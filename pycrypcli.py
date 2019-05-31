@@ -96,8 +96,13 @@ def mainloop():
         elif cmd == "hostname":
             devices: List[dict] = client.get_all_devices()
             assert devices, "no device"
+            if args:
+                name: str = " ".join(args)
+                client.change_device_name(devices[0]["uuid"], name)
+            devices: List[dict] = client.get_all_devices()
             hostname: str = devices[0]["name"]
-            print(hostname)
+            if not args:
+                print(hostname)
         elif cmd == "clear":
             print(end="\033c")
         else:

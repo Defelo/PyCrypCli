@@ -1,6 +1,6 @@
 import getpass
 import sys
-from typing import List
+from typing import List, Optional, Tuple
 
 from client import Client
 from exceptions import *
@@ -46,7 +46,7 @@ def logout():
     die("Logged out.")
 
 
-def get_file(device_uuid: str, filename: str) -> dict:
+def get_file(device_uuid: str, filename: str) -> Optional[dict]:
     files: List[dict] = client.get_all_files(device_uuid)
     for file in files:
         if file["filename"] == filename:
@@ -54,14 +54,19 @@ def get_file(device_uuid: str, filename: str) -> dict:
     return None
 
 
-def mainloop():
-    history: List[str] = []
-    status: dict = client.info()
-    username: str = status["name"]
-    print(f"Logged in as {username}.")
+def get_host() -> Tuple[str, str]:
     devices: List[dict] = client.get_all_devices()
     assert devices, "no device"
     hostname: str = devices[0]["name"]
+    device_uuid: str = devices[0]["uuid"]
+    return hostname, device_uuid
+
+
+def mainloop():
+    history: List[str] = []
+    username: str = client.info()["name"]
+    print(f"Logged in as {username}.")
+    hostname, device_uuid = get_host()
     while True:
         prompt: str = f"\033[32m{username}@{hostname} $ \033[0m"
         cmd: str = None
@@ -104,21 +109,17 @@ def mainloop():
             online: int = client.info()["online"]
             print(f"Online players: {online}")
         elif cmd == "whoami":
-            status: dict = client.info()
-            username: str = status["name"]
+            username: str = client.info()["name"]
             print(username)
         elif cmd == "hostname":
-            devices: List[dict] = client.get_all_devices()
-            assert devices, "no device"
             if args:
                 name: str = " ".join(args)
-                client.change_device_name(devices[0]["uuid"], name)
-            devices: List[dict] = client.get_all_devices()
-            hostname: str = devices[0]["name"]
+                client.change_device_name(device_uuid, name)
+            hostname, device_uuid = get_host()
             if not args:
                 print(hostname)
         elif cmd in ("ls", "l", "dir"):
-            files: List[dict] = client.get_all_files(devices[0]["uuid"])
+            files: List[dict] = client.get_all_files(device_uuid)
             for file in files:
                 print(file["filename"])
         elif cmd == "touch":
@@ -127,38 +128,38 @@ def mainloop():
                 continue
             filename, *content = args
             content: str = " ".join(content)
-            client.create_file(devices[0]["uuid"], filename, content)
+            client.create_file(device_uuid, filename, content)
         elif cmd == "cat":
             if not args:
                 print("usage: cat <filename>")
                 continue
             filename: str = args[0]
-            file: dict = get_file(devices[0]["uuid"], filename)
-            if file is not None:
-                print(file["content"])
-            else:
+            file: dict = get_file(device_uuid, filename)
+            if file is None:
                 print("File does not exist.")
+                continue
+            print(file["content"])
         elif cmd == "rm":
             if not args:
                 print("usage: rm <filename>")
                 continue
             filename: str = args[0]
-            file: dict = get_file(devices[0]["uuid"], filename)
-            if file is not None:
-                client.remove_file(devices[0]["uuid"], file["uuid"])
-            else:
+            file: dict = get_file(device_uuid, filename)
+            if file is None:
                 print("File does not exist.")
+                continue
+            client.remove_file(device_uuid, file["uuid"])
         elif cmd == "cp":
             if len(args) != 2:
                 print("usage: cp <source> <destination>")
                 continue
             filename: str = args[0]
             target: str = args[1]
-            file: dict = get_file(devices[0]["uuid"], filename)
+            file: dict = get_file(device_uuid, filename)
             if file is None:
                 print("File does not exist.")
                 continue
-            client.create_file(devices[0]["uuid"], target, file["content"])
+            client.create_file(device_uuid, target, file["content"])
         elif cmd == "clear":
             print(end="\033c")
         elif cmd == "history":

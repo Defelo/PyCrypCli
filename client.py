@@ -45,3 +45,11 @@ class Client:
         if "token" not in response:
             raise InvalidServerResponseException(response)
         return response["token"]
+
+    def info(self) -> dict:
+        response: dict = self.request({
+            "action": "info"
+        })
+        if "error" in response:
+            raise InvalidServerResponseException(response)
+        return response

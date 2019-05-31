@@ -42,7 +42,42 @@ def login() -> str:
 
 
 def mainloop():
-    print("Logged in successfully.")
+    status: dict = client.info()
+    username: str = status["name"]
+    print(f"Logged in as {username}.")
+    while True:
+        prompt: str = ">>> "
+        command: str = input(prompt)
+        if command in ("exit", "quit"):
+            die("Logged out.")
+        elif command == "help":
+            print("status")
+            # print("hostname")
+            # print("ls")
+            # print("l")
+            # print("dir")
+            # print("touch")
+            # print("cat")
+            # print("rm")
+            # print("cp")
+            # print("mv")
+            print("exit")
+            print("quit")
+            print("clear")
+            # print("history")
+            # print("morphcoin")
+            # print("pay")
+            # print("service")
+            # print("spot")
+            # print("connect")
+        elif command == "status":
+            online: int = client.info()["online"]
+            print(f"Online players: {online}")
+        elif command == "clear":
+            print(end="\033c")
+        else:
+            print("Command could not be found.")
+            print("Type `help` for a list of commands.")
 
 
 def main():

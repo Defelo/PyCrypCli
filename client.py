@@ -13,6 +13,19 @@ class Client:
         self.websocket.send(json.dumps(command))
         return json.loads(self.websocket.recv())
 
+    def register(self, username: str, email: str, password: str) -> str:
+        response: dict = self.request({
+            "action": "register",
+            "name": username,
+            "mail": email,
+            "password": password
+        })
+        if "error" in response:
+            raise InvalidServerResponseException(response)
+        if "token" not in response:
+            raise InvalidServerResponseException(response)
+        return response["token"]
+
     def login(self, username: str, password: str) -> str:
         response: dict = self.request({
             "action": "login",
@@ -22,7 +35,7 @@ class Client:
         if "error" in response:
             if response["error"] == "permission denied":
                 raise InvalidLoginException()
-            raise InvalidServerResponseException()
+            raise InvalidServerResponseException(response)
         if "token" not in response:
-            raise InvalidServerResponseException()
+            raise InvalidServerResponseException(response)
         return response["token"]

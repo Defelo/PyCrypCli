@@ -75,9 +75,9 @@ def mainloop():
             print("status")
             print("whoami")
             print("hostname")
-            # print("ls")
-            # print("l")
-            # print("dir")
+            print("ls")
+            print("l")
+            print("dir")
             # print("touch")
             # print("cat")
             # print("rm")
@@ -109,6 +109,10 @@ def mainloop():
             hostname: str = devices[0]["name"]
             if not args:
                 print(hostname)
+        elif cmd in ("ls", "l", "dir"):
+            files: List[dict] = client.get_all_files(devices[0]["uuid"])
+            for file in files:
+                print(file["filename"])
         elif cmd == "clear":
             print(end="\033c")
         elif cmd == "history":

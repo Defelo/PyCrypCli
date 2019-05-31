@@ -21,7 +21,7 @@ class Client:
     def microservice(self, ms: str, endpoint: List[str], data: dict) -> dict:
         response: dict = self.request({
             "ms": ms,
-            "endpoint": [ms, *endpoint],
+            "endpoint": endpoint,
             "data": data,
             "tag": uuid()
         })
@@ -73,14 +73,23 @@ class Client:
         return response
 
     def get_all_devices(self) -> List[dict]:
-        response: dict = self.microservice("device", ["all"], {})
+        response: dict = self.microservice("device", ["device", "all"], {})
         if "devices" not in response:
             raise InvalidServerResponseException(response)
         devices: List[dict] = response["devices"]
         return devices
 
     def change_device_name(self, device_uuid: str, name: str):
-        self.microservice("device", ["change_name"], {
+        self.microservice("device", ["device", "change_name"], {
             "device_uuid": device_uuid,
             "name": name
         })
+
+    def get_all_files(self, device_uuid: str) -> List[dict]:
+        response: dict = self.microservice("device", ["file", "all"], {
+            "device_uuid": device_uuid
+        })
+        if "files" not in response:
+            raise InvalidServerResponseException(response)
+        files: List[dict] = response["files"]
+        return files

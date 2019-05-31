@@ -89,7 +89,7 @@ def mainloop():
             print("touch")
             print("cat")
             print("rm")
-            # print("cp")
+            print("cp")
             # print("mv")
             print("exit")
             print("quit")
@@ -132,7 +132,7 @@ def mainloop():
             if not args:
                 print("usage: cat <filename>")
                 continue
-            filename = args[0]
+            filename: str = args[0]
             file: dict = get_file(devices[0]["uuid"], filename)
             if file is not None:
                 print(file["content"])
@@ -142,12 +142,23 @@ def mainloop():
             if not args:
                 print("usage: rm <filename>")
                 continue
-            filename = args[0]
+            filename: str = args[0]
             file: dict = get_file(devices[0]["uuid"], filename)
             if file is not None:
                 client.remove_file(devices[0]["uuid"], file["uuid"])
             else:
                 print("File does not exist.")
+        elif cmd == "cp":
+            if len(args) != 2:
+                print("usage: cp <source> <destination>")
+                continue
+            filename: str = args[0]
+            target: str = args[1]
+            file: dict = get_file(devices[0]["uuid"], filename)
+            if file is None:
+                print("File does not exist.")
+                continue
+            client.create_file(devices[0]["uuid"], target, file["content"])
         elif cmd == "clear":
             print(end="\033c")
         elif cmd == "history":

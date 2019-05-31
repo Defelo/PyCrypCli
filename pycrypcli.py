@@ -46,6 +46,14 @@ def logout():
     die("Logged out.")
 
 
+def get_file(device_uuid: str, filename: str) -> dict:
+    files: List[dict] = client.get_all_files(device_uuid)
+    for file in files:
+        if file["filename"] == filename:
+            return file
+    return None
+
+
 def mainloop():
     history: List[str] = []
     status: dict = client.info()
@@ -125,11 +133,9 @@ def mainloop():
                 print("usage: cat <filename>")
                 continue
             filename = args[0]
-            files: List[dict] = client.get_all_files(devices[0]["uuid"])
-            for file in files:
-                if file["filename"] == filename:
-                    print(file["content"])
-                    break
+            file: dict = get_file(devices[0]["uuid"], filename)
+            if file is not None:
+                print(file["content"])
             else:
                 print("File does not exist.")
         elif cmd == "rm":
@@ -137,11 +143,9 @@ def mainloop():
                 print("usage: rm <filename>")
                 continue
             filename = args[0]
-            files: List[dict] = client.get_all_files(devices[0]["uuid"])
-            for file in files:
-                if file["filename"] == filename:
-                    client.remove_file(devices[0]["uuid"], file["uuid"])
-                    break
+            file: dict = get_file(devices[0]["uuid"], filename)
+            if file is not None:
+                client.remove_file(devices[0]["uuid"], file["uuid"])
             else:
                 print("File does not exist.")
         elif cmd == "clear":

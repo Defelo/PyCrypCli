@@ -72,6 +72,7 @@ def mainloop():
             logout()
         elif cmd == "help":
             print("status")
+            print("whoami")
             print("hostname")
             # print("ls")
             # print("l")
@@ -93,6 +94,10 @@ def mainloop():
         elif cmd == "status":
             online: int = client.info()["online"]
             print(f"Online players: {online}")
+        elif cmd == "whoami":
+            status: dict = client.info()
+            username: str = status["name"]
+            print(username)
         elif cmd == "hostname":
             devices: List[dict] = client.get_all_devices()
             assert devices, "no device"

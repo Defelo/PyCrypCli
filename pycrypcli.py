@@ -47,6 +47,7 @@ def logout():
 
 
 def mainloop():
+    history: List[str] = []
     status: dict = client.info()
     username: str = status["name"]
     print(f"Logged in as {username}.")
@@ -85,7 +86,7 @@ def mainloop():
             print("exit")
             print("quit")
             print("clear")
-            # print("history")
+            print("history")
             # print("morphcoin")
             # print("pay")
             # print("service")
@@ -110,9 +111,13 @@ def mainloop():
                 print(hostname)
         elif cmd == "clear":
             print(end="\033c")
+        elif cmd == "history":
+            for line in history:
+                print(line)
         else:
             print("Command could not be found.")
             print("Type `help` for a list of commands.")
+        history.append(cmd + " ".join(args))
 
 
 def main():

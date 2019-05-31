@@ -121,3 +121,12 @@ class Client:
         if "error" in response or "success" not in response:
             raise InvalidServerResponseException(response)
         return response["success"]
+
+    def send(self, wallet_uuid: str, key: str, destination: str, amount: int, usage: str):
+        self.microservice("currency", ["send"], {
+            "source_uuid": wallet_uuid,
+            "key": key,
+            "send_amount": amount,
+            "destination_uuid": destination,
+            "usage": usage
+        })

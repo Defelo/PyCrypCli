@@ -63,6 +63,10 @@ def get_host() -> Tuple[str, str]:
     return hostname, device_uuid
 
 
+def is_uuid(x: str) -> bool:
+    return bool(re.match(r"^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}", x))
+
+
 def extract_wallet(content: str) -> Optional[List[str]]:
     if re.match(r"^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12} [0-9a-f]{10}$", content):
         return content.split()
@@ -108,7 +112,7 @@ def mainloop():
             print("clear")
             print("history")
             print("morphcoin")
-            # print("pay")
+            print("pay")
             # print("service")
             # print("spot")
             # print("connect")
@@ -203,6 +207,28 @@ def mainloop():
                     continue
                 amount: int = client.get_wallet(*wallet)["amount"]
                 print(f"{amount} morphcoin")
+        elif cmd == "pay":
+            if len(args) < 3:
+                print("usage: pay <filename> <receiver> <amount> [usage]")
+                continue
+            file: dict = get_file(device_uuid, args[0])
+            if file is None:
+                print("File does not exist.")
+                continue
+            wallet: Tuple[str, str] = extract_wallet(file["content"])
+            if wallet is None:
+                print("File is no wallet.")
+                continue
+            wallet_uuid, wallet_key = wallet
+            receiver: str = args[1]
+            if not is_uuid(receiver):
+                print("Invalid receiver.")
+                continue
+            if not args[2].isnumeric():
+                print("amount if not a number.")
+                continue
+            amount: int = int(args[2])
+            client.send(wallet_uuid, wallet_key, receiver, amount, " ".join(args[3:]))
         else:
             print("Command could not be found.")
             print("Type `help` for a list of commands.")

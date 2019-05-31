@@ -1,6 +1,13 @@
+from typing import List
+from uuid import uuid4
+
 from websocket import WebSocket, create_connection
 
 from exceptions import *
+
+
+def uuid():
+    return str(uuid4())
 
 
 class Client:
@@ -53,3 +60,20 @@ class Client:
         if "error" in response:
             raise InvalidServerResponseException(response)
         return response
+
+    def get_all_devices(self) -> List[dict]:
+        response: dict = self.request({
+            "ms": "device",
+            "endpoint": ["device", "all"],
+            "data": {},
+            "tag": uuid()
+        })
+        if "error" in response:
+            raise InvalidServerResponseException(response)
+        if "data" not in response:
+            raise InvalidServerResponseException(response)
+        data: dict = response["data"]
+        if "devices" not in data:
+            raise InvalidServerResponseException(response)
+        devices: List[dict] = data["devices"]
+        return devices

@@ -1,5 +1,6 @@
 import getpass
 import sys
+from typing import List
 
 from client import Client
 from exceptions import *
@@ -41,18 +42,37 @@ def login() -> str:
         die("Invalid Login Credentials.")
 
 
+def logout():
+    die("Logged out.")
+
+
 def mainloop():
     status: dict = client.info()
     username: str = status["name"]
     print(f"Logged in as {username}.")
+    devices: List[dict] = client.get_all_devices()
+    assert devices, "no device"
+    hostname: str = devices[0]["name"]
     while True:
-        prompt: str = ">>> "
-        command: str = input(prompt)
-        if command in ("exit", "quit"):
-            die("Logged out.")
-        elif command == "help":
+        prompt: str = f"\033[32m{username}@{hostname} $ \033[0m"
+        cmd: str = None
+        args: List[str] = None
+        try:
+            command: List[str] = input(prompt).lstrip().split()
+            if not command:
+                continue
+            cmd, *args = command
+        except EOFError:
+            print()
+            logout()
+        except KeyboardInterrupt:
+            print()
+            continue
+        if cmd in ("exit", "quit"):
+            logout()
+        elif cmd == "help":
             print("status")
-            # print("hostname")
+            print("hostname")
             # print("ls")
             # print("l")
             # print("dir")
@@ -70,10 +90,15 @@ def mainloop():
             # print("service")
             # print("spot")
             # print("connect")
-        elif command == "status":
+        elif cmd == "status":
             online: int = client.info()["online"]
             print(f"Online players: {online}")
-        elif command == "clear":
+        elif cmd == "hostname":
+            devices: List[dict] = client.get_all_devices()
+            assert devices, "no device"
+            hostname: str = devices[0]["name"]
+            print(hostname)
+        elif cmd == "clear":
             print(end="\033c")
         else:
             print("Command could not be found.")

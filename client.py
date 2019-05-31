@@ -93,3 +93,10 @@ class Client:
             raise InvalidServerResponseException(response)
         files: List[dict] = response["files"]
         return files
+
+    def create_file(self, device_uuid: str, filename: str, content: str):
+        self.microservice("device", ["file", "create"], {
+            "device_uuid": device_uuid,
+            "filename": filename,
+            "content": content
+        })

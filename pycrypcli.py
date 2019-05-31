@@ -78,8 +78,8 @@ def mainloop():
             print("ls")
             print("l")
             print("dir")
-            # print("touch")
-            # print("cat")
+            print("touch")
+            print("cat")
             # print("rm")
             # print("cp")
             # print("mv")
@@ -113,6 +113,13 @@ def mainloop():
             files: List[dict] = client.get_all_files(devices[0]["uuid"])
             for file in files:
                 print(file["filename"])
+        elif cmd == "touch":
+            if not args:
+                print("usage: touch <filename> [content]")
+                continue
+            filename, *content = args
+            content: str = " ".join(content)
+            client.create_file(devices[0]["uuid"], filename, content)
         elif cmd == "cat":
             if not args:
                 print("usage: cat <filename>")

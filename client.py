@@ -100,3 +100,9 @@ class Client:
             "filename": filename,
             "content": content
         })
+
+    def remove_file(self, device_uuid: str, file_uuid: str):
+        self.microservice("device", ["file", "delete"], {
+            "device_uuid": device_uuid,
+            "file_uuid": file_uuid
+        })

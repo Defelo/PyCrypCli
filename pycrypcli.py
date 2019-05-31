@@ -80,7 +80,7 @@ def mainloop():
             print("dir")
             print("touch")
             print("cat")
-            # print("rm")
+            print("rm")
             # print("cp")
             # print("mv")
             print("exit")
@@ -129,6 +129,18 @@ def mainloop():
             for file in files:
                 if file["filename"] == filename:
                     print(file["content"])
+                    break
+            else:
+                print("File does not exist.")
+        elif cmd == "rm":
+            if not args:
+                print("usage: rm <filename>")
+                continue
+            filename = args[0]
+            files: List[dict] = client.get_all_files(devices[0]["uuid"])
+            for file in files:
+                if file["filename"] == filename:
+                    client.remove_file(devices[0]["uuid"], file["uuid"])
                     break
             else:
                 print("File does not exist.")

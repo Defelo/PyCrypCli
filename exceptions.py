@@ -6,6 +6,21 @@ class InvalidServerResponseException(Exception):
         super().__init__("Invalid Server Response: " + json.dumps(response))
 
 
+class WeakPasswordException(Exception):
+    def __init__(self):
+        super().__init__("Password is too weak")
+
+
+class UsernameAlreadyExistsException(Exception):
+    def __init__(self):
+        super().__init__("Username already exists")
+
+
+class InvalidEmailException(Exception):
+    def __init__(self):
+        super().__init__("Invalid Email")
+
+
 class InvalidLoginException(Exception):
     def __init__(self):
         super().__init__("Invalid Login Credentials")

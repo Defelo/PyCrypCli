@@ -1,8 +1,6 @@
-import json
-
 from websocket import WebSocket, create_connection
 
-from exceptions import InvalidLoginException, InvalidServerResponseException
+from exceptions import *
 
 
 class Client:
@@ -21,6 +19,13 @@ class Client:
             "password": password
         })
         if "error" in response:
+            error: str = response["error"]
+            if error.startswith("password invalid (condition:"):
+                raise WeakPasswordException()
+            if error == "username already exists":
+                raise UsernameAlreadyExistsException()
+            if error == "email invalid":
+                raise InvalidEmailException()
             raise InvalidServerResponseException(response)
         if "token" not in response:
             raise InvalidServerResponseException(response)
@@ -33,7 +38,8 @@ class Client:
             "password": password
         })
         if "error" in response:
-            if response["error"] == "permission denied":
+            error = response["error"]
+            if error == "permission denied":
                 raise InvalidLoginException()
             raise InvalidServerResponseException(response)
         if "token" not in response:

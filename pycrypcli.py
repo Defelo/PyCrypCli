@@ -2,6 +2,7 @@ import getpass
 import sys
 
 from client import Client
+from exceptions import *
 
 
 def die(*args, **kwargs):
@@ -21,13 +22,23 @@ def register() -> str:
     confirm_password: str = getpass.getpass("Confirm Password: ")
     if password != confirm_password:
         die("Passwords don't match.")
-    return client.register(username, mail, password)
+    try:
+        return client.register(username, mail, password)
+    except WeakPasswordException:
+        die("Password is too weak.")
+    except UsernameAlreadyExistsException:
+        die("Username already exists.")
+    except InvalidEmailException:
+        die("Invalid email")
 
 
 def login() -> str:
     username: str = input("Username: ")
     password: str = getpass.getpass("Password: ")
-    return client.login(username, password)
+    try:
+        return client.login(username, password)
+    except InvalidLoginException:
+        die("Invalid Login Credentials.")
 
 
 def mainloop():

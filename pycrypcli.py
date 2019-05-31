@@ -95,7 +95,7 @@ def mainloop():
             print("cat")
             print("rm")
             print("cp")
-            # print("mv")
+            print("mv")
             print("exit")
             print("quit")
             print("clear")
@@ -153,13 +153,25 @@ def mainloop():
             if len(args) != 2:
                 print("usage: cp <source> <destination>")
                 continue
-            filename: str = args[0]
-            target: str = args[1]
-            file: dict = get_file(device_uuid, filename)
+            source: str = args[0]
+            destination: str = args[1]
+            file: dict = get_file(device_uuid, source)
             if file is None:
                 print("File does not exist.")
                 continue
-            client.create_file(device_uuid, target, file["content"])
+            client.create_file(device_uuid, destination, file["content"])
+        elif cmd == "mv":
+            if len(args) != 2:
+                print("usage: mv <source> <destination>")
+                continue
+            source: str = args[0]
+            destination: str = args[1]
+            file: dict = get_file(device_uuid, source)
+            if file is None:
+                print("File does not exist.")
+                continue
+            client.create_file(device_uuid, destination, file["content"])
+            client.remove_file(device_uuid, file["uuid"])
         elif cmd == "clear":
             print(end="\033c")
         elif cmd == "history":

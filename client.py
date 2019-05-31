@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 from uuid import uuid4
 
 from websocket import WebSocket, create_connection
@@ -106,3 +106,18 @@ class Client:
             "device_uuid": device_uuid,
             "file_uuid": file_uuid
         })
+
+    def create_wallet(self) -> Tuple[str, str]:
+        response: dict = self.microservice("currency", ["create"], {})
+        if "key" not in response or "uuid" not in response:
+            raise InvalidServerResponseException(response)
+        return response["uuid"], response["key"]
+
+    def get_wallet(self, wallet_uuid: str, key: str) -> dict:
+        response: dict = self.microservice("currency", ["get"], {
+            "source_uuid": wallet_uuid,
+            "key": key
+        })
+        if "error" in response or "success" not in response:
+            raise InvalidServerResponseException(response)
+        return response["success"]

@@ -1,4 +1,5 @@
 import getpass
+import re
 import sys
 from typing import List, Optional, Tuple
 
@@ -62,6 +63,12 @@ def get_host() -> Tuple[str, str]:
     return hostname, device_uuid
 
 
+def extract_wallet(content: str) -> Optional[List[str]]:
+    if re.match(r"^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12} [0-9a-f]{10}$", content):
+        return content.split()
+    return None
+
+
 def mainloop():
     history: List[str] = []
     username: str = client.info()["name"]
@@ -100,7 +107,7 @@ def mainloop():
             print("quit")
             print("clear")
             print("history")
-            # print("morphcoin")
+            print("morphcoin")
             # print("pay")
             # print("service")
             # print("spot")
@@ -177,6 +184,25 @@ def mainloop():
         elif cmd == "history":
             for line in history:
                 print(line)
+        elif cmd == "morphcoin":
+            if len(args) != 2 or args[0] not in ("look", "create"):
+                print("usage: morphcoin look|create <filename>")
+                continue
+            filename: str = args[1]
+            if args[0] == "create":
+                uuid, key = client.create_wallet()
+                client.create_file(device_uuid, filename, uuid + " " + key)
+            elif args[0] == "look":
+                file: dict = get_file(device_uuid, filename)
+                if file is None:
+                    print("File does not exist.")
+                    continue
+                wallet: Tuple[str, str] = extract_wallet(file["content"])
+                if wallet is None:
+                    print("File is no wallet.")
+                    continue
+                amount: int = client.get_wallet(*wallet)["amount"]
+                print(f"{amount} morphcoin")
         else:
             print("Command could not be found.")
             print("Type `help` for a list of commands.")

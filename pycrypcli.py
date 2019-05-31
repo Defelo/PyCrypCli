@@ -113,6 +113,18 @@ def mainloop():
             files: List[dict] = client.get_all_files(devices[0]["uuid"])
             for file in files:
                 print(file["filename"])
+        elif cmd == "cat":
+            if not args:
+                print("usage: cat <filename>")
+                continue
+            filename = args[0]
+            files: List[dict] = client.get_all_files(devices[0]["uuid"])
+            for file in files:
+                if file["filename"] == filename:
+                    print(file["content"])
+                    break
+            else:
+                print("File does not exist.")
         elif cmd == "clear":
             print(end="\033c")
         elif cmd == "history":

@@ -56,6 +56,6 @@ class AlreadyOwnServiceException(Exception):
         super().__init__("You already own a service with this name")
 
 
-class UnkownServiceException(Exception):
+class UnknownServiceException(Exception):
     def __init__(self):
-        super().__init__("Unkown service")
+        super().__init__("Unknown service")

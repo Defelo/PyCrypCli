@@ -1,7 +1,10 @@
 import getpass
 import os
 import re
-import readline
+try:
+    import readline
+except ImportError:
+    import pyreadline as readline
 import sys
 from typing import List, Optional, Tuple
 

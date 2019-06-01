@@ -157,6 +157,19 @@ class Client:
             raise InvalidServerResponseException(response)
         return response["success"]
 
+    def delete_wallet(self, wallet_uuid: str, key: str):
+        response: dict = self.microservice("currency", ["delete"], {
+            "source_uuid": wallet_uuid,
+            "key": key
+        })
+        if "error" in response:
+            error: str = response["error"]
+            if error == "invalid key":
+                raise InvalidKeyException()
+            raise InvalidServerResponseException(response)
+        if "ok" not in response:
+            raise InvalidServerResponseException(response)
+
     def send(self, wallet_uuid: str, key: str, destination: str, amount: int, usage: str):
         response: dict = self.microservice("currency", ["send"], {
             "source_uuid": wallet_uuid,

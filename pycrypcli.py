@@ -105,7 +105,7 @@ def mainloop():
     print(f"Logged in as {username}.")
     hostname, device_uuid = get_host()
     while True:
-        prompt: str = f"\033[32m{username}@{hostname} $ \033[0m"
+        prompt: str = f"\033[38;2;100;221;23m{username}@{hostname} $ \033[0m"
         cmd: str = None
         args: List[str] = None
         try:
@@ -189,6 +189,27 @@ def mainloop():
             if file is None:
                 print("File does not exist.")
                 continue
+            content: str = file["content"]
+            wallet: Tuple[str, str] = extract_wallet(content)
+            if wallet is not None:
+                wallet_uuid, wallet_key = wallet
+                try:
+                    amount: int = client.get_wallet(wallet_uuid, wallet_key)["amount"]
+                    while True:
+                        choice: str = input(f"\033[38;2;255;51;51mThis file contains {amount} morphcoin. "
+                                            f"Do you want to delete the corresponding wallet? [yes|no] \033[0m")
+                        if choice in ("yes", "no"):
+                            break
+                        print(f"'{choice}' is not one of the following: yes, no")
+                    if choice == "yes":
+                        client.delete_wallet(wallet_uuid, wallet_key)
+                        print("The wallet has been deleted.")
+                    else:
+                        print("The following key might now be the only way to access your wallet.")
+                        print("Note that you can't create another wallet without this key.")
+                        print(content)
+                except InvalidKeyException:
+                    pass
             client.remove_file(device_uuid, file["uuid"])
         elif cmd == "cp":
             if len(args) != 2:

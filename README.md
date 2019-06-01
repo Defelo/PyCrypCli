@@ -5,4 +5,4 @@ Python [Cryptic Game](https://github.com/cryptic-game/cryptic) Client
 `sudo pip3 install -r requirements.txt`
 
 ## Usage
-`python3 pycrypcli.py [help|signup]`
+`python3.7 pycrypcli.py [help|signup]`

@@ -429,7 +429,7 @@ class Game:
                                 print("Access denied. The bruteforce attack was not successful")
                         else:
                             print("You started a bruteforce attack")
-                    except UnkownServiceException:
+                    except UnknownServiceException:
                         print("Unknown service. Attack couldn't be started.")
                 elif args[0] == "portscan":
                     if len(args) != 2:

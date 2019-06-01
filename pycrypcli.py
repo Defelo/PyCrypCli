@@ -60,7 +60,6 @@ class Game:
 
         readline.parse_and_bind("tab: complete")
         readline.set_completer(self.completer)
-        readline.set_completer_delims("")
 
     def complete_arguments(self, cmd: str, args: List[str]) -> List[str]:
         if cmd in ("cat", "rm", "cp", "mv", "pay"):
@@ -81,18 +80,13 @@ class Game:
         return []
 
     def completer(self, text: str, state: int) -> Optional[str]:
-        cmd, *args = text.lstrip().split(" ") or [""]
+        cmd, *args = readline.get_line_buffer().split(" ") or [""]
         if not args:
-            options = Game.COMMANDS
-            options = [option + " " for option in options if option.startswith(text)]
+            options: List[str] = self.COMMANDS
         else:
-            options = self.complete_arguments(cmd, args)
-            options = [option for option in options if option.startswith(args[-1])]
-            if len(options) == 1:
-                entry = cmd
-                for arg in args[:-1]:
-                    entry += " " + arg
-                options = [entry + " " + options[0] + " "]
+            options: List[str] = self.complete_arguments(cmd, args)
+        options: List[str] = [o + " " for o in options if o.startswith(text)]
+
         if state < len(options):
             return options[state]
         return None

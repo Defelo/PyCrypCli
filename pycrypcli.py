@@ -1,4 +1,5 @@
 import getpass
+import os
 import re
 import sys
 from typing import List, Optional, Tuple
@@ -13,8 +14,36 @@ def die(*args, **kwargs):
 
 
 SERVER: str = "wss://ws.cryptic-game.net/"
+SESSION_FILE: List[str] = [os.path.expanduser("~"), ".config", "pycrypcli", "session.json"]
 
 client: Client = Client(SERVER)
+
+
+def load_session() -> Optional[str]:
+    try:
+        content: dict = json.load(open(os.path.join(*SESSION_FILE)))
+        if "token" in content:
+            return content["token"]
+    except FileNotFoundError:
+        pass
+    except json.JSONDecodeError:
+        pass
+    return None
+
+
+def save_session(token: str):
+    for i in range(1, len(SESSION_FILE)):
+        path: str = os.path.join(*SESSION_FILE[:i])
+        if not os.path.exists(path):
+            os.mkdir(path)
+    path: str = os.path.join(*SESSION_FILE)
+    with open(path, "w") as file:
+        json.dump({"token": token}, file)
+        file.flush()
+
+
+def delete_session():
+    os.remove(os.path.join(*SESSION_FILE))
 
 
 def register() -> str:
@@ -41,10 +70,6 @@ def login() -> str:
         return client.login(username, password)
     except InvalidLoginException:
         die("Invalid Login Credentials.")
-
-
-def logout():
-    die("Logged out.")
 
 
 def get_file(device_uuid: str, filename: str) -> Optional[dict]:
@@ -89,12 +114,15 @@ def mainloop():
             cmd, *args = command
         except EOFError:
             print()
-            logout()
+            exit()
         except KeyboardInterrupt:
             print()
             continue
         if cmd in ("exit", "quit"):
-            logout()
+            exit()
+        elif cmd == "logout":
+            delete_session()
+            die("Logged out.")
         elif cmd == "help":
             print("status")
             print("whoami")
@@ -109,6 +137,7 @@ def mainloop():
             print("mv")
             print("exit")
             print("quit")
+            print("logout")
             print("clear")
             print("history")
             print("morphcoin")
@@ -260,13 +289,21 @@ def main():
     if len(sys.argv) > 1:
         arg: str = sys.argv[1]
         if arg.lower() in ("signup", "register"):
-            register()
+            save_session(register())
         else:
             print("Python Cryptic Game Client (https://github.com/Defelo/PyCrypCli)")
             print()
             die(f"Usage: {sys.argv[0]} [help|signup]")
     else:
-        login()
+        token: str = load_session()
+        if token is not None:
+            try:
+                client.session(token)
+            except InvalidSessionTokenException:
+                delete_session()
+                save_session(login())
+        else:
+            save_session(login())
     mainloop()
 
 

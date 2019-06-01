@@ -64,6 +64,19 @@ class Client:
             raise InvalidServerResponseException(response)
         return response["token"]
 
+    def session(self, token: str):
+        response: dict = self.request({
+            "action": "session",
+            "token": token
+        })
+        if "error" in response:
+            error: str = response["error"]
+            if error == "invalid token":
+                raise InvalidSessionTokenException()
+            raise InvalidServerResponseException(response)
+        if "token" not in response:
+            raise InvalidServerResponseException(response)
+
     def info(self) -> dict:
         response: dict = self.request({
             "action": "info"

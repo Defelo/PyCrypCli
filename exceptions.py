@@ -6,6 +6,11 @@ class InvalidServerResponseException(Exception):
         super().__init__("Invalid Server Response: " + json.dumps(response))
 
 
+class InvalidSessionTokenException(Exception):
+    def __init__(self):
+        super().__init__("Invalid session token")
+
+
 class WeakPasswordException(Exception):
     def __init__(self):
         super().__init__("Password is too weak")

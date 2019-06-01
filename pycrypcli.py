@@ -61,7 +61,7 @@ class Game:
         readline.set_completer_delims("")
 
     def complete_arguments(self, cmd: str, args: List[str]) -> List[str]:
-        if cmd in ("cat", "rm"):
+        if cmd in ("cat", "rm", "cp", "mv", "pay"):
             if len(args) == 1:
                 return [file["filename"] for file in self.client.get_all_files(self.device_uuid)]
         elif cmd == "morphcoin":
@@ -70,6 +70,12 @@ class Game:
             elif len(args) == 2:
                 if args[0] == "look":
                     return [file["filename"] for file in self.client.get_all_files(self.device_uuid)]
+        elif cmd == "service":
+            if len(args) == 1:
+                return ["create", "bruteforce", "portscan"]
+            elif len(args) == 2:
+                if args[0] == "create":
+                    return ["bruteforce", "portscan", "ssh", "telnet"]
         return []
 
     def completer(self, text: str, state: int) -> Optional[str]:

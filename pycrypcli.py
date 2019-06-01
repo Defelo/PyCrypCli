@@ -224,8 +224,11 @@ def mainloop():
                 continue
             filename: str = args[1]
             if args[0] == "create":
-                uuid, key = client.create_wallet()
-                client.create_file(device_uuid, filename, uuid + " " + key)
+                try:
+                    uuid, key = client.create_wallet()
+                    client.create_file(device_uuid, filename, uuid + " " + key)
+                except AlreadyOwnAWalletException:
+                    print("You already own a wallet")
             elif args[0] == "look":
                 file: dict = get_file(device_uuid, filename)
                 if file is None:

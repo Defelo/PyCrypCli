@@ -134,7 +134,12 @@ class Client:
 
     def create_wallet(self) -> Tuple[str, str]:
         response: dict = self.microservice("currency", ["create"], {})
-        if "error" in response or "key" not in response or "uuid" not in response:
+        if "error" in response:
+            error: str = response["error"]
+            if error == "You already own a wallet!":
+                raise AlreadyOwnAWalletException()
+            raise InvalidServerResponseException(response)
+        if "key" not in response or "uuid" not in response:
             raise InvalidServerResponseException(response)
         return response["uuid"], response["key"]
 

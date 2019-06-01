@@ -44,3 +44,8 @@ class InvalidWalletException(Exception):
 class InvalidKeyException(Exception):
     def __init__(self):
         super().__init__("Invalid Wallet Key")
+
+
+class AlreadyOwnAWalletException(Exception):
+    def __init__(self):
+        super().__init__("You already own a wallet")

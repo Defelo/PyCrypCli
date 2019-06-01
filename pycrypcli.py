@@ -1,6 +1,7 @@
 import getpass
 import os
 import re
+import readline
 import sys
 from typing import List, Optional, Tuple
 
@@ -11,7 +12,7 @@ SERVER: str = "wss://ws.cryptic-game.net/"
 
 
 def is_uuid(x: str) -> bool:
-    return bool(re.match(r"^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}", x))
+    return bool(re.match(r"^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$", x))
 
 
 def extract_wallet(content: str) -> Optional[List[str]]:
@@ -21,6 +22,30 @@ def extract_wallet(content: str) -> Optional[List[str]]:
 
 
 class Game:
+    COMMANDS: List[str] = [
+        "status",
+        "whoami",
+        "hostname",
+        "ls",
+        "l",
+        "dir",
+        "touch",
+        "cat",
+        "rm",
+        "cp",
+        "mv",
+        "exit",
+        "quit",
+        "logout",
+        "clear",
+        "history",
+        "morphcoin",
+        "pay",
+        "service",
+        # "spot",
+        # "connect",
+    ]
+
     def __init__(self, server: str, session_file: List[str]):
         self.client: Client = Client(server)
         self.session_file: List[str] = session_file
@@ -29,6 +54,20 @@ class Game:
         self.device_uuid: str = None
         self.hostname: str = None
         self.username: str = None
+
+        readline.parse_and_bind("tab: complete")
+        readline.set_completer(self.completer)
+
+    def completer(self, text: str, state: int) -> Optional[str]:
+        cmd, *args = text.lstrip().split() or [""]
+        if not args:
+            options = Game.COMMANDS
+        else:
+            options = []
+        options = [option for option in options if option.startswith(text)]
+        if state < len(options):
+            return options[state]
+        return None
 
     def load_session(self) -> bool:
         try:
@@ -119,10 +158,10 @@ class Game:
                     continue
                 cmd, *args = command
             except EOFError:
-                print()
+                print("exit")
                 exit()
             except KeyboardInterrupt:
-                print()
+                print("^C")
                 continue
             if cmd in ("exit", "quit"):
                 exit()
@@ -131,27 +170,8 @@ class Game:
                 print("Logged out.")
                 break
             elif cmd == "help":
-                print("status")
-                print("whoami")
-                print("hostname")
-                print("ls")
-                print("l")
-                print("dir")
-                print("touch")
-                print("cat")
-                print("rm")
-                print("cp")
-                print("mv")
-                print("exit")
-                print("quit")
-                print("logout")
-                print("clear")
-                print("history")
-                print("morphcoin")
-                print("pay")
-                print("service")
-                # print("spot")
-                # print("connect")
+                for command in Game.COMMANDS:
+                    print(command)
             elif cmd == "status":
                 online: int = self.client.info()["online"]
                 print(f"Online players: {online}")

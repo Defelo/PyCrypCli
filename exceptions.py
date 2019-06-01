@@ -54,3 +54,8 @@ class AlreadyOwnAWalletException(Exception):
 class AlreadyOwnServiceException(Exception):
     def __init__(self):
         super().__init__("You already own a service with this name")
+
+
+class UnkownServiceException(Exception):
+    def __init__(self):
+        super().__init__("Unkown service")

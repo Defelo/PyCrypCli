@@ -376,7 +376,36 @@ class Game:
                     except AlreadyOwnServiceException:
                         print("You already created this service")
                 elif args[0] == "bruteforce":
-                    pass
+                    if len(args) != 3:
+                        print("usage: service bruteforce <target-device> <target-service>")
+                        continue
+                    target_device: str = args[1]
+                    target_service: str = args[2]
+                    if not is_uuid(target_device):
+                        print("Invalid target device")
+                        continue
+                    if not is_uuid(target_service):
+                        print("Invalid target service")
+                        continue
+                    service: dict = self.get_service("bruteforce")
+                    if service is None:
+                        print("You have to create a bruteforce service before you use it")
+                        continue
+                    try:
+                        result: dict = self.client.use_service(
+                            self.device_uuid, service["uuid"],
+                            target_device=target_device, target_service=target_service
+                        )
+                        assert result["ok"]
+                        if "access" in result:
+                            if result["access"]:
+                                print("Access granted - use `connect <device>`")
+                            else:
+                                print("Access denied. The bruteforce attack was not successful")
+                        else:
+                            print("You started a bruteforce attack")
+                    except UnkownServiceException:
+                        print("Unknown service. Attack couldn't be started.")
                 elif args[0] == "portscan":
                     if len(args) != 2:
                         print("usage: service portscan <device>")

@@ -215,6 +215,9 @@ class Client:
             **kwargs
         })
         if "error" in response:
+            error: str = response["error"]
+            if error == "unknown service":
+                raise UnkownServiceException()
             raise InvalidServerResponseException(response)
         return response
 

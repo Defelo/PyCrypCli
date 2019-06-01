@@ -26,6 +26,7 @@ class Game:
         "status",
         "whoami",
         "hostname",
+        "help",
         "ls",
         "l",
         "dir",
@@ -57,14 +58,33 @@ class Game:
 
         readline.parse_and_bind("tab: complete")
         readline.set_completer(self.completer)
+        readline.set_completer_delims("")
+
+    def complete_arguments(self, cmd: str, args: List[str]) -> List[str]:
+        if cmd in ("cat", "rm"):
+            if len(args) == 1:
+                return [file["filename"] for file in self.client.get_all_files(self.device_uuid)]
+        elif cmd == "morphcoin":
+            if len(args) == 1:
+                return ["create", "look"]
+            elif len(args) == 2:
+                if args[0] == "look":
+                    return [file["filename"] for file in self.client.get_all_files(self.device_uuid)]
+        return []
 
     def completer(self, text: str, state: int) -> Optional[str]:
-        cmd, *args = text.lstrip().split() or [""]
+        cmd, *args = text.lstrip().split(" ") or [""]
         if not args:
             options = Game.COMMANDS
+            options = [option + " " for option in options if option.startswith(text)]
         else:
-            options = []
-        options = [option for option in options if option.startswith(text)]
+            options = self.complete_arguments(cmd, args)
+            options = [option for option in options if option.startswith(args[-1])]
+            if len(options) == 1:
+                entry = cmd
+                for arg in args[:-1]:
+                    entry += " " + arg
+                options = [entry + " " + options[0] + " "]
         if state < len(options):
             return options[state]
         return None

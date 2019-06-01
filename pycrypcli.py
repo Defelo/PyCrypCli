@@ -44,7 +44,7 @@ class Game:
         "pay",
         "service",
         "spot",
-        # "connect",
+        "connect",
     ]
 
     def __init__(self, server: str, session_file: List[str]):
@@ -55,6 +55,8 @@ class Game:
         self.device_uuid: str = None
         self.hostname: str = None
         self.username: str = None
+
+        self.login_stack: List[str] = []
 
         readline.parse_and_bind("tab: complete")
         readline.set_completer(self.completer)
@@ -166,23 +168,35 @@ class Game:
                 return service
         return None
 
-    def update_host(self):
-        devices: List[dict] = self.client.get_all_devices()
-        if not devices:
-            devices: List[dict] = [self.client.create_device()]
-        self.hostname: str = devices[0]["name"]
-        self.device_uuid: str = devices[0]["uuid"]
+    def update_host(self, device_uuid: str = None):
+        if device_uuid is None:
+            devices: List[dict] = self.client.get_all_devices()
+            if not devices:
+                devices: List[dict] = [self.client.create_device()]
+            self.hostname: str = devices[0]["name"]
+            self.device_uuid: str = devices[0]["uuid"]
+        else:
+            self.device_uuid: str = device_uuid
+            self.hostname: str = self.client.device_info(device_uuid)["name"]
 
     def update_username(self):
         self.username: str = self.client.info()["name"]
+
+    def remote(self) -> bool:
+        return len(self.login_stack) > 1
 
     def mainloop(self):
         history: List[str] = []
         self.update_host()
         self.update_username()
+        self.login_stack.append(self.device_uuid)
         print(f"Logged in as {self.username}.")
         while True:
-            prompt: str = f"\033[38;2;100;221;23m{self.username}@{self.hostname} $ \033[0m"
+            if self.remote():
+                prompt: str = "\033[38;2;255;64;23m"
+            else:
+                prompt: str = "\033[38;2;100;221;23m"
+            prompt += f"{self.username}@{self.hostname} $ \033[0m"
             cmd: str = None
             args: List[str] = None
             try:
@@ -192,16 +206,33 @@ class Game:
                 cmd, *args = command
             except EOFError:
                 print("exit")
-                exit()
+                if self.remote():
+                    self.login_stack.pop()
+                    self.update_host(self.login_stack[-1])
+                else:
+                    exit()
             except KeyboardInterrupt:
                 print("^C")
                 continue
+
+            command: str = cmd + " " + " ".join(args)
+            if history[-1:] != [command]:
+                history.append(command)
+
             if cmd in ("exit", "quit"):
-                exit()
+                if self.remote():
+                    self.login_stack.pop()
+                    self.update_host(self.login_stack[-1])
+                else:
+                    exit()
             elif cmd == "logout":
-                self.delete_session()
-                print("Logged out.")
-                break
+                if self.remote():
+                    self.login_stack.pop()
+                    self.update_host(self.login_stack[-1])
+                else:
+                    self.delete_session()
+                    print("Logged out.")
+                    break
             elif cmd == "help":
                 for command in Game.COMMANDS:
                     print(command)
@@ -215,7 +246,7 @@ class Game:
                 if args:
                     name: str = " ".join(args)
                     self.client.change_device_name(self.device_uuid, name)
-                self.update_host()
+                self.update_host(self.device_uuid)
                 if not args:
                     print(self.hostname)
             elif cmd in ("ls", "l", "dir"):
@@ -446,13 +477,22 @@ class Game:
                         uuid: str = service["uuid"]
                         port: int = service["running_port"]
                         print(f" - {name} on port {port} (UUID: {uuid})")
+            elif cmd == "connect":
+                if len(args) != 1:
+                    print("usage: connect <device>")
+                    continue
+                uuid: str = args[0]
+                if not is_uuid(uuid):
+                    print("Invalid device")
+                    continue
+                if self.client.part_owner(uuid):
+                    self.login_stack.append(uuid)
+                    self.update_host(uuid)
+                else:
+                    print("Access denied")
             else:
                 print("Command could not be found.")
                 print("Type `help` for a list of commands.")
-
-            command: str = cmd + " ".join(args)
-            if history[-1:] != [command]:
-                history.append(command)
 
 
 def main():

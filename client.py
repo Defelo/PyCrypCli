@@ -226,3 +226,19 @@ class Client:
         if "error" in response:
             raise InvalidServerResponseException(response)
         return response
+
+    def device_info(self, device_uuid: str) -> dict:
+        response: dict = self.microservice("device", ["device", "info"], {
+            "device_uuid": device_uuid
+        })
+        if "error" in response:
+            raise InvalidServerResponseException(response)
+        return response
+
+    def part_owner(self, device_uuid: str) -> bool:
+        response: dict = self.microservice("service", ["part_owner"], {
+            "device_uuid": device_uuid
+        })
+        if "error" in response or "ok" not in response:
+            raise InvalidServerResponseException(response)
+        return response["ok"]

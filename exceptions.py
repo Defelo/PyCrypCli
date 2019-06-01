@@ -24,3 +24,8 @@ class InvalidEmailException(Exception):
 class InvalidLoginException(Exception):
     def __init__(self):
         super().__init__("Invalid Login Credentials")
+
+
+class SourceWalletTransactionDebtException(Exception):
+    def __init__(self):
+        super().__init__("Source wallet would make debt")

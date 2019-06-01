@@ -228,7 +228,11 @@ def mainloop():
                 print("amount if not a number.")
                 continue
             amount: int = int(args[2])
-            client.send(wallet_uuid, wallet_key, receiver, amount, " ".join(args[3:]))
+            try:
+                client.send(wallet_uuid, wallet_key, receiver, amount, " ".join(args[3:]))
+                print(f"Sent {amount} morphcoin to {receiver}.")
+            except SourceWalletTransactionDebtException:
+                print("The source wallet would make debt. Transaction canceled.")
         else:
             print("Command could not be found.")
             print("Type `help` for a list of commands.")

@@ -329,7 +329,10 @@ class Game:
             else:
                 print("Command could not be found.")
                 print("Type `help` for a list of commands.")
-            history.append(cmd + " ".join(args))
+
+            command: str = cmd + " ".join(args)
+            if history[-1:] != [command]:
+                history.append(command)
 
 
 def main():

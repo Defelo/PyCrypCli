@@ -205,7 +205,14 @@ def mainloop():
                 if wallet is None:
                     print("File is no wallet file.")
                     continue
-                amount: int = client.get_wallet(*wallet)["amount"]
+                try:
+                    amount: int = client.get_wallet(*wallet)["amount"]
+                except InvalidWalletException:
+                    print("Invalid wallet file. Wallet does not exist.")
+                    continue
+                except InvalidKeyException:
+                    print("Invalid wallet file. Key is incorrect.")
+                    continue
                 print(f"{amount} morphcoin")
         elif cmd == "pay":
             if len(args) < 3:
@@ -232,6 +239,9 @@ def mainloop():
                 client.get_wallet(wallet_uuid, wallet_key)
             except InvalidWalletException:
                 print("Invalid wallet file. Wallet does not exist.")
+                continue
+            except InvalidKeyException:
+                print("Invalid wallet file. Key is incorrect.")
                 continue
             try:
                 client.send(wallet_uuid, wallet_key, receiver, amount, " ".join(args[3:]))

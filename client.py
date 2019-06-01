@@ -124,7 +124,12 @@ class Client:
             "source_uuid": wallet_uuid,
             "key": key
         })
-        if "error" in response or "success" not in response:
+        if "error" in response:
+            error: str = response["error"]
+            if error == "invalid key":
+                raise InvalidKeyException()
+            raise InvalidServerResponseException(response)
+        if "success" not in response:
             raise InvalidServerResponseException(response)
         return response["success"]
 
@@ -142,4 +147,6 @@ class Client:
                 raise SourceWalletTransactionDebtException()
             if error.startswith("Your Souce or Destination uuid is invalid"):
                 raise InvalidWalletException()
+            if error == "invalid key":
+                raise InvalidKeyException()
             raise InvalidServerResponseException(response)

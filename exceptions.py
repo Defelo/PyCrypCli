@@ -34,3 +34,8 @@ class SourceWalletTransactionDebtException(Exception):
 class InvalidWalletException(Exception):
     def __init__(self):
         super().__init__("Invalid Wallet UUID")
+
+
+class InvalidKeyException(Exception):
+    def __init__(self):
+        super().__init__("Invalid Wallet Key")

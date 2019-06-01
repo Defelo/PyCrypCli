@@ -143,7 +143,7 @@ def mainloop():
             print("history")
             print("morphcoin")
             print("pay")
-            # print("service")
+            print("service")
             # print("spot")
             # print("connect")
         elif cmd == "status":
@@ -304,6 +304,22 @@ def mainloop():
                 print("The source wallet would make debt. Transaction canceled.")
             except InvalidWalletException:
                 print("Destination wallet does not exist.")
+        elif cmd == "service":
+            if len(args) < 1 or args[0] not in ("create", "bruteforce", "portscan"):
+                print("usage: service create|bruteforce|portscan")
+            elif args[0] == "create":
+                if len(args) != 2 or args[1] not in ("bruteforce", "portscan", "telnet", "ssh"):
+                    print("usage: service create <bruteforce|portscan|telnet|ssh>")
+                    continue
+                try:
+                    client.create_service(device_uuid, args[1])
+                    print("Service was created")
+                except AlreadyOwnServiceException:
+                    print("You already created this service")
+            elif args[0] == "bruteforce":
+                pass
+            elif args[0] == "portscan":
+                pass
         else:
             print("Command could not be found.")
             print("Type `help` for a list of commands.")

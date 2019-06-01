@@ -187,3 +187,15 @@ class Client:
             if error == "invalid key":
                 raise InvalidKeyException()
             raise InvalidServerResponseException(response)
+
+    def create_service(self, device_uuid: str, name: str) -> dict:
+        response: dict = self.microservice("service", ["create"], {
+            "name": name,
+            "device_uuid": device_uuid
+        })
+        if "error" in response:
+            error: str = response["error"]
+            if error == "you already own a service with this name":
+                raise AlreadyOwnServiceException()
+            raise InvalidServerResponseException(response)
+        return response

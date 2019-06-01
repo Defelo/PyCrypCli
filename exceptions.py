@@ -49,3 +49,8 @@ class InvalidKeyException(Exception):
 class AlreadyOwnAWalletException(Exception):
     def __init__(self):
         super().__init__("You already own a wallet")
+
+
+class AlreadyOwnServiceException(Exception):
+    def __init__(self):
+        super().__init__("You already own a service with this name")

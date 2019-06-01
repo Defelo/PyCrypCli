@@ -82,7 +82,8 @@ def get_file(device_uuid: str, filename: str) -> Optional[dict]:
 
 def get_host() -> Tuple[str, str]:
     devices: List[dict] = client.get_all_devices()
-    assert devices, "no device"
+    if not devices:
+        devices: List[dict] = [client.create_device()]
     hostname: str = devices[0]["name"]
     device_uuid: str = devices[0]["uuid"]
     return hostname, device_uuid

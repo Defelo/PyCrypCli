@@ -92,6 +92,12 @@ class Client:
         devices: List[dict] = response["devices"]
         return devices
 
+    def create_device(self) -> dict:
+        response: dict = self.microservice("device", ["device", "create"], {})
+        if "error" in response:
+            raise InvalidServerResponseException(response)
+        return response
+
     def change_device_name(self, device_uuid: str, name: str):
         response: dict = self.microservice("device", ["device", "change_name"], {
             "device_uuid": device_uuid,

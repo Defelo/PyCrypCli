@@ -199,3 +199,21 @@ class Client:
                 raise AlreadyOwnServiceException()
             raise InvalidServerResponseException(response)
         return response
+
+    def get_services(self, device_uuid: str) -> List[dict]:
+        response: dict = self.microservice("service", ["list"], {
+            "device_uuid": device_uuid
+        })
+        if "error" in response or "services" not in response:
+            raise InvalidServerResponseException(response)
+        return response["services"]
+
+    def use_service(self, device_uuid, service_uuid: str, **kwargs):
+        response: dict = self.microservice("service", ["use"], {
+            "device_uuid": device_uuid,
+            "service_uuid": service_uuid,
+            **kwargs
+        })
+        if "error" in response:
+            raise InvalidServerResponseException(response)
+        return response

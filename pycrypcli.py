@@ -159,6 +159,13 @@ class Game:
                 return file
         return None
 
+    def get_service(self, name: str) -> Optional[dict]:
+        services: List[dict] = self.client.get_services(self.device_uuid)
+        for service in services:
+            if service["name"] == name:
+                return service
+        return None
+
     def update_host(self):
         devices: List[dict] = self.client.get_all_devices()
         if not devices:
@@ -371,7 +378,25 @@ class Game:
                 elif args[0] == "bruteforce":
                     pass
                 elif args[0] == "portscan":
-                    pass
+                    if len(args) != 2:
+                        print("usage: service portscan <device>")
+                        continue
+                    target: str = args[1]
+                    if not is_uuid(target):
+                        print("Invalid target")
+                        continue
+                    service: dict = self.get_service("portscan")
+                    if service is None:
+                        print("You have to create a portscan service before you use it")
+                        continue
+                    result: dict = self.client.use_service(self.device_uuid, service["uuid"], target_device=target)
+                    if not result["services"]:
+                        print("That device doesn't have any running services")
+                    for service in result["services"]:
+                        name: str = service["name"]
+                        uuid: str = service["uuid"]
+                        port: int = service["running_port"]
+                        print(f" - {name} on port {port} (UUID: {uuid})")
             else:
                 print("Command could not be found.")
                 print("Type `help` for a list of commands.")

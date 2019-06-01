@@ -203,7 +203,7 @@ def mainloop():
                     continue
                 wallet: Tuple[str, str] = extract_wallet(file["content"])
                 if wallet is None:
-                    print("File is no wallet.")
+                    print("File is no wallet file.")
                     continue
                 amount: int = client.get_wallet(*wallet)["amount"]
                 print(f"{amount} morphcoin")
@@ -217,7 +217,7 @@ def mainloop():
                 continue
             wallet: Tuple[str, str] = extract_wallet(file["content"])
             if wallet is None:
-                print("File is no wallet.")
+                print("File is no wallet file.")
                 continue
             wallet_uuid, wallet_key = wallet
             receiver: str = args[1]
@@ -225,14 +225,21 @@ def mainloop():
                 print("Invalid receiver.")
                 continue
             if not args[2].isnumeric():
-                print("amount if not a number.")
+                print("amount is not a number.")
                 continue
             amount: int = int(args[2])
+            try:
+                client.get_wallet(wallet_uuid, wallet_key)
+            except InvalidWalletException:
+                print("Invalid wallet file. Wallet does not exist.")
+                continue
             try:
                 client.send(wallet_uuid, wallet_key, receiver, amount, " ".join(args[3:]))
                 print(f"Sent {amount} morphcoin to {receiver}.")
             except SourceWalletTransactionDebtException:
                 print("The source wallet would make debt. Transaction canceled.")
+            except InvalidWalletException:
+                print("Destination wallet does not exist.")
         else:
             print("Command could not be found.")
             print("Type `help` for a list of commands.")
@@ -245,7 +252,7 @@ def main():
         if arg.lower() in ("signup", "register"):
             register()
         else:
-            print("Python Cryptic Game Client (https://cryptic-game.net/)")
+            print("Python Cryptic Game Client (https://github.com/Defelo/PyCrypCli)")
             print()
             die(f"Usage: {sys.argv[0]} [help|signup]")
     else:

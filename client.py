@@ -140,4 +140,6 @@ class Client:
             error: str = response["error"]
             if error == "The source wallet would make debt transaction canceled":
                 raise SourceWalletTransactionDebtException()
+            if error.startswith("Your Souce or Destination uuid is invalid"):
+                raise InvalidWalletException()
             raise InvalidServerResponseException(response)

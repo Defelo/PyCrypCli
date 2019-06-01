@@ -29,3 +29,8 @@ class InvalidLoginException(Exception):
 class SourceWalletTransactionDebtException(Exception):
     def __init__(self):
         super().__init__("Source wallet would make debt")
+
+
+class InvalidWalletException(Exception):
+    def __init__(self):
+        super().__init__("Invalid Wallet UUID")

@@ -217,3 +217,9 @@ class Client:
         if "error" in response:
             raise InvalidServerResponseException(response)
         return response
+
+    def spot(self) -> dict:
+        response: dict = self.microservice("device", ["device", "spot"], {})
+        if "error" in response:
+            raise InvalidServerResponseException(response)
+        return response

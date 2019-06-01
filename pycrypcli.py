@@ -43,7 +43,7 @@ class Game:
         "morphcoin",
         "pay",
         "service",
-        # "spot",
+        "spot",
         # "connect",
     ]
 
@@ -392,6 +392,26 @@ class Game:
                     result: dict = self.client.use_service(self.device_uuid, service["uuid"], target_device=target)
                     if not result["services"]:
                         print("That device doesn't have any running services")
+                    for service in result["services"]:
+                        name: str = service["name"]
+                        uuid: str = service["uuid"]
+                        port: int = service["running_port"]
+                        print(f" - {name} on port {port} (UUID: {uuid})")
+            elif cmd == "spot":
+                device: dict = self.client.spot()
+                name: str = device["name"]
+                powered: bool = device["powered_on"]
+                uuid: str = device["uuid"]
+                powered_text: str = ["\033[38;2;255;51;51mno", "\033[38;2;100;246;23myes"][powered] + "\033[0m"
+                print(f"Name: '{name}'")
+                print(f"UUID: {uuid}")
+                print(f"Powered on: {powered_text}")
+                service: dict = self.get_service("portscan")
+                if service is not None:
+                    print("Services:")
+                    result: dict = self.client.use_service(self.device_uuid, service["uuid"], target_device=uuid)
+                    if not result["services"]:
+                        print("  This device doesn't have any running services")
                     for service in result["services"]:
                         name: str = service["name"]
                         uuid: str = service["uuid"]

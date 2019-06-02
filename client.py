@@ -64,7 +64,7 @@ class Client:
             "password": password
         })
         if "error" in response:
-            error = response["error"]
+            error: str = response["error"]
             if error == "permission denied":
                 raise InvalidLoginException()
             raise InvalidServerResponseException(response)

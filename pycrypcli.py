@@ -85,7 +85,7 @@ class Game:
                     return [file["filename"] for file in self.client.get_all_files(self.device_uuid)]
         elif cmd == "service":
             if len(args) == 1:
-                return ["create", "bruteforce", "portscan"]
+                return ["create", "list", "bruteforce", "portscan"]
             elif len(args) == 2:
                 if args[0] == "create":
                     return ["bruteforce", "portscan", "ssh", "telnet"]
@@ -468,8 +468,8 @@ class Game:
                 except InvalidWalletException:
                     print("Destination wallet does not exist.")
             elif cmd == "service":
-                if len(args) < 1 or args[0] not in ("create", "bruteforce", "portscan"):
-                    print("usage: service create|bruteforce|portscan")
+                if len(args) < 1 or args[0] not in ("create", "list", "bruteforce", "portscan"):
+                    print("usage: service create|list|bruteforce|portscan")
                 elif args[0] == "create":
                     if len(args) != 2 or args[1] not in ("bruteforce", "portscan", "telnet", "ssh"):
                         print("usage: service create <bruteforce|portscan|telnet|ssh>")
@@ -479,6 +479,16 @@ class Game:
                         print("Service was created")
                     except AlreadyOwnServiceException:
                         print("You already created this service")
+                elif args[0] == "list":
+                    services: List[dict] = self.client.get_services(self.device_uuid)
+                    print("Services:")
+                    for service in services:
+                        name: str = service["name"]
+                        port: int = service["running_port"]
+                        line: str = f" - {name}"
+                        if port is not None:
+                            line += f" on port {port}"
+                        print(line)
                 elif args[0] == "bruteforce":
                     if len(args) != 3:
                         print("usage: service bruteforce <target-device> <target-service>")
@@ -570,8 +580,9 @@ class Game:
 
 def main():
     print("Python Cryptic Game Client (https://github.com/Defelo/PyCrypCli)")
-    game: Game = Game(SERVER, [os.path.expanduser("~"), ".config", "pycrypcli", "session.json"])
     print("You can always type `help` for a list of available commands.")
+
+    game: Game = Game(SERVER, [os.path.expanduser("~"), ".config", "pycrypcli", "session.json"])
     game.login_loop()
 
 

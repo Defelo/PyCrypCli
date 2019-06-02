@@ -1,15 +1,16 @@
 import getpass
 import os
 import re
-try:
-    import readline
-except ImportError:
-    import pyreadline as readline
 import sys
 from typing import List, Optional, Tuple
 
 from client import Client
 from exceptions import *
+
+try:
+    import readline
+except ImportError:
+    import pyreadline as readline
 
 SERVER: str = "wss://ws.cryptic-game.net/"
 

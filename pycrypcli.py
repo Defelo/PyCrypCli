@@ -25,38 +25,38 @@ def extract_wallet(content: str) -> Optional[List[str]]:
 
 
 class Game:
-    LOGIN_COMMANDS: List[str] = [
-        "login",
-        "register",
-        "signup",
-        "help",
-        "exit",
-        "quit"
+    LOGIN_COMMANDS: List[Tuple[str, str]] = [
+        ("login", "Login with an existing account"),
+        ("register", "Create a new account"),
+        ("signup", "Create a new account"),
+        ("help", "Show a list of available commands"),
+        ("exit", "Exit PyCrypCli"),
+        ("quit", "Exit PyCrypCli"),
     ]
 
-    COMMANDS: List[str] = [
-        "status",
-        "whoami",
-        "hostname",
-        "help",
-        "ls",
-        "l",
-        "dir",
-        "touch",
-        "cat",
-        "rm",
-        "cp",
-        "mv",
-        "exit",
-        "quit",
-        "logout",
-        "clear",
-        "history",
-        "morphcoin",
-        "pay",
-        "service",
-        "spot",
-        "connect",
+    COMMANDS: List[Tuple[str, str]] = [
+        ("status", "Indicate how many players are online"),
+        ("whoami", "Print the name of the current user"),
+        ("hostname", "Show or modify the name of the device"),
+        ("help", "Show a list of available commands"),
+        ("ls", "List all files"),
+        ("l", "List all files"),
+        ("dir", "List all files"),
+        ("touch", "Create a new file with given content"),
+        ("cat", "Print the content of a file"),
+        ("rm", "Remove a file"),
+        ("cp", "Create a copy of a file"),
+        ("mv", "Rename a file"),
+        ("exit", "Exit PyCrypCli (session will be saved)"),
+        ("quit", "Exit PyCrypCli (session will be saved)"),
+        ("logout", "Delete the current session and exit PyCrypCli"),
+        ("clear", "Clear the console"),
+        ("history", "Show the history of commands entered in this session"),
+        ("morphcoin", "Manage your Morphcoin wallet"),
+        ("pay", "Send Morphcoins to another wallet"),
+        ("service", "Create or use a service"),
+        ("spot", "Find a random device in the network"),
+        ("connect", "Connect to a device you hacked before")
     ]
 
     def __init__(self, server: str, session_file: List[str]):
@@ -96,10 +96,10 @@ class Game:
         options: List[str] = []
         if not self.login_stack:
             if not args:
-                options: List[str] = self.LOGIN_COMMANDS
+                options: List[str] = [cmd[0] for cmd in self.LOGIN_COMMANDS]
         else:
             if not args:
-                options: List[str] = self.COMMANDS
+                options: List[str] = [cmd[0] for cmd in self.COMMANDS]
             else:
                 options: List[str] = self.complete_arguments(cmd, args)
         options: List[str] = [o + " " for o in sorted(options) if o.startswith(text)]
@@ -154,8 +154,10 @@ class Game:
                     print("Registration failed.")
             elif cmd == "help":
                 print("Available commands:")
-                for line in self.LOGIN_COMMANDS:
-                    print(" - " + line)
+                max_length: int = max(len(command[0]) for command in self.LOGIN_COMMANDS)
+                for com, desc in self.LOGIN_COMMANDS:
+                    com: str = com.ljust(max_length)
+                    print(f" - {com}    {desc}")
             else:
                 print("Command could not be found.")
                 print("Type `help` for a list of commands.")
@@ -303,8 +305,10 @@ class Game:
                     break
             elif cmd == "help":
                 print("Available commands:")
-                for line in self.COMMANDS:
-                    print(" - " + line)
+                max_length: int = max(len(command[0]) for command in self.COMMANDS)
+                for com, desc in self.COMMANDS:
+                    com: str = com.ljust(max_length)
+                    print(f" - {com}    {desc}")
             elif cmd == "status":
                 online: int = self.client.info()["online"]
                 print(f"Online players: {online}")

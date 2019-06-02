@@ -1,7 +1,6 @@
 import getpass
 import os
 import re
-import sys
 from typing import List, Optional, Tuple
 
 from client import Client
@@ -26,6 +25,15 @@ def extract_wallet(content: str) -> Optional[List[str]]:
 
 
 class Game:
+    LOGIN_COMMANDS: List[str] = [
+        "login",
+        "register",
+        "signup",
+        "help",
+        "exit",
+        "quit"
+    ]
+
     COMMANDS: List[str] = [
         "status",
         "whoami",
@@ -85,21 +93,78 @@ class Game:
 
     def completer(self, text: str, state: int) -> Optional[str]:
         cmd, *args = readline.get_line_buffer().split(" ") or [""]
-        if not args:
-            options: List[str] = self.COMMANDS
+        if not self.login_stack:
+            if not args:
+                options = self.LOGIN_COMMANDS
         else:
-            options: List[str] = self.complete_arguments(cmd, args)
-        options: List[str] = [o + " " for o in options if o.startswith(text)]
+            if not args:
+                options: List[str] = self.COMMANDS
+            else:
+                options: List[str] = self.complete_arguments(cmd, args)
+        options: List[str] = [o + " " for o in sorted(options) if o.startswith(text)]
 
         if state < len(options):
             return options[state]
         return None
+
+    def logout(self):
+        self.client.close()
+        self.delete_session()
+        print("Logged out.")
+
+    def login_loop(self):
+        logged_in: bool = False
+        try:
+            if self.load_session():
+                logged_in: bool = True
+                self.mainloop()
+        except InvalidSessionTokenException:
+            self.delete_session()
+            self.client.close()
+
+        if not logged_in:
+            print("You are not logged in.")
+            print("Type `register` to create a new account or `login` if you already have one.")
+
+        while True:
+            cmd: str = None
+            try:
+                cmd: str = input("$ ").strip()
+                if not cmd:
+                    continue
+            except EOFError:
+                print("exit")
+                exit()
+            except KeyboardInterrupt:
+                print("^C")
+                continue
+
+            if cmd in ("exit", "quit"):
+                exit()
+            elif cmd == "login":
+                if self.login():
+                    self.mainloop()
+                else:
+                    print("Login failed.")
+            elif cmd in ("register", "signup"):
+                if self.register():
+                    self.mainloop()
+                else:
+                    print("Registration failed.")
+            elif cmd == "help":
+                print("Available commands:")
+                for line in self.LOGIN_COMMANDS:
+                    print(" - " + line)
+            else:
+                print("Command could not be found.")
+                print("Type `help` for a list of commands.")
 
     def load_session(self) -> bool:
         try:
             content: dict = json.load(open(os.path.join(*self.session_file)))
             if "token" in content:
                 self.session_token: str = content["token"]
+                self.client.init()
                 self.client.session(self.session_token)
                 return True
         except FileNotFoundError:
@@ -129,6 +194,7 @@ class Game:
         if password != confirm_password:
             print("Passwords don't match.")
             return False
+        self.client.init()
         try:
             self.session_token: str = self.client.register(username, mail, password)
             self.save_session()
@@ -139,17 +205,20 @@ class Game:
             print("Username already exists.")
         except InvalidEmailException:
             print("Invalid email")
+        self.client.close()
         return False
 
     def login(self) -> bool:
         username: str = input("Username: ")
         password: str = getpass.getpass("Password: ")
+        self.client.init()
         try:
             self.session_token: str = self.client.login(username, password)
             self.save_session()
             return True
         except InvalidLoginException:
             print("Invalid Login Credentials.")
+        self.client.close()
         return False
 
     def get_file(self, filename: str) -> Optional[dict]:
@@ -204,9 +273,10 @@ class Game:
                 cmd, *args = command
             except EOFError:
                 print("exit")
-                if self.remote():
-                    self.login_stack.pop()
+                self.login_stack.pop()
+                if self.login_stack:
                     self.update_host(self.login_stack[-1])
+                    continue
                 else:
                     exit()
             except KeyboardInterrupt:
@@ -218,22 +288,22 @@ class Game:
                 history.append(command)
 
             if cmd in ("exit", "quit"):
-                if self.remote():
-                    self.login_stack.pop()
+                self.login_stack.pop()
+                if self.login_stack:
                     self.update_host(self.login_stack[-1])
                 else:
                     exit()
             elif cmd == "logout":
-                if self.remote():
-                    self.login_stack.pop()
+                self.login_stack.pop()
+                if self.login_stack:
                     self.update_host(self.login_stack[-1])
                 else:
-                    self.delete_session()
-                    print("Logged out.")
+                    self.logout()
                     break
             elif cmd == "help":
-                for command in Game.COMMANDS:
-                    print(command)
+                print("Available commands:")
+                for line in self.COMMANDS:
+                    print(" - " + line)
             elif cmd == "status":
                 online: int = self.client.info()["online"]
                 print(f"Online players: {online}")
@@ -494,32 +564,10 @@ class Game:
 
 
 def main():
+    print("Python Cryptic Game Client (https://github.com/Defelo/PyCrypCli)")
     game: Game = Game(SERVER, [os.path.expanduser("~"), ".config", "pycrypcli", "session.json"])
-    if len(sys.argv) > 1:
-        arg: str = sys.argv[1]
-        if arg.lower() in ("signup", "register"):
-            if not game.register():
-                print("Registration failed.")
-                return
-        else:
-            print("Python Cryptic Game Client (https://github.com/Defelo/PyCrypCli)")
-            print()
-            print(f"Usage: {sys.argv[0]} [help|signup]")
-            return
-    else:
-        login_needed: bool = False
-        try:
-            if not game.load_session():
-                login_needed: bool = True
-        except InvalidSessionTokenException:
-            game.delete_session()
-            login_needed: bool = True
-        if login_needed:
-            if not game.login():
-                print("Login failed.")
-                return
-    assert game.session_token is not None
-    game.mainloop()
+    print("You can always type `help` for a list of available commands.")
+    game.login_loop()
 
 
 if __name__ == '__main__':

@@ -12,7 +12,15 @@ def uuid() -> str:
 
 class Client:
     def __init__(self, server: str):
-        self.websocket: WebSocket = create_connection(server)
+        self.server: str = server
+        self.websocket: WebSocket = None
+
+    def init(self):
+        self.websocket: WebSocket = create_connection(self.server)
+
+    def close(self):
+        self.websocket.close()
+        self.websocket: WebSocket = None
 
     def request(self, command: dict) -> dict:
         self.websocket.send(json.dumps(command))

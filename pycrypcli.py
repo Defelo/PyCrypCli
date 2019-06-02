@@ -208,6 +208,8 @@ class Game:
         try:
             self.session_token: str = self.client.register(username, mail, password)
             self.save_session()
+            self.update_host()
+            self.client.create_service(self.device_uuid, "ssh")
             return True
         except WeakPasswordException:
             print("Password is too weak.")

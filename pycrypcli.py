@@ -72,6 +72,7 @@ class Game:
 
         readline.parse_and_bind("tab: complete")
         readline.set_completer(self.completer)
+        self.override_completions: List[str] = None
 
     def complete_arguments(self, cmd: str, args: List[str]) -> List[str]:
         if cmd in ("cat", "rm", "cp", "mv", "pay"):
@@ -91,17 +92,23 @@ class Game:
                     return ["bruteforce", "portscan", "ssh", "telnet"]
         return []
 
-    def completer(self, text: str, state: int) -> Optional[str]:
-        cmd, *args = readline.get_line_buffer().split(" ") or [""]
-        options: List[str] = []
+    def complete_command(self, text: str) -> List[str]:
+        if self.override_completions is not None:
+            return self.override_completions
+
+        cmd, *args = text.split(" ") or [""]
         if not self.login_stack:
             if not args:
-                options: List[str] = [cmd[0] for cmd in self.LOGIN_COMMANDS]
+                return [cmd[0] for cmd in self.LOGIN_COMMANDS]
         else:
             if not args:
-                options: List[str] = [cmd[0] for cmd in self.COMMANDS]
+                return [cmd[0] for cmd in self.COMMANDS]
             else:
-                options: List[str] = self.complete_arguments(cmd, args)
+                return self.complete_arguments(cmd, args)
+        return []
+
+    def completer(self, text: str, state: int) -> Optional[str]:
+        options: List[str] = self.complete_command(readline.get_line_buffer())
         options: List[str] = [o + " " for o in sorted(options) if o.startswith(text)]
 
         if state < len(options):
@@ -359,8 +366,11 @@ class Game:
                     try:
                         amount: int = self.client.get_wallet(wallet_uuid, wallet_key)["amount"]
                         while True:
+                            self.override_completions: List[str] = ["yes", "no"]
                             choice: str = input(f"\033[38;2;255;51;51mThis file contains {amount} morphcoin. "
                                                 f"Do you want to delete the corresponding wallet? [yes|no] \033[0m")
+                            self.override_completions: List[str] = None
+                            choice: str = choice.strip()
                             if choice in ("yes", "no"):
                                 break
                             print(f"'{choice}' is not one of the following: yes, no")

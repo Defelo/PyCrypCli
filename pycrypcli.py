@@ -93,9 +93,10 @@ class Game:
 
     def completer(self, text: str, state: int) -> Optional[str]:
         cmd, *args = readline.get_line_buffer().split(" ") or [""]
+        options: List[str] = []
         if not self.login_stack:
             if not args:
-                options = self.LOGIN_COMMANDS
+                options: List[str] = self.LOGIN_COMMANDS
         else:
             if not args:
                 options: List[str] = self.COMMANDS

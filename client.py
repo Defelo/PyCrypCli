@@ -35,7 +35,10 @@ class Client:
         })
         if "error" in response or "data" not in response:
             raise InvalidServerResponseException(response)
-        return response["data"]
+        data: dict = response["data"]
+        if "error" in data and data["error"] == "no response - timeout":
+            raise NoResponseTimeoutException()
+        return data
 
     def register(self, username: str, email: str, password: str) -> str:
         response: dict = self.request({

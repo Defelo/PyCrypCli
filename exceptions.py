@@ -6,6 +6,11 @@ class InvalidServerResponseException(Exception):
         super().__init__("Invalid Server Response: " + json.dumps(response))
 
 
+class NoResponseTimeoutException(Exception):
+    def __init__(self):
+        super().__init__("No Response - Timeout")
+
+
 class InvalidSessionTokenException(Exception):
     def __init__(self):
         super().__init__("Invalid session token")

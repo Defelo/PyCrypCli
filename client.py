@@ -1,9 +1,11 @@
+import time
 from typing import List, Tuple
 from uuid import uuid4
 
 from websocket import WebSocket, create_connection
 
 from exceptions import *
+from timer import Timer
 
 
 def uuid() -> str:
@@ -14,17 +16,29 @@ class Client:
     def __init__(self, server: str):
         self.server: str = server
         self.websocket: WebSocket = None
+        self.timer: Timer = None
+        self.waiting_for_response: bool = False
 
     def init(self):
         self.websocket: WebSocket = create_connection(self.server)
+        self.timer: Timer = Timer(10, self.info)
 
     def close(self):
+        if self.timer is not None:
+            self.timer.stop()
+            self.timer: Timer = None
+
         self.websocket.close()
         self.websocket: WebSocket = None
 
     def request(self, command: dict) -> dict:
+        while self.waiting_for_response:
+            time.sleep(0.01)
+        self.waiting_for_response: bool = True
         self.websocket.send(json.dumps(command))
-        return json.loads(self.websocket.recv())
+        response: dict = json.loads(self.websocket.recv())
+        self.waiting_for_response: bool = False
+        return response
 
     def microservice(self, ms: str, endpoint: List[str], data: dict) -> dict:
         response: dict = self.request({
@@ -41,6 +55,7 @@ class Client:
         return data
 
     def register(self, username: str, email: str, password: str) -> str:
+        self.init()
         response: dict = self.request({
             "action": "register",
             "name": username,
@@ -48,6 +63,7 @@ class Client:
             "password": password
         })
         if "error" in response:
+            self.close()
             error: str = response["error"]
             if error.startswith("password invalid (condition:"):
                 raise WeakPasswordException()
@@ -57,36 +73,49 @@ class Client:
                 raise InvalidEmailException()
             raise InvalidServerResponseException(response)
         if "token" not in response:
+            self.close()
             raise InvalidServerResponseException(response)
+        self.timer.start()
         return response["token"]
 
     def login(self, username: str, password: str) -> str:
+        self.init()
         response: dict = self.request({
             "action": "login",
             "name": username,
             "password": password
         })
         if "error" in response:
+            self.close()
             error: str = response["error"]
             if error == "permission denied":
                 raise InvalidLoginException()
             raise InvalidServerResponseException(response)
         if "token" not in response:
+            self.close()
             raise InvalidServerResponseException(response)
+        self.timer.start()
         return response["token"]
 
     def session(self, token: str):
+        self.init()
         response: dict = self.request({
             "action": "session",
             "token": token
         })
         if "error" in response:
+            self.close()
             error: str = response["error"]
             if error == "invalid token":
                 raise InvalidSessionTokenException()
             raise InvalidServerResponseException(response)
         if "token" not in response:
+            self.close()
             raise InvalidServerResponseException(response)
+        self.timer.start()
+
+    def logout(self):
+        self.close()
 
     def info(self) -> dict:
         response: dict = self.request({

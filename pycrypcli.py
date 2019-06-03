@@ -116,7 +116,7 @@ class Game:
         return None
 
     def logout(self):
-        self.client.close()
+        self.client.logout()
         self.delete_session()
         print("Logged out.")
 
@@ -128,7 +128,6 @@ class Game:
                 self.mainloop()
         except InvalidSessionTokenException:
             self.delete_session()
-            self.client.close()
 
         if not logged_in:
             print("You are not logged in.")
@@ -174,7 +173,6 @@ class Game:
             content: dict = json.load(open(os.path.join(*self.session_file)))
             if "token" in content:
                 self.session_token: str = content["token"]
-                self.client.init()
                 self.client.session(self.session_token)
                 return True
         except FileNotFoundError:
@@ -204,7 +202,6 @@ class Game:
         if password != confirm_password:
             print("Passwords don't match.")
             return False
-        self.client.init()
         try:
             self.session_token: str = self.client.register(username, mail, password)
             self.save_session()
@@ -217,20 +214,17 @@ class Game:
             print("Username already exists.")
         except InvalidEmailException:
             print("Invalid email")
-        self.client.close()
         return False
 
     def login(self) -> bool:
         username: str = input("Username: ")
         password: str = getpass.getpass("Password: ")
-        self.client.init()
         try:
             self.session_token: str = self.client.login(username, password)
             self.save_session()
             return True
         except InvalidLoginException:
             print("Invalid Login Credentials.")
-        self.client.close()
         return False
 
     def get_file(self, filename: str) -> Optional[dict]:
@@ -290,6 +284,7 @@ class Game:
                     self.update_host(self.login_stack[-1])
                     continue
                 else:
+                    self.client.close()
                     exit()
             except KeyboardInterrupt:
                 print("^C")
@@ -304,6 +299,7 @@ class Game:
                 if self.login_stack:
                     self.update_host(self.login_stack[-1])
                 else:
+                    self.client.close()
                     exit()
             elif cmd == "logout":
                 self.login_stack.pop()

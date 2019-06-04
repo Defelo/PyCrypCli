@@ -1,3 +1,4 @@
+import time
 from typing import List
 
 from commands.command import command
@@ -7,8 +8,8 @@ from util import is_uuid
 
 
 def handle_bruteforce(game: Game, args: List[str]):
-    if len(args) != 2:
-        print("usage: service bruteforce <target-device> <target-service>")
+    if len(args) not in (2, 3):
+        print("usage: service bruteforce <target-device> <target-service> [duration]")
         return
 
     target_device: str = args[0]
@@ -20,6 +21,14 @@ def handle_bruteforce(game: Game, args: List[str]):
     if not is_uuid(target_service):
         print("Invalid target service")
         return
+
+    duration: int = None
+    if len(args) == 3:
+        if args[2].isnumeric():
+            duration: int = int(args[2])
+        else:
+            print("Duration has to be a possible integer")
+            return
 
     service: dict = game.get_service("bruteforce")
     if service is None:
@@ -39,6 +48,25 @@ def handle_bruteforce(game: Game, args: List[str]):
                 print("Access denied. The bruteforce attack was not successful")
         else:
             print("You started a bruteforce attack")
+            if duration is not None:
+                width: int = 50
+                steps: int = 17
+                d: int = duration * steps
+                i: int = 0
+                try:
+                    for i in range(d):
+                        progress: int = int(i / d * width)
+                        j = i // steps
+                        text: str = f"\rBruteforcing {j // 60:02d}:{j % 60:02d} " + \
+                                    "[" + "=" * progress + ">" + " " * (width - progress) + "] " + \
+                                    f"({i / d * 100:.1f}%) "
+                        print(end=text, flush=True)
+                        time.sleep(1 / steps)
+                    i: int = (i + 1) // steps
+                    print(f"\rBruteforcing {i // 60:02d}:{i % 60:02d} [" + "=" * width + ">] (100%) ")
+                except KeyboardInterrupt:
+                    print()
+                handle_bruteforce(game, args[:-1])
     except UnknownServiceException:
         print("Unknown service. Attack couldn't be started.")
 

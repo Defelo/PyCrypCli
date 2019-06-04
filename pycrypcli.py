@@ -280,6 +280,14 @@ class Frontend(Game):
 
 
 def main():
+    print("""\033[32m\033[1m
+       ______                 __  _     
+      / ____/______  ______  / /_(_)____
+     / /   / ___/ / / / __ \/ __/ / ___/
+    / /___/ /  / /_/ / /_/ / /_/ / /__  
+    \____/_/   \__, / .___/\__/_/\___/  
+              /____/_/                  
+\033[0m""")
     print("Python Cryptic Game Client (https://github.com/Defelo/PyCrypCli)")
     print("You can always type `help` for a list of available commands.")
 

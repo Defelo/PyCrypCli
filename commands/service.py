@@ -6,6 +6,68 @@ from game import Game
 from util import is_uuid
 
 
+def handle_bruteforce(game: Game, args: List[str]):
+    if len(args) != 2:
+        print("usage: service bruteforce <target-device> <target-service>")
+        return
+
+    target_device: str = args[0]
+    target_service: str = args[1]
+    if not is_uuid(target_device):
+        print("Invalid target device")
+        return
+
+    if not is_uuid(target_service):
+        print("Invalid target service")
+        return
+
+    service: dict = game.get_service("bruteforce")
+    if service is None:
+        print("You have to create a bruteforce service before you use it")
+        return
+
+    try:
+        result: dict = game.client.use_service(
+            game.device_uuid, service["uuid"],
+            target_device=target_device, target_service=target_service
+        )
+        assert result["ok"]
+        if "access" in result:
+            if result["access"]:
+                print("Access granted - use `connect <device>`")
+            else:
+                print("Access denied. The bruteforce attack was not successful")
+        else:
+            print("You started a bruteforce attack")
+    except UnknownServiceException:
+        print("Unknown service. Attack couldn't be started.")
+
+
+def handle_portscan(game: Game, args: List[str]):
+    if len(args) != 1:
+        print("usage: service portscan <device>")
+        return
+
+    target: str = args[0]
+    if not is_uuid(target):
+        print("Invalid target")
+        return
+
+    service: dict = game.get_service("portscan")
+    if service is None:
+        print("You have to create a portscan service before you use it")
+        return
+
+    result: dict = game.client.use_service(game.device_uuid, service["uuid"], target_device=target)
+    if not result["services"]:
+        print("That device doesn't have any running services")
+    for service in result["services"]:
+        name: str = service["name"]
+        uuid: str = service["uuid"]
+        port: int = service["running_port"]
+        print(f" - {name} on port {port} (UUID: {uuid})")
+
+
 @command(["service"], "Create or use a service")
 def handle_service(game: Game, args: List[str]):
     if len(args) < 1 or args[0] not in ("create", "list", "bruteforce", "portscan"):
@@ -33,63 +95,9 @@ def handle_service(game: Game, args: List[str]):
                 line += f" on port {port}"
             print(line)
     elif args[0] == "bruteforce":
-        if len(args) != 3:
-            print("usage: service bruteforce <target-device> <target-service>")
-            return
-
-        target_device: str = args[1]
-        target_service: str = args[2]
-        if not is_uuid(target_device):
-            print("Invalid target device")
-            return
-
-        if not is_uuid(target_service):
-            print("Invalid target service")
-            return
-
-        service: dict = game.get_service("bruteforce")
-        if service is None:
-            print("You have to create a bruteforce service before you use it")
-            return
-
-        try:
-            result: dict = game.client.use_service(
-                game.device_uuid, service["uuid"],
-                target_device=target_device, target_service=target_service
-            )
-            assert result["ok"]
-            if "access" in result:
-                if result["access"]:
-                    print("Access granted - use `connect <device>`")
-                else:
-                    print("Access denied. The bruteforce attack was not successful")
-            else:
-                print("You started a bruteforce attack")
-        except UnknownServiceException:
-            print("Unknown service. Attack couldn't be started.")
+        handle_bruteforce(game, args[1:])
     elif args[0] == "portscan":
-        if len(args) != 2:
-            print("usage: service portscan <device>")
-            return
-
-        target: str = args[1]
-        if not is_uuid(target):
-            print("Invalid target")
-            return
-
-        service: dict = game.get_service("portscan")
-        if service is None:
-            print("You have to create a portscan service before you use it")
-            return
-
-        result: dict = game.client.use_service(game.device_uuid, service["uuid"], target_device=target)
-        if not result["services"]:
-            print("That device doesn't have any running services")
-        for service in result["services"]:
-            name: str = service["name"]
-            uuid: str = service["uuid"]
-            port: int = service["running_port"]
-            print(f" - {name} on port {port} (UUID: {uuid})")
+        handle_portscan(game, args[1:])
 
 
 @command(["spot"], "Find a random device in the network")
@@ -102,17 +110,7 @@ def handle_spot(game: Game, *_):
     print(f"Name: '{name}'")
     print(f"UUID: {uuid}")
     print(f"Powered on: {powered_text}")
-    service: dict = game.get_service("portscan")
-    if service is not None:
-        print("Services:")
-        result: dict = game.client.use_service(game.device_uuid, service["uuid"], target_device=uuid)
-        if not result["services"]:
-            print("  This device doesn't have any running services")
-        for service in result["services"]:
-            name: str = service["name"]
-            uuid: str = service["uuid"]
-            port: int = service["running_port"]
-            print(f" - {name} on port {port} (UUID: {uuid})")
+    handle_portscan(game, [uuid])
 
 
 @command(["connect"], "Connect to a device you hacked before")

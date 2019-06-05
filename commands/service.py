@@ -62,7 +62,10 @@ def handle_bruteforce(game: Game, args: List[str]):
         assert result["ok"]
         if "access" in result:
             if result["access"]:
-                print("Access granted - use `connect <device>`")
+                if game.ask("Access granted. Do you want to connect to the device? [yes|no] ", ["yes", "no"]) == "yes":
+                    handle_connect(game, [target_device])
+                else:
+                    print(f"To connect to the device type `connect {target_device}`")
             else:
                 print("Access denied. The bruteforce attack was not successful")
         else:
@@ -173,6 +176,7 @@ def handle_connect(game: Game, args: List[str]):
         print("Invalid device")
         return
 
+    print(f"Connecting to {uuid} ...")
     if game.client.part_owner(uuid):
         game.remote_login(uuid)
     else:

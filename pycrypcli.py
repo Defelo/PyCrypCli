@@ -60,6 +60,8 @@ class Frontend(Game):
             elif len(args) == 2:
                 if args[0] == "create":
                     return ["bruteforce", "portscan", "ssh", "telnet"]
+                elif args[0] == "bruteforce":
+                    return ["ssh", "telnet"]
         return []
 
     def complete_command(self, text: str) -> List[str]:

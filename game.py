@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from client import Client
 
@@ -11,6 +11,8 @@ class Game:
         self.device_uuid: str = None
         self.hostname: str = None
         self.username: str = None
+
+        self.last_portscan: Tuple[str, List[dict]] = None
 
     def update_username(self):
         self.username: str = self.client.info()["name"]
@@ -45,3 +47,9 @@ class Game:
 
     def remote_login(self, uuid: str):
         pass
+
+    def update_last_portscan(self, scan: Tuple[str, List[dict]]):
+        self.last_portscan: Tuple[str, List[dict]] = scan
+
+    def get_last_portscan(self) -> Tuple[str, List[dict]]:
+        return self.last_portscan

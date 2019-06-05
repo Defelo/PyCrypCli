@@ -8,24 +8,43 @@ from util import is_uuid
 
 
 def handle_bruteforce(game: Game, args: List[str]):
-    if len(args) not in (2, 3):
-        print("usage: service bruteforce <target-device> <target-service> [duration]")
-        return
-
-    target_device: str = args[0]
-    target_service: str = args[1]
-    if not is_uuid(target_device):
-        print("Invalid target device")
-        return
-
-    if not is_uuid(target_service):
-        print("Invalid target service")
-        return
-
     duration: int = None
-    if len(args) == 3:
-        if args[2].isnumeric():
-            duration: int = int(args[2])
+    if len(args) in (1, 2) and args[0] in ("ssh", "telnet"):
+        last_portscan = game.get_last_portscan()
+        if last_portscan is None:
+            print("You have to portscan your target first to find open ports.")
+            return
+        target_device, services = last_portscan
+        for service in services:
+            if service["name"] == args[0]:
+                target_service: str = service["uuid"]
+                break
+        else:
+            print(f"Service '{args[0]}' is not running on target device.")
+            return
+        if len(args) == 2:
+            duration: str = args[1]
+    elif len(args) in (2, 3):
+        target_device: str = args[0]
+        target_service: str = args[1]
+        if not is_uuid(target_device):
+            print("Invalid target device")
+            return
+
+        if not is_uuid(target_service):
+            print("Invalid target service")
+            return
+
+        if len(args) == 3:
+            duration: str = args[2]
+    else:
+        print("usage: service bruteforce <target-device> <target-service> [duration]")
+        print("       service bruteforce ssh|telnet [duration]")
+        return
+
+    if duration is not None:
+        if duration.isnumeric():
+            duration: int = int(duration)
         else:
             print("Duration has to be a possible integer")
             return
@@ -87,9 +106,11 @@ def handle_portscan(game: Game, args: List[str]):
         return
 
     result: dict = game.client.use_service(game.device_uuid, service["uuid"], target_device=target)
-    if not result["services"]:
+    services: List[dict] = result["services"]
+    game.update_last_portscan((target, services))
+    if not services:
         print("That device doesn't have any running services")
-    for service in result["services"]:
+    for service in services:
         name: str = service["name"]
         uuid: str = service["uuid"]
         port: int = service["running_port"]

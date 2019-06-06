@@ -50,9 +50,9 @@ class Frontend(Game):
                 return [file["filename"] for file in self.client.get_all_files(self.device_uuid)]
         elif cmd == "morphcoin":
             if len(args) == 1:
-                return ["create", "look"]
+                return ["create", "look", "list"]
             elif len(args) == 2:
-                if args[0] == "look":
+                if args[0] in ("look", "list"):
                     return [file["filename"] for file in self.client.get_all_files(self.device_uuid)]
         elif cmd == "service":
             if len(args) == 1:

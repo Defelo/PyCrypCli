@@ -8,8 +8,8 @@ from util import extract_wallet, is_uuid
 
 @command(["morphcoin"], "Manage your Morphcoin wallet")
 def handle_morphcoin(game: Game, args: List[str]):
-    if len(args) != 2 or args[0] not in ("look", "create"):
-        print("usage: morphcoin look|create <filename>")
+    if len(args) != 2 or args[0] not in ("create", "look", "list"):
+        print("usage: morphcoin create|look|list <filename>")
         return
 
     filename: str = args[1]
@@ -39,7 +39,42 @@ def handle_morphcoin(game: Game, args: List[str]):
             print("Invalid wallet file. Key is incorrect.")
             return
 
-        print(f"{amount} morphcoin")
+        print(f"UUID: {wallet[0]}")
+        print(f"Balance: {amount} morphcoin")
+    elif args[0] == "list":
+        file: dict = game.get_file(filename)
+        if file is None:
+            print("File does not exist.")
+            return
+
+        wallet: Tuple[str, str] = extract_wallet(file["content"])
+        if wallet is None:
+            print("File is no wallet file.")
+            return
+
+        try:
+            transactions: List[dict] = game.client.get_wallet(*wallet)["transactions"]
+        except InvalidWalletException:
+            print("Invalid wallet file. Wallet does not exist.")
+            return
+        except InvalidKeyException:
+            print("Invalid wallet file. Key is incorrect.")
+            return
+
+        for transaction in transactions:
+            source: str = transaction["source_uuid"]
+            if source == wallet[0]:
+                source: str = "self"
+            destination: str = transaction["destination_uuid"]
+            if destination == wallet[0]:
+                destination: str = "self"
+            amount: int = transaction["amount"]
+            time_stamp: str = transaction["time_stamp"]
+            usage: str = transaction["usage"]
+            text = f"{time_stamp}: {amount} morphcoin ({source} -> {destination})"
+            if usage:
+                text += f" (Usage: {usage})"
+            print(text)
 
 
 @command(["pay"], "Send Morphcoins to another wallet")

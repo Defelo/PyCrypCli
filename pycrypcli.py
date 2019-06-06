@@ -45,8 +45,8 @@ class Frontend(Game):
         self.override_completions: List[str] = None
 
     def complete_arguments(self, cmd: str, args: List[str]) -> List[str]:
-        if cmd in ("cat", "rm", "cp", "mv", "pay"):
-            if len(args) == 1:
+        if cmd in ("cat", "touch", "rm", "cp", "mv", "pay"):
+            if len(args) == 1 or (len(args) == 2 and cmd in ("cp", "mv")):
                 return [file["filename"] for file in self.client.get_all_files(self.device_uuid)]
         elif cmd == "morphcoin":
             if len(args) == 1:

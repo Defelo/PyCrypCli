@@ -18,9 +18,16 @@ def handle_touch(game: Game, args: List[str]):
     if not args:
         print("usage: touch <filename> [content]")
         return
+
     filename, *content = args
     content: str = " ".join(content)
-    game.client.create_file(game.device_uuid, filename, content)
+
+    if game.get_file(filename) is not None:
+        print(f"File `{filename}` already exists.")
+        handle_rm(game, [filename])
+
+    if game.get_file(filename) is None:
+        game.client.create_file(game.device_uuid, filename, content)
 
 
 @command(["cat"], "Print the content of a file")
@@ -48,6 +55,10 @@ def handle_rm(game: Game, args: List[str]):
     file: dict = game.get_file(filename)
     if file is None:
         print("File does not exist.")
+        return
+
+    if game.ask(f"Are you sure you want to delete `{filename}`? [yes|no] ", ["yes", "no"]) == "no":
+        print("File has not been deleted.")
         return
 
     content: str = file["content"]
@@ -86,7 +97,12 @@ def handle_cp(game: Game, args: List[str]):
         print("File does not exist.")
         return
 
-    game.client.create_file(game.device_uuid, destination, file["content"])
+    if game.get_file(destination) is not None:
+        print(f"File `{destination}` already exists.")
+        handle_rm(game, [destination])
+
+    if game.get_file(destination) is None:
+        game.client.create_file(game.device_uuid, destination, file["content"])
 
 
 @command(["mv"], "Rename a file")
@@ -102,5 +118,10 @@ def handle_mv(game: Game, args: List[str]):
         print("File does not exist.")
         return
 
-    game.client.create_file(game.device_uuid, destination, file["content"])
-    game.client.remove_file(game.device_uuid, file["uuid"])
+    if game.get_file(destination) is not None:
+        print(f"File `{destination}` already exists.")
+        handle_rm(game, [destination])
+
+    if game.get_file(destination) is None:
+        game.client.create_file(game.device_uuid, destination, file["content"])
+        game.client.remove_file(game.device_uuid, file["uuid"])

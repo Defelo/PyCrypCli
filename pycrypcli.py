@@ -1,5 +1,6 @@
 import getpass
 import os
+import sys
 from typing import List, Optional, Tuple, Dict
 
 from commands.command import make_commands, COMMAND_FUNCTION, command
@@ -12,6 +13,10 @@ except ImportError:
     import pyreadline as readline
 
 SERVER: str = "wss://ws.cryptic-game.net/"
+if len(sys.argv) > 1:
+    SERVER: str = sys.argv[1]
+    if not SERVER.startswith("wss://") and not SERVER.startswith("ws://"):
+        SERVER: str = "ws://" + SERVER
 
 
 def show_help(commands):

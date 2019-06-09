@@ -156,12 +156,9 @@ def handle_service(game: Game, args: List[str]):
 def handle_spot(game: Game, *_):
     device: dict = game.client.spot()
     name: str = device["name"]
-    powered: bool = device["powered_on"]
     uuid: str = device["uuid"]
-    powered_text: str = ["\033[38;2;255;51;51mno", "\033[38;2;100;246;23myes"][powered] + "\033[0m"
     print(f"Name: '{name}'")
     print(f"UUID: {uuid}")
-    print(f"Powered on: {powered_text}")
     handle_portscan(game, [uuid])
 
 

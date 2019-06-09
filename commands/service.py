@@ -8,7 +8,7 @@ from util import is_uuid
 
 
 def handle_bruteforce(game: Game, args: List[str]):
-    duration: int = None
+    duration: int = 20
     if len(args) in (1, 2) and args[0] in ("ssh", "telnet"):
         last_portscan = game.get_last_portscan()
         if last_portscan is None:
@@ -42,7 +42,7 @@ def handle_bruteforce(game: Game, args: List[str]):
         print("       service bruteforce ssh|telnet [duration]")
         return
 
-    if duration is not None:
+    if isinstance(duration, str):
         if duration.isnumeric():
             duration: int = int(duration)
         else:
@@ -88,7 +88,7 @@ def handle_bruteforce(game: Game, args: List[str]):
                     print(f"\rBruteforcing {i // 60:02d}:{i % 60:02d} [" + "=" * width + ">] (100%) ")
                 except KeyboardInterrupt:
                     print()
-                handle_bruteforce(game, args[:-1])
+                handle_bruteforce(game, args)
     except UnknownServiceException:
         print("Unknown service. Attack couldn't be started.")
 

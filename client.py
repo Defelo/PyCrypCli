@@ -47,7 +47,12 @@ class Client:
             "data": data,
             "tag": uuid()
         })
-        if "error" in response or "data" not in response:
+        if "error" in response:
+            error: str = response["error"]
+            if error == "unknown microservice":
+                raise UnknownMicroserviceException(ms)
+            raise InvalidServerResponseException(response)
+        if "data" not in response:
             raise InvalidServerResponseException(response)
         data: dict = response["data"]
         if "error" in data and data["error"] == "no response - timeout":

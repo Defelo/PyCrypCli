@@ -11,6 +11,11 @@ class NoResponseTimeoutException(Exception):
         super().__init__("No Response - Timeout")
 
 
+class UnknownMicroserviceException(Exception):
+    def __init__(self, ms: str):
+        super().__init__("Unknown Microservice: " + ms)
+
+
 class InvalidSessionTokenException(Exception):
     def __init__(self):
         super().__init__("Invalid session token")

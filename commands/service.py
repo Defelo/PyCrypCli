@@ -1,3 +1,4 @@
+import os
 import time
 from typing import List
 
@@ -71,7 +72,7 @@ def handle_bruteforce(game: Game, args: List[str]):
         else:
             print("You started a bruteforce attack")
             if duration is not None:
-                width: int = 50
+                width: int = os.get_terminal_size().columns - 31
                 steps: int = 17
                 d: int = duration * steps
                 i: int = 0

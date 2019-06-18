@@ -99,3 +99,8 @@ class UnknownServiceException(Exception):
 class ServiceCannotBeUsedException(Exception):
     def __init__(self):
         super().__init__("Service cannot be used")
+
+
+class MinerDoesNotExistException(Exception):
+    def __init__(self):
+        super().__init__("Miner does not exist.")

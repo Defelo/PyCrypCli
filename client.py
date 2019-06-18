@@ -262,10 +262,11 @@ class Client:
                 raise NotEnoughCoinsException()
             raise InvalidServerResponseException(response)
 
-    def create_service(self, device_uuid: str, name: str) -> dict:
+    def create_service(self, device_uuid: str, name: str, extra: dict) -> dict:
         response: dict = self.microservice("service", ["create"], {
             "name": name,
-            "device_uuid": device_uuid
+            "device_uuid": device_uuid,
+            **extra
         })
         if "error" in response:
             error: str = response["error"]
@@ -332,3 +333,29 @@ class Client:
         if "error" in response or "ok" not in response:
             raise InvalidServerResponseException(response)
         return response["ok"]
+
+    def get_miner(self, service_uuid: str) -> dict:
+        response: dict = self.microservice("service", ["miner", "get"], {
+            "service_uuid": service_uuid
+        })
+        if "error" in response:
+            error: str = response["error"]
+            if error == "miner_does_not_exist":
+                raise MinerDoesNotExistException()
+            raise InvalidServerResponseException(response)
+        return response
+
+    def miner_power(self, service_uuid: str, power: int):
+        response: dict = self.microservice("service", ["miner", "power"], {
+            "service_uuid": service_uuid,
+            "power": power
+        })
+        if "error" in response:
+            error: str = response["error"]
+            if error == "miner_does_not_exist":
+                raise MinerDoesNotExistException()
+            if error == "device_does_not_exist":
+                raise DeviceNotFoundException()
+            if error == "permission_denied":
+                raise PermissionDeniedException()
+            raise InvalidServerResponseException(response)

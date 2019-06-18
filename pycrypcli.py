@@ -64,9 +64,12 @@ class Frontend(Game):
                 return ["create", "list", "bruteforce", "portscan"]
             elif len(args) == 2:
                 if args[0] == "create":
-                    return ["bruteforce", "portscan", "ssh", "telnet"]
+                    return ["bruteforce", "portscan", "ssh", "telnet", "miner"]
                 elif args[0] == "bruteforce":
                     return ["ssh", "telnet"]
+        elif cmd == "miner":
+            if len(args) == 1:
+                return ["look", "power"]
         return []
 
     def complete_command(self, text: str) -> List[str]:
@@ -187,7 +190,7 @@ class Frontend(Game):
             self.session_token: str = self.client.register(username, mail, password)
             self.save_session()
             self.update_host()
-            self.client.create_service(self.device_uuid, "ssh")
+            self.client.create_service(self.device_uuid, "ssh", {})
             return True
         except WeakPasswordException:
             print("Password is too weak.")

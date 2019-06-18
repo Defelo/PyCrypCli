@@ -128,12 +128,25 @@ def handle_service(game: Game, args: List[str]):
         return
 
     if args[0] == "create":
-        if len(args) != 2 or args[1] not in ("bruteforce", "portscan", "telnet", "ssh"):
-            print("usage: service create <bruteforce|portscan|telnet|ssh>")
+        if len(args) < 2 or args[1] not in ("bruteforce", "portscan", "telnet", "ssh", "miner"):
+            print("usage: service create bruteforce|portscan|telnet|ssh|miner")
             return
 
+        extra: dict = {}
+        if args[1] == "miner":
+            if len(args) != 3:
+                print("usage: service create miner <wallet>")
+                return
+
+            wallet_uuid: str = args[2]
+            if not is_uuid(wallet_uuid):
+                print("Invalid wallet uuid")
+                return
+
+            extra["wallet_uuid"] = wallet_uuid
+
         try:
-            game.client.create_service(game.device_uuid, args[1])
+            game.client.create_service(game.device_uuid, args[1], extra)
             print("Service was created")
         except AlreadyOwnThisServiceException:
             print("You already created this service")

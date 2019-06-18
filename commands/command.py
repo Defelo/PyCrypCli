@@ -2,7 +2,7 @@ from typing import Callable, List, Tuple, Dict
 
 from game import Game
 
-MODULES: List[str] = ["status", "device", "files", "morphcoin", "service"]
+MODULES: List[str] = ["status", "device", "files", "morphcoin", "service", "miner"]
 
 COMMAND_FUNCTION = Callable[[Game, List[str]], None]
 commands: List[Tuple[List[str], str, COMMAND_FUNCTION]] = []

@@ -61,9 +61,9 @@ class Frontend(Game):
                     return [file["filename"] for file in self.client.get_files(self.device_uuid)]
         elif cmd == "service":
             if len(args) == 1:
-                return ["create", "list", "bruteforce", "portscan"]
+                return ["create", "list", "delete", "bruteforce", "portscan"]
             elif len(args) == 2:
-                if args[0] == "create":
+                if args[0] in ("create", "delete"):
                     return ["bruteforce", "portscan", "ssh", "telnet", "miner"]
                 elif args[0] == "bruteforce":
                     return ["ssh", "telnet"]

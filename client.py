@@ -359,3 +359,16 @@ class Client:
             if error == "permission_denied":
                 raise PermissionDeniedException()
             raise InvalidServerResponseException(response)
+
+    def delete_service(self, device_uuid: str, service_uuid: str):
+        response: dict = self.microservice("service", ["delete"], {
+            "device_uuid": device_uuid,
+            "service_uuid": service_uuid
+        })
+        if "error" in response:
+            error: str = response["error"]
+            if error == "service_does_not_exists":
+                raise UnknownServiceException()
+            if error == "permission_denied":
+                raise PermissionDeniedException()
+            raise InvalidServerResponseException(response)

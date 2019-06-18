@@ -123,8 +123,8 @@ def handle_portscan(game: Game, args: List[str]):
 
 @command(["service"], "Create or use a service")
 def handle_service(game: Game, args: List[str]):
-    if len(args) < 1 or args[0] not in ("create", "list", "bruteforce", "portscan"):
-        print("usage: service create|list|bruteforce|portscan")
+    if len(args) < 1 or args[0] not in ("create", "list", "delete", "bruteforce", "portscan"):
+        print("usage: service create|list|delete|bruteforce|portscan")
         return
 
     if args[0] == "create":
@@ -160,6 +160,18 @@ def handle_service(game: Game, args: List[str]):
             if port is not None:
                 line += f" on port {port}"
             print(line)
+    elif args[0] == "delete":
+        if len(args) < 2 or args[1] not in ("bruteforce", "portscan", "telnet", "ssh", "miner"):
+            print("usage: service delete bruteforce|portscan|telnet|ssh|miner")
+            return
+
+        service: dict = game.get_service(args[1])
+        if service is None:
+            print(f"The service '{args[1]}' could not be found on this device")
+            return
+
+        game.client.delete_service(game.device_uuid, service["uuid"])
+
     elif args[0] == "bruteforce":
         handle_bruteforce(game, args[1:])
     elif args[0] == "portscan":

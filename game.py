@@ -19,7 +19,7 @@ class Game:
 
     def update_host(self, device_uuid: str = None):
         if device_uuid is None:
-            devices: List[dict] = self.client.get_all_devices()
+            devices: List[dict] = self.client.get_devices()
             if not devices:
                 devices: List[dict] = [self.client.create_device()]
             self.hostname: str = devices[0]["name"]
@@ -29,7 +29,7 @@ class Game:
             self.hostname: str = self.client.device_info(device_uuid)["name"]
 
     def get_file(self, filename: str) -> Optional[dict]:
-        files: List[dict] = self.client.get_all_files(self.device_uuid)
+        files: List[dict] = self.client.get_files(self.device_uuid)
         for file in files:
             if file["filename"] == filename:
                 return file

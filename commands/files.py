@@ -8,7 +8,7 @@ from util import extract_wallet
 
 @command(["ls", "l", "dir"], "List all files")
 def handle_ls(game: Game, *_):
-    files: List[dict] = game.client.get_all_files(game.device_uuid)
+    files: List[dict] = game.client.get_files(game.device_uuid)
     for file in files:
         print(file["filename"])
 
@@ -21,6 +21,11 @@ def handle_touch(game: Game, args: List[str]):
 
     filename, *content = args
     content: str = " ".join(content)
+
+    if not filename:
+        print("Filename cannot be empty.")
+    if len(filename) > 64:
+        print("Filename cannot be longer than 64 characters.")
 
     if game.get_file(filename) is not None:
         print(f"File `{filename}` already exists.")
@@ -79,7 +84,9 @@ def handle_rm(game: Game, args: List[str]):
                 print("The following key might now be the only way to access your wallet.")
                 print("Note that you can't create another wallet without this key.")
                 print(content)
-        except InvalidKeyException:
+        except SourceOrDestinationInvalidException:
+            pass
+        except PermissionDeniedException:
             pass
     game.client.remove_file(game.device_uuid, file["uuid"])
 
@@ -92,6 +99,12 @@ def handle_cp(game: Game, args: List[str]):
 
     source: str = args[0]
     destination: str = args[1]
+
+    if not destination:
+        print("Destination filename cannot be empty.")
+    if len(destination) > 64:
+        print("Destination filename cannot be longer than 64 characters.")
+
     file: dict = game.get_file(source)
     if file is None:
         print("File does not exist.")
@@ -113,6 +126,12 @@ def handle_mv(game: Game, args: List[str]):
 
     source: str = args[0]
     destination: str = args[1]
+
+    if not destination:
+        print("Destination filename cannot be empty.")
+    if len(destination) > 64:
+        print("Destination filename cannot be longer than 64 characters.")
+
     file: dict = game.get_file(source)
     if file is None:
         print("File does not exist.")

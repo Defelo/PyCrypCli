@@ -135,7 +135,7 @@ def handle_service(game: Game, args: List[str]):
         try:
             game.client.create_service(game.device_uuid, args[1])
             print("Service was created")
-        except AlreadyOwnServiceException:
+        except AlreadyOwnThisServiceException:
             print("You already created this service")
     elif args[0] == "list":
         services: List[dict] = game.client.get_services(game.device_uuid)

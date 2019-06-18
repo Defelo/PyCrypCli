@@ -32,10 +32,10 @@ def handle_morphcoin(game: Game, args: List[str]):
 
         try:
             amount: int = game.client.get_wallet(*wallet)["amount"]
-        except InvalidWalletException:
+        except SourceOrDestinationInvalidException:
             print("Invalid wallet file. Wallet does not exist.")
             return
-        except InvalidKeyException:
+        except PermissionDeniedException:
             print("Invalid wallet file. Key is incorrect.")
             return
 
@@ -54,10 +54,10 @@ def handle_morphcoin(game: Game, args: List[str]):
 
         try:
             transactions: List[dict] = game.client.get_wallet(*wallet)["transactions"]
-        except InvalidWalletException:
+        except SourceOrDestinationInvalidException:
             print("Invalid wallet file. Wallet does not exist.")
             return
-        except InvalidKeyException:
+        except PermissionDeniedException:
             print("Invalid wallet file. Key is incorrect.")
             return
 
@@ -68,7 +68,7 @@ def handle_morphcoin(game: Game, args: List[str]):
             destination: str = transaction["destination_uuid"]
             if destination == wallet[0]:
                 destination: str = "self"
-            amount: int = transaction["amount"]
+            amount: int = transaction["send_amount"]
             time_stamp: str = transaction["time_stamp"]
             usage: str = transaction["usage"]
             text = f"{time_stamp}: {amount} morphcoin ({source} -> {destination})"
@@ -106,17 +106,19 @@ def handle_pay(game: Game, args: List[str]):
     amount: int = int(args[2])
     try:
         game.client.get_wallet(wallet_uuid, wallet_key)
-    except InvalidWalletException:
+    except SourceOrDestinationInvalidException:
         print("Invalid wallet file. Wallet does not exist.")
         return
-    except InvalidKeyException:
+    except PermissionDeniedException:
         print("Invalid wallet file. Key is incorrect.")
         return
 
     try:
         game.client.send(wallet_uuid, wallet_key, receiver, amount, " ".join(args[3:]))
         print(f"Sent {amount} morphcoin to {receiver}.")
-    except SourceWalletTransactionDebtException:
-        print("The source wallet would make debt. Transaction canceled.")
-    except InvalidWalletException:
+    except PermissionDeniedException:
+        print("Invalid wallet file. Key is incorrect.")
+    except NotEnoughCoinsException:
+        print("Not enough coins. Transaction canceled.")
+    except SourceOrDestinationInvalidException:
         print("Destination wallet does not exist.")

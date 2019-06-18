@@ -41,19 +41,39 @@ class InvalidLoginException(Exception):
         super().__init__("Invalid Login Credentials")
 
 
-class SourceWalletTransactionDebtException(Exception):
+class AlreadyOwnADeviceException(Exception):
     def __init__(self):
-        super().__init__("Source wallet would make debt")
+        super().__init__("You already own a device")
 
 
-class InvalidWalletException(Exception):
+class DeviceNotFoundException(Exception):
     def __init__(self):
-        super().__init__("Invalid Wallet UUID")
+        super().__init__("Device not found")
 
 
-class InvalidKeyException(Exception):
+class PermissionDeniedException(Exception):
     def __init__(self):
-        super().__init__("Invalid Wallet Key")
+        super().__init__("Permission denied")
+
+
+class FileAlreadyExistsException(Exception):
+    def __init__(self):
+        super().__init__("File already exists")
+
+
+class FileNotFoundException(Exception):
+    def __init__(self):
+        super().__init__("File not found")
+
+
+class SourceOrDestinationInvalidException(Exception):
+    def __init__(self):
+        super().__init__("Source or destination invalid")
+
+
+class NotEnoughCoinsException(Exception):
+    def __init__(self):
+        super().__init__("Not enough coins")
 
 
 class AlreadyOwnAWalletException(Exception):
@@ -61,7 +81,12 @@ class AlreadyOwnAWalletException(Exception):
         super().__init__("You already own a wallet")
 
 
-class AlreadyOwnServiceException(Exception):
+class ServiceIsNotSupportedException(Exception):
+    def __init__(self):
+        super().__init__("Service is not supported")
+
+
+class AlreadyOwnThisServiceException(Exception):
     def __init__(self):
         super().__init__("You already own a service with this name")
 
@@ -69,3 +94,8 @@ class AlreadyOwnServiceException(Exception):
 class UnknownServiceException(Exception):
     def __init__(self):
         super().__init__("Unknown service")
+
+
+class ServiceCannotBeUsedException(Exception):
+    def __init__(self):
+        super().__init__("Service cannot be used")

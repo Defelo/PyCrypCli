@@ -130,16 +130,18 @@ class Client:
             raise InvalidServerResponseException(response)
         return response
 
-    def get_all_devices(self) -> List[dict]:
+    def get_devices(self) -> List[dict]:
         response: dict = self.microservice("device", ["device", "all"], {})
         if "error" in response or "devices" not in response:
             raise InvalidServerResponseException(response)
-        devices: List[dict] = response["devices"]
-        return devices
+        return response["devices"]
 
     def create_device(self) -> dict:
         response: dict = self.microservice("device", ["device", "create"], {})
         if "error" in response:
+            error: str = response["error"]
+            if error == "already_own_a_device":
+                raise AlreadyOwnADeviceException()
             raise InvalidServerResponseException(response)
         return response
 
@@ -149,16 +151,27 @@ class Client:
             "name": name
         })
         if "error" in response:
+            error: str = response["error"]
+            if error == "device_not_found":
+                raise DeviceNotFoundException()
+            if error == "permission_denied":
+                raise PermissionDeniedException()
             raise InvalidServerResponseException(response)
 
-    def get_all_files(self, device_uuid: str) -> List[dict]:
+    def get_files(self, device_uuid: str) -> List[dict]:
         response: dict = self.microservice("device", ["file", "all"], {
             "device_uuid": device_uuid
         })
-        if "error" in response or "files" not in response:
+        if "error" in response:
+            error: str = response["error"]
+            if error == "device_not_found":
+                raise DeviceNotFoundException()
+            if error == "permission_denied":
+                raise PermissionDeniedException()
             raise InvalidServerResponseException(response)
-        files: List[dict] = response["files"]
-        return files
+        if "files" not in response:
+            raise InvalidServerResponseException(response)
+        return response["files"]
 
     def create_file(self, device_uuid: str, filename: str, content: str):
         response: dict = self.microservice("device", ["file", "create"], {
@@ -167,6 +180,13 @@ class Client:
             "content": content
         })
         if "error" in response:
+            error: str = response["error"]
+            if error == "device_not_found":
+                raise DeviceNotFoundException()
+            if error == "permission_denied":
+                raise PermissionDeniedException()
+            if error == "file_already_exists":
+                raise FileAlreadyExistsException()
             raise InvalidServerResponseException(response)
 
     def remove_file(self, device_uuid: str, file_uuid: str):
@@ -175,6 +195,13 @@ class Client:
             "file_uuid": file_uuid
         })
         if "error" in response:
+            error: str = response["error"]
+            if error == "device_not_found":
+                raise DeviceNotFoundException()
+            if error == "permission_denied":
+                raise PermissionDeniedException()
+            if error == "file_not_found":
+                raise FileNotFoundException()
             raise InvalidServerResponseException(response)
 
     def create_wallet(self) -> Tuple[str, str]:
@@ -195,8 +222,10 @@ class Client:
         })
         if "error" in response:
             error: str = response["error"]
-            if error == "invalid key":
-                raise InvalidKeyException()
+            if error == "unknown_source_or_destination":
+                raise SourceOrDestinationInvalidException()
+            if error == "permission_denied":
+                raise PermissionDeniedException()
             raise InvalidServerResponseException(response)
         if "success" not in response:
             raise InvalidServerResponseException(response)
@@ -209,8 +238,8 @@ class Client:
         })
         if "error" in response:
             error: str = response["error"]
-            if error == "invalid key":
-                raise InvalidKeyException()
+            if error == "unknown_source_or_destination":
+                raise SourceOrDestinationInvalidException()
             raise InvalidServerResponseException(response)
         if "ok" not in response:
             raise InvalidServerResponseException(response)
@@ -225,12 +254,12 @@ class Client:
         })
         if "error" in response:
             error: str = response["error"]
-            if error == "The source wallet would make debt transaction canceled":
-                raise SourceWalletTransactionDebtException()
-            if error.startswith("Your Souce or Destination uuid is invalid"):
-                raise InvalidWalletException()
-            if error == "invalid key":
-                raise InvalidKeyException()
+            if error == "permission_denied":
+                raise PermissionDeniedException()
+            if error == "unknown_source_or_destination":
+                raise SourceOrDestinationInvalidException()
+            if error == "not_enough_coins":
+                raise NotEnoughCoinsException()
             raise InvalidServerResponseException(response)
 
     def create_service(self, device_uuid: str, name: str) -> dict:
@@ -240,8 +269,14 @@ class Client:
         })
         if "error" in response:
             error: str = response["error"]
-            if error == "you already own a service with this name":
-                raise AlreadyOwnServiceException()
+            if error == "this_service_is_not_supported":
+                raise ServiceIsNotSupportedException()
+            if error == "this_device_does_not_exist":
+                raise DeviceNotFoundException()
+            if error == "permission_denied":
+                raise PermissionDeniedException()
+            if error == "you_already_own_a_service_with_this_name":
+                raise AlreadyOwnThisServiceException()
             raise InvalidServerResponseException(response)
         return response
 
@@ -249,7 +284,12 @@ class Client:
         response: dict = self.microservice("service", ["list"], {
             "device_uuid": device_uuid
         })
-        if "error" in response or "services" not in response:
+        if "error" in response:
+            error: str = response["error"]
+            if error == "permission_denied":
+                raise PermissionDeniedException()
+            raise InvalidServerResponseException(response)
+        if "services" not in response:
             raise InvalidServerResponseException(response)
         return response["services"]
 
@@ -261,8 +301,10 @@ class Client:
         })
         if "error" in response:
             error: str = response["error"]
-            if error == "unknown service":
+            if error == "unknown_service":
                 raise UnknownServiceException()
+            if error == "service_cannot_be_used":
+                raise ServiceCannotBeUsedException()
             raise InvalidServerResponseException(response)
         return response
 
@@ -277,6 +319,9 @@ class Client:
             "device_uuid": device_uuid
         })
         if "error" in response:
+            error: str = response["error"]
+            if error == "device_not_found":
+                raise DeviceNotFoundException()
             raise InvalidServerResponseException(response)
         return response
 

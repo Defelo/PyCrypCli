@@ -322,6 +322,7 @@ class Client:
                 raise ServiceNotFoundException()
             if error == "service_not_running":
                 raise TargetServiceNotRunningException()
+            raise InvalidServerResponseException(response)
         return response
 
     def bruteforce_status(self, device_uuid: str, service_uuid: str) -> dict:
@@ -335,6 +336,7 @@ class Client:
                 raise ServiceNotFoundException()
             if error == "attack_not_running":
                 return {"running": False}
+            raise InvalidServerResponseException(response)
         return {"running": True, **response}
 
     def bruteforce_stop(self, device_uuid: str, service_uuid: str) -> dict:
@@ -348,6 +350,7 @@ class Client:
                 raise ServiceNotFoundException()
             if error == "attack_not_running":
                 raise AttackNotRunningException()
+            raise InvalidServerResponseException(response)
         return response
 
     def spot(self) -> dict:
@@ -381,8 +384,8 @@ class Client:
         })
         if "error" in response:
             error: str = response["error"]
-            if error == "miner_does_not_exist":
-                raise MinerDoesNotExistException()
+            if error == "miner_not_found":
+                raise MinerNotFoundException()
             raise InvalidServerResponseException(response)
         return response
 
@@ -393,12 +396,29 @@ class Client:
         })
         if "error" in response:
             error: str = response["error"]
-            if error == "miner_does_not_exist":
-                raise MinerDoesNotExistException()
+            if error == "miner_not_found":
+                raise MinerNotFoundException()
             if error == "device_does_not_exist":
                 raise DeviceNotFoundException()
             if error == "permission_denied":
                 raise PermissionDeniedException()
+            raise InvalidServerResponseException(response)
+
+    def miner_wallet(self, service_uuid: str, wallet_uuid: str):
+        response: dict = self.microservice("service", ["miner", "wallet"], {
+            "service_uuid": service_uuid,
+            "wallet_uuid": wallet_uuid
+        })
+        if "error" in response:
+            error: str = response["error"]
+            if error == "miner_not_found":
+                raise MinerNotFoundException()
+            if error == "device_not_found":
+                raise DeviceNotFoundException()
+            if error == "permission_denied":
+                raise PermissionDeniedException()
+            if error == "wallet_not_found":
+                raise WalletNotFoundException()
             raise InvalidServerResponseException(response)
 
     def delete_service(self, device_uuid: str, service_uuid: str):

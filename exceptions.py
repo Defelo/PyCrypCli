@@ -116,6 +116,11 @@ class ServiceCannotBeUsedException(Exception):
         super().__init__("Service cannot be used")
 
 
-class MinerDoesNotExistException(Exception):
+class MinerNotFoundException(Exception):
     def __init__(self):
-        super().__init__("Miner does not exist.")
+        super().__init__("Miner does not exist")
+
+
+class WalletNotFoundException(Exception):
+    def __init__(self):
+        super().__init__("Wallet not found")

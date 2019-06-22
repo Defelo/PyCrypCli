@@ -69,7 +69,7 @@ class Frontend(Game):
                     return ["ssh", "telnet"]
         elif cmd == "miner":
             if len(args) == 1:
-                return ["look", "power"]
+                return ["look", "power", "wallet"]
         return []
 
     def complete_command(self, text: str) -> List[str]:

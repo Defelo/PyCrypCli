@@ -84,7 +84,7 @@ def handle_rm(game: Game, args: List[str]):
                 print("The following key might now be the only way to access your wallet.")
                 print("Note that you can't create another wallet without this key.")
                 print(content)
-        except SourceOrDestinationInvalidException:
+        except UnknownSourceOrDestinationException:
             pass
         except PermissionDeniedException:
             pass

@@ -6,16 +6,6 @@ class InvalidServerResponseException(Exception):
         super().__init__("Invalid Server Response: " + json.dumps(response))
 
 
-class NoResponseTimeoutException(Exception):
-    def __init__(self):
-        super().__init__("No Response - Timeout")
-
-
-class UnknownMicroserviceException(Exception):
-    def __init__(self, ms: str):
-        super().__init__("Unknown Microservice: " + ms)
-
-
 class InvalidSessionTokenException(Exception):
     def __init__(self):
         super().__init__("Invalid session token")
@@ -41,86 +31,89 @@ class InvalidLoginException(Exception):
         super().__init__("Invalid Login Credentials")
 
 
-class AlreadyOwnADeviceException(Exception):
+class UnknownMicroserviceException(Exception):
+    def __init__(self, ms: str):
+        super().__init__("Unknown Microservice: " + ms)
+
+
+class MicroserviceException(Exception):
+    error: str = None
+
     def __init__(self):
-        super().__init__("You already own a device")
+        super().__init__(self.error)
 
 
-class DeviceNotFoundException(Exception):
-    def __init__(self):
-        super().__init__("Device not found")
+class NoResponseTimeoutException(MicroserviceException):
+    error: str = "no response - timeout"
 
 
-class PermissionDeniedException(Exception):
-    def __init__(self):
-        super().__init__("Permission denied")
+class InvalidRequestException(MicroserviceException):
+    error: str = "invalid_request"
 
 
-class FileAlreadyExistsException(Exception):
-    def __init__(self):
-        super().__init__("File already exists")
+class AlreadyOwnADeviceException(MicroserviceException):
+    error: str = "already_own_a_device"
 
 
-class FileNotFoundException(Exception):
-    def __init__(self):
-        super().__init__("File not found")
+class PermissionDeniedException(MicroserviceException):
+    error: str = "permission_denied"
 
 
-class SourceOrDestinationInvalidException(Exception):
-    def __init__(self):
-        super().__init__("Source or destination invalid")
+class DeviceNotFoundException(MicroserviceException):
+    error: str = "device_not_found"
 
 
-class NotEnoughCoinsException(Exception):
-    def __init__(self):
-        super().__init__("Not enough coins")
+class FileNotFoundException(MicroserviceException):
+    error: str = "file_not_found"
 
 
-class AlreadyOwnAWalletException(Exception):
-    def __init__(self):
-        super().__init__("You already own a wallet")
+class FileAlreadyExistsException(MicroserviceException):
+    error: str = "file_already_exists"
 
 
-class ServiceIsNotSupportedException(Exception):
-    def __init__(self):
-        super().__init__("Service is not supported")
+class AlreadyOwnAWalletException(MicroserviceException):
+    error: str = "already_own_a_wallet"
 
 
-class AlreadyOwnThisServiceException(Exception):
-    def __init__(self):
-        super().__init__("You already own a service with this name")
+class UnknownSourceOrDestinationException(MicroserviceException):
+    error: str = "unknown_source_or_destination"
 
 
-class ServiceNotFoundException(Exception):
-    def __init__(self):
-        super().__init__("Service not found")
+class NotEnoughCoinsException(MicroserviceException):
+    error: str = "not_enough_coins"
 
 
-class AttackNotRunningException(Exception):
-    def __init__(self):
-        super().__init__("Attack not running")
+class AlreadyOwnThisServiceException(MicroserviceException):
+    error: str = "already_own_this_service"
 
 
-class TargetServiceNotRunningException(Exception):
-    def __init__(self):
-        super().__init__("Target service is not running")
+class ServiceNotSupportedException(MicroserviceException):
+    error: str = "service_not_supported"
 
 
-class UnknownServiceException(Exception):
-    def __init__(self):
-        super().__init__("Unknown service")
+class ServiceNotRunningException(MicroserviceException):
+    error: str = "service_not_running"
 
 
-class ServiceCannotBeUsedException(Exception):
-    def __init__(self):
-        super().__init__("Service cannot be used")
+class WalletNotFoundException(MicroserviceException):
+    error: str = "wallet_not_found"
 
 
-class MinerNotFoundException(Exception):
-    def __init__(self):
-        super().__init__("Miner does not exist")
+class MinerNotFoundException(MicroserviceException):
+    error: str = "miner_not_found"
 
 
-class WalletNotFoundException(Exception):
-    def __init__(self):
-        super().__init__("Wallet not found")
+class ServiceNotFoundException(MicroserviceException):
+    error: str = "service_not_found"
+
+
+class UnknownServiceException(MicroserviceException):
+    error: str = "unknown_service"
+
+
+class ServiceCannotBeUsedException(MicroserviceException):
+    error: str = "service_cannot_be_used"
+
+
+class AttackNotRunningException(MicroserviceException):
+    error: str = "attack_not_running"

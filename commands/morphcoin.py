@@ -32,7 +32,7 @@ def handle_morphcoin(game: Game, args: List[str]):
 
         try:
             amount: int = game.client.get_wallet(*wallet)["amount"]
-        except SourceOrDestinationInvalidException:
+        except UnknownSourceOrDestinationException:
             print("Invalid wallet file. Wallet does not exist.")
             return
         except PermissionDeniedException:
@@ -54,7 +54,7 @@ def handle_morphcoin(game: Game, args: List[str]):
 
         try:
             transactions: List[dict] = game.client.get_wallet(*wallet)["transactions"]
-        except SourceOrDestinationInvalidException:
+        except UnknownSourceOrDestinationException:
             print("Invalid wallet file. Wallet does not exist.")
             return
         except PermissionDeniedException:
@@ -106,7 +106,7 @@ def handle_pay(game: Game, args: List[str]):
     amount: int = int(args[2])
     try:
         game.client.get_wallet(wallet_uuid, wallet_key)
-    except SourceOrDestinationInvalidException:
+    except UnknownSourceOrDestinationException:
         print("Invalid wallet file. Wallet does not exist.")
         return
     except PermissionDeniedException:
@@ -120,5 +120,5 @@ def handle_pay(game: Game, args: List[str]):
         print("Invalid wallet file. Key is incorrect.")
     except NotEnoughCoinsException:
         print("Not enough coins. Transaction canceled.")
-    except SourceOrDestinationInvalidException:
+    except UnknownSourceOrDestinationException:
         print("Destination wallet does not exist.")

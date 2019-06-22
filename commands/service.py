@@ -84,7 +84,7 @@ def handle_bruteforce(game: Game, args: List[str]):
     except ServiceNotFoundException:
         print("The target service does not exist.")
         return
-    except TargetServiceNotRunningException:
+    except ServiceNotRunningException:
         print("The target service is not running and cannot be exploited.")
         return
 

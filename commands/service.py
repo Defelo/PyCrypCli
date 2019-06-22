@@ -165,6 +165,8 @@ def handle_service(game: Game, args: List[str]):
             print("Service was created")
         except AlreadyOwnThisServiceException:
             print("You already created this service")
+        except WalletNotFoundException:
+            print("Wallet does not exist.")
     elif args[0] == "list":
         services: List[dict] = game.client.get_services(game.device_uuid)
         if services:

@@ -8,6 +8,18 @@ from game import Game
 from util import is_uuid
 
 
+def stop_bruteforce(game: Game, service: dict):
+    result: dict = game.client.bruteforce_stop(game.device_uuid, service["uuid"])
+    target_device: str = result["target_device"]
+    if result["access"]:
+        if game.ask("Access granted. Do you want to connect to the device? [yes|no] ", ["yes", "no"]) == "yes":
+            handle_connect(game, [target_device])
+        else:
+            print(f"To connect to the device type `connect {target_device}`")
+    else:
+        print("Access denied. The bruteforce attack was not successful")
+
+
 def handle_bruteforce(game: Game, args: List[str]):
     duration: int = 20
     if len(args) in (1, 2) and args[0] in ("ssh", "telnet"):
@@ -52,46 +64,49 @@ def handle_bruteforce(game: Game, args: List[str]):
 
     service: dict = game.get_service("bruteforce")
     if service is None:
-        print("You have to create a bruteforce service before you use it")
+        print("You have to create a bruteforce service before you can use it.")
+        return
+
+    result: dict = game.client.bruteforce_status(game.device_uuid, service["uuid"])
+    if result["running"]:
+        print(f"You are already attacking a device.")
+        print("Target device: " + result["target_device"])
+        print(f"Attack started {result['pen_time']:.0f} seconds ago")
+        if game.ask("Do you want to stop this attack? [yes|no] ", ["yes", "no"]) == "yes":
+            stop_bruteforce(game, service)
         return
 
     try:
-        result: dict = game.client.use_service(
+        game.client.bruteforce_attack(
             game.device_uuid, service["uuid"],
-            target_device=target_device, target_service=target_service
+            target_device, target_service
         )
-        assert result["ok"]
-        if "access" in result:
-            if result["access"]:
-                if game.ask("Access granted. Do you want to connect to the device? [yes|no] ", ["yes", "no"]) == "yes":
-                    handle_connect(game, [target_device])
-                else:
-                    print(f"To connect to the device type `connect {target_device}`")
-            else:
-                print("Access denied. The bruteforce attack was not successful")
-        else:
-            print("You started a bruteforce attack")
-            if duration is not None:
-                width: int = os.get_terminal_size().columns - 31
-                steps: int = 17
-                d: int = duration * steps
-                i: int = 0
-                try:
-                    for i in range(d):
-                        progress: int = int(i / d * width)
-                        j = i // steps
-                        text: str = f"\rBruteforcing {j // 60:02d}:{j % 60:02d} " + \
-                                    "[" + "=" * progress + ">" + " " * (width - progress) + "] " + \
-                                    f"({i / d * 100:.1f}%) "
-                        print(end=text, flush=True)
-                        time.sleep(1 / steps)
-                    i: int = (i + 1) // steps
-                    print(f"\rBruteforcing {i // 60:02d}:{i % 60:02d} [" + "=" * width + ">] (100%) ")
-                except KeyboardInterrupt:
-                    print()
-                handle_bruteforce(game, args)
-    except UnknownServiceException:
-        print("Unknown service. Attack couldn't be started.")
+    except ServiceNotFoundException:
+        print("The target service does not exist.")
+        return
+    except TargetServiceNotRunningException:
+        print("The target service is not running and cannot be exploited.")
+        return
+
+    print("You started a bruteforce attack")
+    width: int = os.get_terminal_size().columns - 31
+    steps: int = 17
+    d: int = duration * steps
+    i: int = 0
+    try:
+        for i in range(d):
+            progress: int = int(i / d * width)
+            j = i // steps
+            text: str = f"\rBruteforcing {j // 60:02d}:{j % 60:02d} " + \
+                        "[" + "=" * progress + ">" + " " * (width - progress) + "] " + \
+                        f"({i / d * 100:.1f}%) "
+            print(end=text, flush=True)
+            time.sleep(1 / steps)
+        i: int = (i + 1) // steps
+        print(f"\rBruteforcing {i // 60:02d}:{i % 60:02d} [" + "=" * width + ">] (100%) ")
+    except KeyboardInterrupt:
+        print()
+    stop_bruteforce(game, service)
 
 
 def handle_portscan(game: Game, args: List[str]):
@@ -106,7 +121,7 @@ def handle_portscan(game: Game, args: List[str]):
 
     service: dict = game.get_service("portscan")
     if service is None:
-        print("You have to create a portscan service before you use it")
+        print("You have to create a portscan service before you can use it.")
         return
 
     result: dict = game.client.use_service(game.device_uuid, service["uuid"], target_device=target)
@@ -152,7 +167,10 @@ def handle_service(game: Game, args: List[str]):
             print("You already created this service")
     elif args[0] == "list":
         services: List[dict] = game.client.get_services(game.device_uuid)
-        print("Services:")
+        if services:
+            print("Services:")
+        else:
+            print("There are no services on this device.")
         for service in services:
             name: str = service["name"]
             port: int = service["running_port"]

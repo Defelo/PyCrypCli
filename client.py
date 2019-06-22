@@ -294,7 +294,7 @@ class Client:
             raise InvalidServerResponseException(response)
         return response["services"]
 
-    def use_service(self, device_uuid, service_uuid: str, **kwargs):
+    def use_service(self, device_uuid, service_uuid: str, **kwargs) -> dict:
         response: dict = self.microservice("service", ["use"], {
             "device_uuid": device_uuid,
             "service_uuid": service_uuid,
@@ -307,6 +307,47 @@ class Client:
             if error == "service_cannot_be_used":
                 raise ServiceCannotBeUsedException()
             raise InvalidServerResponseException(response)
+        return response
+
+    def bruteforce_attack(self, device_uuid: str, service_uuid: str, target_device: str, target_service: str) -> dict:
+        response: dict = self.microservice("service", ["bruteforce", "attack"], {
+            "device_uuid": device_uuid,
+            "service_uuid": service_uuid,
+            "target_device": target_device,
+            "target_service": target_service
+        })
+        if "error" in response:
+            error: str = response["error"]
+            if error == "service_not_found":
+                raise ServiceNotFoundException()
+            if error == "service_not_running":
+                raise TargetServiceNotRunningException()
+        return response
+
+    def bruteforce_status(self, device_uuid: str, service_uuid: str) -> dict:
+        response: dict = self.microservice("service", ["bruteforce", "status"], {
+            "device_uuid": device_uuid,
+            "service_uuid": service_uuid
+        })
+        if "error" in response:
+            error: str = response["error"]
+            if error == "service_not_found":
+                raise ServiceNotFoundException()
+            if error == "attack_not_running":
+                return {"running": False}
+        return {"running": True, **response}
+
+    def bruteforce_stop(self, device_uuid: str, service_uuid: str) -> dict:
+        response: dict = self.microservice("service", ["bruteforce", "stop"], {
+            "device_uuid": device_uuid,
+            "service_uuid": service_uuid
+        })
+        if "error" in response:
+            error: str = response["error"]
+            if error == "service_not_found":
+                raise ServiceNotFoundException()
+            if error == "attack_not_running":
+                raise AttackNotRunningException()
         return response
 
     def spot(self) -> dict:

@@ -91,6 +91,21 @@ class AlreadyOwnThisServiceException(Exception):
         super().__init__("You already own a service with this name")
 
 
+class ServiceNotFoundException(Exception):
+    def __init__(self):
+        super().__init__("Service not found")
+
+
+class AttackNotRunningException(Exception):
+    def __init__(self):
+        super().__init__("Attack not running")
+
+
+class TargetServiceNotRunningException(Exception):
+    def __init__(self):
+        super().__init__("Target service is not running")
+
+
 class UnknownServiceException(Exception):
     def __init__(self):
         super().__init__("Unknown service")

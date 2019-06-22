@@ -169,7 +169,7 @@ class Client:
 
     def create_wallet(self) -> Tuple[str, str]:
         response: dict = self.microservice("currency", ["create"], {})
-        return response["uuid"], response["key"]
+        return response["source_uuid"], response["key"]
 
     def get_wallet(self, wallet_uuid: str, key: str) -> dict:
         return self.microservice("currency", ["get"], {

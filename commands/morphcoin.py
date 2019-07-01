@@ -8,8 +8,9 @@ from util import extract_wallet, is_uuid
 
 @command(["morphcoin"], "Manage your Morphcoin wallet")
 def handle_morphcoin(game: Game, args: List[str]):
-    if not ((len(args) == 2 and args[0] in ("create", "look", "transactions")) or (args == ["list"])):
+    if not ((len(args) == 2 and args[0] in ("create", "look", "transactions", "reset")) or (args == ["list"])):
         print("usage: morphcoin create|list|look|transactions [<filename>]")
+        print("       morphcoin reset <uuid>")
         return
 
     if args[0] == "create":
@@ -88,6 +89,18 @@ def handle_morphcoin(game: Game, args: List[str]):
             if usage:
                 text += f" (Usage: {usage})"
             print(text)
+    elif args[0] == "reset":
+        wallet_uuid = args[1]
+        if not is_uuid(wallet_uuid):
+            print("Invalid wallet uuid.")
+            return
+
+        try:
+            game.client.reset_wallet(wallet_uuid)
+        except UnknownSourceOrDestinationException:
+            print("Wallet does not exist.")
+        except PermissionDeniedException:
+            print("Permission denied.")
 
 
 @command(["pay"], "Send Morphcoins to another wallet")

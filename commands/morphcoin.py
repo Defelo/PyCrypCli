@@ -8,18 +8,27 @@ from util import extract_wallet, is_uuid
 
 @command(["morphcoin"], "Manage your Morphcoin wallet")
 def handle_morphcoin(game: Game, args: List[str]):
-    if len(args) != 2 or args[0] not in ("create", "look", "list"):
-        print("usage: morphcoin create|look|list <filename>")
+    if not ((len(args) == 2 and args[0] in ("create", "look", "transactions")) or (args == ["list"])):
+        print("usage: morphcoin create|list|look|transactions [<filename>]")
         return
 
-    filename: str = args[1]
     if args[0] == "create":
+        filename: str = args[1]
         try:
             uuid, key = game.client.create_wallet()
             game.client.create_file(game.device_uuid, filename, uuid + " " + key)
         except AlreadyOwnAWalletException:
             print("You already own a wallet")
+    elif args[0] == "list":
+        wallets = game.client.list_wallets()
+        if not wallets:
+            print("You don't own any wallet.")
+        else:
+            print("Your wallets:")
+        for wallet in wallets:
+            print(f" - {wallet}")
     elif args[0] == "look":
+        filename: str = args[1]
         file: dict = game.get_file(filename)
         if file is None:
             print("File does not exist.")
@@ -41,7 +50,8 @@ def handle_morphcoin(game: Game, args: List[str]):
 
         print(f"UUID: {wallet[0]}")
         print(f"Balance: {amount} morphcoin")
-    elif args[0] == "list":
+    elif args[0] == "transactions":
+        filename: str = args[1]
         file: dict = game.get_file(filename)
         if file is None:
             print("File does not exist.")
@@ -61,6 +71,10 @@ def handle_morphcoin(game: Game, args: List[str]):
             print("Invalid wallet file. Key is incorrect.")
             return
 
+        if not transactions:
+            print("No transactions found for this wallet.")
+        else:
+            print("Transactions for this wallet:")
         for transaction in transactions:
             source: str = transaction["source_uuid"]
             if source == wallet[0]:
@@ -69,9 +83,8 @@ def handle_morphcoin(game: Game, args: List[str]):
             if destination == wallet[0]:
                 destination: str = "self"
             amount: int = transaction["send_amount"]
-            time_stamp: str = transaction["time_stamp"]
             usage: str = transaction["usage"]
-            text = f"{time_stamp}: {amount} morphcoin ({source} -> {destination})"
+            text = f"{amount} morphcoin: {source} -> {destination}"
             if usage:
                 text += f" (Usage: {usage})"
             print(text)

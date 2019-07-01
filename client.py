@@ -177,6 +177,9 @@ class Client:
             "key": key
         })["success"]
 
+    def list_wallets(self) -> List[str]:
+        return self.microservice("currency", ["list"], {})["wallets"]
+
     def delete_wallet(self, wallet_uuid: str, key: str):
         self.microservice("currency", ["delete"], {
             "source_uuid": wallet_uuid,

@@ -49,16 +49,19 @@ class Frontend(Game):
         readline.set_completer_delims(" ")
         self.override_completions: List[str] = None
 
+    def get_filenames(self) -> List[str]:
+        return [file["filename"] for file in self.client.get_files(self.device_uuid)]
+
     def complete_arguments(self, cmd: str, args: List[str]) -> List[str]:
         if cmd in ("cat", "touch", "rm", "cp", "mv", "pay"):
             if len(args) == 1 or (len(args) == 2 and cmd in ("cp", "mv")):
-                return [file["filename"] for file in self.client.get_files(self.device_uuid)]
+                return self.get_filenames()
         elif cmd == "morphcoin":
             if len(args) == 1:
                 return ["create", "list", "look", "transactions", "reset"]
             elif len(args) == 2:
                 if args[0] in ("look", "transactions"):
-                    return [file["filename"] for file in self.client.get_files(self.device_uuid)]
+                    return self.get_filenames()
         elif cmd == "service":
             if len(args) == 1:
                 return ["create", "list", "delete", "bruteforce", "portscan"]
@@ -67,6 +70,9 @@ class Frontend(Game):
                     return ["bruteforce", "portscan", "ssh", "telnet", "miner"]
                 elif args[0] == "bruteforce":
                     return ["ssh", "telnet"]
+            elif len(args) == 3:
+                if args[0] == "create" and args[1] == "miner":
+                    return self.get_filenames()
         elif cmd == "miner":
             if len(args) == 1:
                 return ["look", "power", "wallet"]

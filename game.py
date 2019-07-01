@@ -1,6 +1,7 @@
 from typing import List, Optional, Tuple
 
 from client import Client
+from util import extract_wallet
 
 
 class Game:
@@ -34,6 +35,13 @@ class Game:
             if file["filename"] == filename:
                 return file
         return None
+
+    def get_wallet_from_file(self, filename: str) -> Optional[Tuple[str, str]]:
+        file: dict = self.get_file(filename)
+        if file is None:
+            return None
+
+        return extract_wallet(file["content"])
 
     def get_service(self, name: str) -> Optional[dict]:
         services: List[dict] = self.client.get_services(self.device_uuid)

@@ -14,7 +14,7 @@ def handle_miner(game: Game, args: List[str]):
 
     service: dict = game.get_service("miner")
     if service is None:
-        print("You have to create the miner service before using it.")
+        print("You have to create the miner service before you can use it.")
         return
 
     miner: dict = game.client.get_miner(service["uuid"])

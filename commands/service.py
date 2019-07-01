@@ -153,8 +153,12 @@ def handle_service(game: Game, args: List[str]):
                 print("usage: service create miner <wallet>")
                 return
 
-            wallet_uuid: str = args[2]
-            if not is_uuid(wallet_uuid):
+            wallet = game.get_wallet_from_file(args[2])
+            if wallet is not None:
+                wallet_uuid: str = wallet[0]
+            elif is_uuid(args[2]):
+                wallet_uuid: str = args[2]
+            else:
                 print("Invalid wallet uuid")
                 return
 

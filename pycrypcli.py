@@ -50,7 +50,7 @@ class Frontend(Game):
         self.override_completions: List[str] = None
 
     def get_filenames(self) -> List[str]:
-        return [file["filename"] for file in self.client.get_files(self.device_uuid)]
+        return [file.filename for file in self.client.get_files(self.device_uuid)]
 
     def complete_arguments(self, cmd: str, args: List[str]) -> List[str]:
         if cmd in ("cat", "touch", "rm", "cp", "mv", "pay"):

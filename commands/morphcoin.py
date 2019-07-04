@@ -3,6 +3,7 @@ from typing import List, Tuple
 from commands.command import command
 from exceptions import *
 from game import Game
+from game_objects import File
 from util import extract_wallet, is_uuid
 
 
@@ -30,12 +31,12 @@ def handle_morphcoin(game: Game, args: List[str]):
             print(f" - {wallet}")
     elif args[0] == "look":
         filename: str = args[1]
-        file: dict = game.get_file(filename)
+        file: File = game.get_file(filename)
         if file is None:
             print("File does not exist.")
             return
 
-        wallet: Tuple[str, str] = extract_wallet(file["content"])
+        wallet: Tuple[str, str] = extract_wallet(file.content)
         if wallet is None:
             print("File is no wallet file.")
             return
@@ -53,12 +54,12 @@ def handle_morphcoin(game: Game, args: List[str]):
         print(f"Balance: {amount} morphcoin")
     elif args[0] == "transactions":
         filename: str = args[1]
-        file: dict = game.get_file(filename)
+        file: File = game.get_file(filename)
         if file is None:
             print("File does not exist.")
             return
 
-        wallet: Tuple[str, str] = extract_wallet(file["content"])
+        wallet: Tuple[str, str] = extract_wallet(file.content)
         if wallet is None:
             print("File is no wallet file.")
             return
@@ -109,12 +110,12 @@ def handle_pay(game: Game, args: List[str]):
         print("usage: pay <filename> <receiver> <amount> [usage]")
         return
 
-    file: dict = game.get_file(args[0])
+    file: File = game.get_file(args[0])
     if file is None:
         print("File does not exist.")
         return
 
-    wallet: Tuple[str, str] = extract_wallet(file["content"])
+    wallet: Tuple[str, str] = extract_wallet(file.content)
     if wallet is None:
         print("File is no wallet file.")
         return

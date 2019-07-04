@@ -5,6 +5,7 @@ from typing import List
 from commands.command import command
 from exceptions import *
 from game import Game
+from game_objects import Device
 from util import is_uuid
 
 
@@ -204,12 +205,10 @@ def handle_service(game: Game, args: List[str]):
 
 @command(["spot"], "Find a random device in the network")
 def handle_spot(game: Game, *_):
-    device: dict = game.client.spot()
-    name: str = device["name"]
-    uuid: str = device["uuid"]
-    print(f"Name: '{name}'")
-    print(f"UUID: {uuid}")
-    handle_portscan(game, [uuid])
+    device: Device = game.client.spot()
+    print(f"Name: '{device.name}'")
+    print(f"UUID: {device.uuid}")
+    handle_portscan(game, [device.uuid])
 
 
 @command(["connect"], "Connect to a device you hacked before")

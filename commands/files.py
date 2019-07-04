@@ -3,14 +3,15 @@ from typing import List, Tuple
 from commands.command import command
 from exceptions import *
 from game import Game
+from game_objects import File
 from util import extract_wallet
 
 
 @command(["ls", "l", "dir"], "List all files")
 def handle_ls(game: Game, *_):
-    files: List[dict] = game.client.get_files(game.device_uuid)
+    files: List[File] = game.client.get_files(game.device_uuid)
     for file in files:
-        print(file["filename"])
+        print(file.filename)
 
 
 @command(["touch"], "Create a new file with given content")
@@ -42,12 +43,12 @@ def handle_cat(game: Game, args: List[str]):
         return
 
     filename: str = args[0]
-    file: dict = game.get_file(filename)
+    file: File = game.get_file(filename)
     if file is None:
         print("File does not exist.")
         return
 
-    print(file["content"])
+    print(file.content)
 
 
 @command(["rm"], "Remove a file")
@@ -57,7 +58,7 @@ def handle_rm(game: Game, args: List[str]):
         return
 
     filename: str = args[0]
-    file: dict = game.get_file(filename)
+    file: File = game.get_file(filename)
     if file is None:
         print("File does not exist.")
         return
@@ -66,7 +67,7 @@ def handle_rm(game: Game, args: List[str]):
         print("File has not been deleted.")
         return
 
-    content: str = file["content"]
+    content: str = file.content
     wallet: Tuple[str, str] = extract_wallet(content)
     if wallet is not None:
         wallet_uuid, wallet_key = wallet
@@ -88,7 +89,7 @@ def handle_rm(game: Game, args: List[str]):
             pass
         except PermissionDeniedException:
             pass
-    game.client.remove_file(game.device_uuid, file["uuid"])
+    game.client.remove_file(game.device_uuid, file.uuid)
 
 
 @command(["cp"], "Create a copy of a file")
@@ -105,7 +106,7 @@ def handle_cp(game: Game, args: List[str]):
     if len(destination) > 64:
         print("Destination filename cannot be longer than 64 characters.")
 
-    file: dict = game.get_file(source)
+    file: File = game.get_file(source)
     if file is None:
         print("File does not exist.")
         return
@@ -115,7 +116,7 @@ def handle_cp(game: Game, args: List[str]):
         handle_rm(game, [destination])
 
     if game.get_file(destination) is None:
-        game.client.create_file(game.device_uuid, destination, file["content"])
+        game.client.create_file(game.device_uuid, destination, file.content)
 
 
 @command(["mv"], "Rename a file")
@@ -132,7 +133,7 @@ def handle_mv(game: Game, args: List[str]):
     if len(destination) > 64:
         print("Destination filename cannot be longer than 64 characters.")
 
-    file: dict = game.get_file(source)
+    file: File = game.get_file(source)
     if file is None:
         print("File does not exist.")
         return
@@ -142,5 +143,5 @@ def handle_mv(game: Game, args: List[str]):
         handle_rm(game, [destination])
 
     if game.get_file(destination) is None:
-        game.client.create_file(game.device_uuid, destination, file["content"])
-        game.client.remove_file(game.device_uuid, file["uuid"])
+        game.client.create_file(game.device_uuid, destination, file.content)
+        game.client.remove_file(game.device_uuid, file.uuid)

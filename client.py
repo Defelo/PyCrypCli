@@ -5,6 +5,7 @@ from uuid import uuid4
 from websocket import WebSocket, create_connection
 
 from exceptions import *
+from game_objects import Device, File
 from timer import Timer
 
 
@@ -137,11 +138,12 @@ class Client:
             raise InvalidServerResponseException(response)
         return response
 
-    def get_devices(self) -> List[dict]:
-        return self.microservice("device", ["device", "all"], {})["devices"]
+    def get_devices(self) -> List[Device]:
+        return [Device.deserialize(device) for device in
+                self.microservice("device", ["device", "all"], {})["devices"]]
 
-    def create_device(self) -> dict:
-        return self.microservice("device", ["device", "create"], {})
+    def create_device(self) -> Device:
+        return Device.deserialize(self.microservice("device", ["device", "create"], {}))
 
     def change_device_name(self, device_uuid: str, name: str):
         self.microservice("device", ["device", "change_name"], {
@@ -149,17 +151,23 @@ class Client:
             "name": name
         })
 
-    def get_files(self, device_uuid: str) -> List[dict]:
-        return self.microservice("device", ["file", "all"], {
-            "device_uuid": device_uuid
-        })["files"]
+    def get_files(self, device_uuid: str) -> List[File]:
+        return [File.deserialize(file) for file in
+                self.microservice("device", ["file", "all"], {
+                    "device_uuid": device_uuid
+                })["files"]]
 
-    def create_file(self, device_uuid: str, filename: str, content: str):
-        self.microservice("device", ["file", "create"], {
+    def create_file(self, device_uuid: str, filename: str, content: str) -> File:
+        return File.deserialize(self.microservice("device", ["file", "create"], {
             "device_uuid": device_uuid,
             "filename": filename,
             "content": content
-        })
+        }))
+
+    def device_info(self, device_uuid: str) -> Device:
+        return Device.deserialize(self.microservice("device", ["device", "info"], {
+            "device_uuid": device_uuid
+        }))
 
     def remove_file(self, device_uuid: str, file_uuid: str):
         self.microservice("device", ["file", "delete"], {
@@ -244,13 +252,8 @@ class Client:
             "service_uuid": service_uuid
         })
 
-    def spot(self) -> dict:
-        return self.microservice("device", ["device", "spot"], {})
-
-    def device_info(self, device_uuid: str) -> dict:
-        return self.microservice("device", ["device", "info"], {
-            "device_uuid": device_uuid
-        })
+    def spot(self) -> Device:
+        return Device.deserialize(self.microservice("device", ["device", "spot"], {}))
 
     def part_owner(self, device_uuid: str) -> bool:
         return self.microservice("service", ["part_owner"], {

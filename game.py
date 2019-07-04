@@ -1,6 +1,7 @@
 from typing import List, Optional, Tuple
 
 from client import Client
+from game_objects import Device, File
 from util import extract_wallet
 
 
@@ -20,28 +21,28 @@ class Game:
 
     def update_host(self, device_uuid: str = None):
         if device_uuid is None:
-            devices: List[dict] = self.client.get_devices()
+            devices: List[Device] = self.client.get_devices()
             if not devices:
-                devices: List[dict] = [self.client.create_device()]
-            self.hostname: str = devices[0]["name"]
-            self.device_uuid: str = devices[0]["uuid"]
+                devices: List[Device] = [self.client.create_device()]
+            self.hostname: str = devices[0].name
+            self.device_uuid: str = devices[0].uuid
         else:
             self.device_uuid: str = device_uuid
-            self.hostname: str = self.client.device_info(device_uuid)["name"]
+            self.hostname: str = self.client.device_info(device_uuid).name
 
-    def get_file(self, filename: str) -> Optional[dict]:
-        files: List[dict] = self.client.get_files(self.device_uuid)
+    def get_file(self, filename: str) -> Optional[File]:
+        files: List[File] = self.client.get_files(self.device_uuid)
         for file in files:
-            if file["filename"] == filename:
+            if file.filename == filename:
                 return file
         return None
 
     def get_wallet_from_file(self, filename: str) -> Optional[Tuple[str, str]]:
-        file: dict = self.get_file(filename)
+        file: File = self.get_file(filename)
         if file is None:
             return None
 
-        return extract_wallet(file["content"])
+        return extract_wallet(file.content)
 
     def get_service(self, name: str) -> Optional[dict]:
         services: List[dict] = self.client.get_services(self.device_uuid)

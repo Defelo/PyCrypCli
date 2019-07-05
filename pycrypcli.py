@@ -1,6 +1,7 @@
 import getpass
 import os
 import sys
+import time
 from typing import List, Optional, Tuple, Dict
 
 from commands.command import make_commands, COMMAND_FUNCTION, command
@@ -126,6 +127,9 @@ class Frontend(Game):
         if not logged_in:
             print("You are not logged in.")
             print("Type `register` to create a new account or `login` if you already have one.")
+
+        self.presence.update(state=f"Server: {self.host}", details="Logging in", start=int(time.time()),
+                             large_image="cryptic", large_text="Cryptic")
 
         while True:
             cmd: str = None
@@ -264,7 +268,9 @@ class Frontend(Game):
         self.update_host()
         self.update_username()
         self.login_stack.append(self.device_uuid)
+        self.login_time: int = int(time.time())
         print(f"Logged in as {self.username}.")
+        self.main_loop_presence()
         while self.login_stack:
             if self.is_remote():
                 prompt: str = "\033[38;2;255;64;23m"

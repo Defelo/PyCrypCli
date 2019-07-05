@@ -95,6 +95,8 @@ def handle_bruteforce(game: Game, args: List[str]):
     d: int = duration * steps
     i: int = 0
     try:
+        game.presence.update(state=f"Logged in: {game.username}@{game.host}", details="Hacking Remote Device",
+                             end=int(time.time()) + duration, large_image="cryptic", large_text="Cryptic")
         for i in range(d):
             progress: int = int(i / d * width)
             j = i // steps
@@ -107,6 +109,7 @@ def handle_bruteforce(game: Game, args: List[str]):
         print(f"\rBruteforcing {i // 60:02d}:{i % 60:02d} [" + "=" * width + ">] (100%) ")
     except KeyboardInterrupt:
         print()
+    game.main_loop_presence()
     stop_bruteforce(game, service)
 
 

@@ -1,4 +1,7 @@
+import re
 from typing import List, Optional, Tuple
+
+from pypresence import Presence
 
 from client import Client
 from game_objects import Device, File
@@ -9,12 +12,22 @@ class Game:
     def __init__(self, server: str):
         self.client: Client = Client(server)
         self.session_token: str = None
+        self.host: str = re.match(r"^wss?://(.+)$", server).group(1).split("/")[0]
 
         self.device_uuid: str = None
         self.hostname: str = None
         self.username: str = None
 
         self.last_portscan: Tuple[str, List[dict]] = None
+
+        self.login_time: int = None
+
+        self.presence: Presence = Presence(client_id="596676243144048640")
+        self.presence.connect()
+
+    def main_loop_presence(self):
+        self.presence.update(state=f"Logged in: {self.username}@{self.host}", details="in Cryptic Terminal",
+                             start=self.login_time, large_image="cryptic", large_text="Cryptic")
 
     def update_username(self):
         self.username: str = self.client.info()["name"]

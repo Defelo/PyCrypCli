@@ -5,7 +5,7 @@ from uuid import uuid4
 from websocket import WebSocket, create_connection
 
 from exceptions import *
-from game_objects import Device, File, Wallet
+from game_objects import Device, File, Wallet, Service, Miner
 from timer import Timer
 
 
@@ -207,17 +207,18 @@ class Client:
             "usage": usage
         })
 
-    def create_service(self, device_uuid: str, name: str, extra: dict) -> dict:
-        return self.microservice("service", ["create"], {
+    def create_service(self, device_uuid: str, name: str, extra: dict) -> Service:
+        return Service.deserialize(self.microservice("service", ["create"], {
             "name": name,
             "device_uuid": device_uuid,
             **extra
-        })
+        }))
 
-    def get_services(self, device_uuid: str) -> List[dict]:
-        return self.microservice("service", ["list"], {
-            "device_uuid": device_uuid
-        })["services"]
+    def get_services(self, device_uuid: str) -> List[Service]:
+        return [Service.deserialize(service) for service in
+                self.microservice("service", ["list"], {
+                    "device_uuid": device_uuid
+                })["services"]]
 
     def use_service(self, device_uuid, service_uuid: str, **kwargs) -> dict:
         return self.microservice("service", ["use"], {
@@ -259,10 +260,10 @@ class Client:
             "device_uuid": device_uuid
         })["ok"]
 
-    def get_miner(self, service_uuid: str) -> dict:
-        return self.microservice("service", ["miner", "get"], {
+    def get_miner(self, service_uuid: str) -> Miner:
+        return Miner.deserialize(self.microservice("service", ["miner", "get"], {
             "service_uuid": service_uuid
-        })
+        }))
 
     def miner_power(self, service_uuid: str, power: int):
         self.microservice("service", ["miner", "power"], {

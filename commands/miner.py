@@ -3,6 +3,7 @@ from typing import List
 from commands.command import command
 from exceptions import *
 from game import Game
+from game_objects import Service, Miner
 from util import is_uuid
 
 
@@ -12,17 +13,17 @@ def handle_miner(game: Game, args: List[str]):
         print("usage: miner look|power|wallet")
         return
 
-    service: dict = game.get_service("miner")
+    service: Service = game.get_service("miner")
     if service is None:
         print("You have to create the miner service before you can use it.")
         return
 
-    miner: dict = game.client.get_miner(service["uuid"])
+    miner: Miner = game.client.get_miner(service.uuid)
 
     if args[0] == "look":
-        print("Destination wallet: " + miner["wallet"])
-        print("Running: " + ["no", "yes"][service["running"]])
-        print(f"Power: {miner['power']}%")
+        print("Destination wallet: " + miner.wallet)
+        print("Running: " + ["no", "yes"][service.running])
+        print(f"Power: {miner.power}%")
     elif args[0] == "power":
         if len(args) != 2:
             print("usage: miner power <percentage>")
@@ -32,7 +33,7 @@ def handle_miner(game: Game, args: List[str]):
             print("percentage has to be an integer between 0 and 100")
             return
 
-        game.client.miner_power(service["uuid"], int(args[1]))
+        game.client.miner_power(service.uuid, int(args[1]))
     elif args[0] == "wallet":
         if len(args) != 2:
             print("usage: miner wallet <uuid>")
@@ -43,6 +44,6 @@ def handle_miner(game: Game, args: List[str]):
             return
 
         try:
-            game.client.miner_wallet(service["uuid"], args[1])
+            game.client.miner_wallet(service.uuid, args[1])
         except WalletNotFoundException:
             print("Wallet does not exist.")

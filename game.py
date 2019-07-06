@@ -5,7 +5,7 @@ from pypresence import Presence
 
 from client import Client
 from exceptions import FileNotFoundException, InvalidWalletFile
-from game_objects import Device, File, Wallet
+from game_objects import Device, File, Wallet, Service
 from util import extract_wallet
 
 
@@ -19,7 +19,7 @@ class Game:
         self.hostname: str = None
         self.username: str = None
 
-        self.last_portscan: Tuple[str, List[dict]] = None
+        self.last_portscan: Tuple[str, List[Service]] = None
 
         self.login_time: int = None
 
@@ -64,10 +64,10 @@ class Game:
             raise InvalidWalletFile
         return self.client.get_wallet(*wallet)
 
-    def get_service(self, name: str) -> Optional[dict]:
-        services: List[dict] = self.client.get_services(self.device_uuid)
+    def get_service(self, name: str) -> Optional[Service]:
+        services: List[Service] = self.client.get_services(self.device_uuid)
         for service in services:
-            if service["name"] == name:
+            if service.name == name:
                 return service
         return None
 
@@ -77,8 +77,8 @@ class Game:
     def remote_login(self, uuid: str):
         pass
 
-    def update_last_portscan(self, scan: Tuple[str, List[dict]]):
-        self.last_portscan: Tuple[str, List[dict]] = scan
+    def update_last_portscan(self, scan: Tuple[str, List[Service]]):
+        self.last_portscan: Tuple[str, List[Service]] = scan
 
-    def get_last_portscan(self) -> Tuple[str, List[dict]]:
+    def get_last_portscan(self) -> Tuple[str, List[Service]]:
         return self.last_portscan

@@ -81,3 +81,44 @@ class Wallet:
             data.get("user_uuid"),
             [Transaction.deserialize(transaction) for transaction in data.get("transactions")]
         )
+
+
+class Service:
+    def __init__(self, uuid: str, device: str, owner: str, name: str, running: bool, running_port: int,
+                 part_owner: str):
+        self.uuid: str = uuid
+        self.device: str = device
+        self.owner: str = owner
+        self.name: str = name
+        self.running: bool = running
+        self.running_port: int = running_port
+        self.part_owner: str = part_owner
+
+    @staticmethod
+    def deserialize(data: dict) -> 'Service':
+        return Service(
+            data.get("uuid"),
+            data.get("device"),
+            data.get("owner"),
+            data.get("name"),
+            data.get("running"),
+            data.get("running_port"),
+            data.get("part_owner")
+        )
+
+
+class Miner:
+    def __init__(self, uuid: str, wallet: str, started: int, power: int):
+        self.uuid: str = uuid
+        self.wallet: str = wallet
+        self.started: int = started
+        self.power: int = power
+
+    @staticmethod
+    def deserialize(data: dict) -> 'Miner':
+        return Miner(
+            data.get("uuid"),
+            data.get("wallet"),
+            data.get("started"),
+            data.get("power")
+        )

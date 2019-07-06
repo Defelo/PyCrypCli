@@ -31,6 +31,11 @@ class InvalidLoginException(Exception):
         super().__init__("Invalid Login Credentials")
 
 
+class InvalidWalletFile(Exception):
+    def __init__(self):
+        super().__init__("Invalid wallet file")
+
+
 class UnknownMicroserviceException(Exception):
     def __init__(self, ms: str):
         super().__init__("Unknown Microservice: " + ms)

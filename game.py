@@ -4,7 +4,8 @@ from typing import List, Optional, Tuple
 from pypresence import Presence
 
 from client import Client
-from game_objects import Device, File
+from exceptions import FileNotFoundException, InvalidWalletFile
+from game_objects import Device, File, Wallet
 from util import extract_wallet
 
 
@@ -50,12 +51,18 @@ class Game:
                 return file
         return None
 
-    def get_wallet_from_file(self, filename: str) -> Optional[Tuple[str, str]]:
+    def get_wallet_from_file(self, filename: str) -> Wallet:
         file: File = self.get_file(filename)
         if file is None:
-            return None
+            raise FileNotFoundException
 
-        return extract_wallet(file.content)
+        return self.extract_wallet(file.content)
+
+    def extract_wallet(self, content: str) -> Wallet:
+        wallet = extract_wallet(content)
+        if wallet is None:
+            raise InvalidWalletFile
+        return self.client.get_wallet(*wallet)
 
     def get_service(self, name: str) -> Optional[dict]:
         services: List[dict] = self.client.get_services(self.device_uuid)

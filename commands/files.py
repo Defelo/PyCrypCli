@@ -1,10 +1,9 @@
-from typing import List, Tuple
+from typing import List
 
 from commands.command import command
 from exceptions import *
 from game import Game
-from game_objects import File
-from util import extract_wallet
+from game_objects import File, Wallet
 
 
 @command(["ls", "l", "dir"], "List all files")
@@ -68,27 +67,22 @@ def handle_rm(game: Game, args: List[str]):
         return
 
     content: str = file.content
-    wallet: Tuple[str, str] = extract_wallet(content)
-    if wallet is not None:
-        wallet_uuid, wallet_key = wallet
-        try:
-            amount: int = game.client.get_wallet(wallet_uuid, wallet_key)["amount"]
-            choice: str = game.ask(
-                f"\033[38;2;255;51;51mThis file contains {amount} morphcoin. "
-                f"Do you want to delete the corresponding wallet? [yes|no] \033[0m",
-                ["yes", "no"]
-            )
-            if choice == "yes":
-                game.client.delete_wallet(wallet_uuid, wallet_key)
-                print("The wallet has been deleted.")
-            else:
-                print("The following key might now be the only way to access your wallet.")
-                print("Note that you can't create another wallet without this key.")
-                print(content)
-        except UnknownSourceOrDestinationException:
-            pass
-        except PermissionDeniedException:
-            pass
+    try:
+        wallet: Wallet = game.extract_wallet(content)
+        choice: str = game.ask(
+            f"\033[38;2;255;51;51mThis file contains {wallet.amount} morphcoin. "
+            f"Do you want to delete the corresponding wallet? [yes|no] \033[0m",
+            ["yes", "no"]
+        )
+        if choice == "yes":
+            game.client.delete_wallet(wallet)
+            print("The wallet has been deleted.")
+        else:
+            print("The following key might now be the only way to access your wallet.")
+            print("Note that you can't create another wallet without this key.")
+            print(content)
+    except (InvalidWalletFile, UnknownSourceOrDestinationException, PermissionDeniedException):
+        pass
     game.client.remove_file(game.device_uuid, file.uuid)
 
 

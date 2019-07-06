@@ -1,11 +1,11 @@
 import time
-from typing import List, Tuple
+from typing import List
 from uuid import uuid4
 
 from websocket import WebSocket, create_connection
 
 from exceptions import *
-from game_objects import Device, File
+from game_objects import Device, File, Wallet
 from timer import Timer
 
 
@@ -175,15 +175,14 @@ class Client:
             "file_uuid": file_uuid
         })
 
-    def create_wallet(self) -> Tuple[str, str]:
-        response: dict = self.microservice("currency", ["create"], {})
-        return response["source_uuid"], response["key"]
+    def create_wallet(self) -> Wallet:
+        return Wallet.deserialize({**self.microservice("currency", ["create"], {}), "transactions": []})
 
-    def get_wallet(self, wallet_uuid: str, key: str) -> dict:
-        return self.microservice("currency", ["get"], {
+    def get_wallet(self, wallet_uuid: str, key: str) -> Wallet:
+        return Wallet.deserialize({**self.microservice("currency", ["get"], {
             "source_uuid": wallet_uuid,
             "key": key
-        })["success"]
+        })["success"], "source_uuid": wallet_uuid, "key": key})
 
     def list_wallets(self) -> List[str]:
         return self.microservice("currency", ["list"], {})["wallets"]
@@ -193,16 +192,16 @@ class Client:
             "source_uuid": wallet_uuid
         })
 
-    def delete_wallet(self, wallet_uuid: str, key: str):
+    def delete_wallet(self, wallet: Wallet):
         self.microservice("currency", ["delete"], {
-            "source_uuid": wallet_uuid,
-            "key": key
+            "source_uuid": wallet.uuid,
+            "key": wallet.key
         })
 
-    def send(self, wallet_uuid: str, key: str, destination: str, amount: int, usage: str):
+    def send(self, wallet: Wallet, destination: str, amount: int, usage: str):
         self.microservice("currency", ["send"], {
-            "source_uuid": wallet_uuid,
-            "key": key,
+            "source_uuid": wallet.uuid,
+            "key": wallet.key,
             "send_amount": amount,
             "destination_uuid": destination,
             "usage": usage

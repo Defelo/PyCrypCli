@@ -5,7 +5,7 @@ from typing import Callable
 
 class Timer(Thread):
     def __init__(self, interval: float, func: Callable):
-        super().__init__()
+        super().__init__(daemon=True)
 
         self.interval: float = interval
         self.func: Callable = func

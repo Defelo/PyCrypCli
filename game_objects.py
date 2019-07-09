@@ -2,7 +2,15 @@ from datetime import datetime
 from typing import List, Optional
 
 
-class Device:
+class GameObject:
+    def __repr__(self):
+        out = "<" + self.__class__.__name__
+        for key, value in self.__dict__.items():
+            out += f" {key}={repr(value)}"
+        return out + ">"
+
+
+class Device(GameObject):
     def __init__(self, uuid: str, name: str, owner: str, power: int, powered_on: bool):
         self.uuid: str = uuid
         self.name: str = name
@@ -21,7 +29,7 @@ class Device:
         )
 
 
-class File:
+class File(GameObject):
     def __init__(self, uuid: str, device: str, filename: str, content: str):
         self.uuid: str = uuid
         self.device: str = device
@@ -38,7 +46,7 @@ class File:
         )
 
 
-class Transaction:
+class Transaction(GameObject):
     def __init__(self, time_stamp: datetime, source_uuid: str, destination_uuid: str, amount: int,
                  usage: str, origin: int):
         self.time_stamp: datetime = time_stamp
@@ -64,7 +72,7 @@ class Transaction:
         )
 
 
-class Wallet:
+class Wallet(GameObject):
     def __init__(self, uuid: str, key: str, amount: int, user: str, transactions: List[Transaction]):
         self.uuid: str = uuid
         self.key: str = key
@@ -83,7 +91,7 @@ class Wallet:
         )
 
 
-class Service:
+class Service(GameObject):
     def __init__(self, uuid: str, device: str, owner: str, name: str, running: bool, running_port: int,
                  part_owner: str):
         self.uuid: str = uuid
@@ -107,7 +115,7 @@ class Service:
         )
 
 
-class Miner:
+class Miner(GameObject):
     def __init__(self, uuid: str, wallet: str, started: int, power: int):
         self.uuid: str = uuid
         self.wallet: str = wallet

@@ -179,10 +179,10 @@ class Client:
         return Wallet.deserialize({**self.microservice("currency", ["create"], {}), "transactions": []})
 
     def get_wallet(self, wallet_uuid: str, key: str) -> Wallet:
-        return Wallet.deserialize({**self.microservice("currency", ["get"], {
+        return Wallet.deserialize(self.microservice("currency", ["get"], {
             "source_uuid": wallet_uuid,
             "key": key
-        })["success"], "source_uuid": wallet_uuid, "key": key})
+        }))
 
     def list_wallets(self) -> List[str]:
         return self.microservice("currency", ["list"], {})["wallets"]

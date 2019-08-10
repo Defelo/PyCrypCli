@@ -4,10 +4,10 @@ from typing import List, Optional
 
 class GameObject:
     def __repr__(self):
-        out = "<" + self.__class__.__name__
-        for key, value in self.__dict__.items():
-            out += f" {key}={repr(value)}"
-        return out + ">"
+        out: str = self.__class__.__name__ + "("
+        out += ", ".join(key + "=" + repr(value) for key, value in self.__dict__.items())
+        out += ")"
+        return out
 
 
 class Device(GameObject):

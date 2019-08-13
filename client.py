@@ -19,6 +19,7 @@ class Client:
         self.websocket: WebSocket = None
         self.timer: Timer = None
         self.waiting_for_response: bool = False
+        self.notifications: List[dict] = []
 
     def init(self):
         self.websocket: WebSocket = create_connection(self.server)
@@ -37,11 +38,16 @@ class Client:
             time.sleep(0.01)
         self.waiting_for_response: bool = True
         self.websocket.send(json.dumps(command))
-        response: dict = json.loads(self.websocket.recv())
+        while True:
+            response: dict = json.loads(self.websocket.recv())
+            if "ms" not in command or "data" in response:
+                break
+            else:
+                self.notifications.append(response)
         self.waiting_for_response: bool = False
         return response
 
-    def microservice(self, ms: str, endpoint: List[str], data: dict) -> dict:
+    def microservice(self, ms: str, endpoint: List[str], data: dict, *, ignore_errors=False) -> dict:
         response: dict = self.request({
             "ms": ms,
             "endpoint": endpoint,
@@ -59,7 +65,7 @@ class Client:
             raise InvalidServerResponseException(response)
 
         data: dict = response["data"]
-        if "error" in data:
+        if "error" in data and not ignore_errors:
             error: str = data["error"]
             for exception in MicroserviceException.__subclasses__():
                 if exception.error == error:

@@ -129,14 +129,7 @@ class Frontend(Game):
         if not logged_in:
             print("You are not logged in.")
             print("Type `register` to create a new account or `login` if you already have one.")
-
-        self.presence.update(
-            state=f"Server: {self.host}",
-            details="Logging in",
-            start=int(time.time()),
-            large_image="cryptic",
-            large_text="Cryptic",
-        )
+            self.login_loop_presence()
 
         while True:
             cmd: str = ""
@@ -252,6 +245,7 @@ class Frontend(Game):
             self.update_host(self.login_stack[-1])
         else:
             self.logout()
+            self.login_loop_presence()
 
     @command(["help"], "Show a list of available commands")
     def handle_main_help(self, *_):

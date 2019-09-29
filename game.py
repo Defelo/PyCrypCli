@@ -1,4 +1,5 @@
 import re
+import time
 from typing import List, Optional, Tuple
 
 from pypresence import Presence
@@ -31,6 +32,15 @@ class Game:
             state=f"Logged in: {self.username}@{self.host}",
             details="in Cryptic Terminal",
             start=self.login_time,
+            large_image="cryptic",
+            large_text="Cryptic",
+        )
+
+    def login_loop_presence(self):
+        self.presence.update(
+            state=f"Server: {self.host}",
+            details="Logging in",
+            start=int(time.time()),
             large_image="cryptic",
             large_text="Cryptic",
         )

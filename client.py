@@ -74,11 +74,11 @@ class Client:
         if "error" in response:
             self.close()
             error: str = response["error"]
-            if error.startswith("password invalid (condition:"):
+            if error == "invalid password":
                 raise WeakPasswordException()
             if error == "username already exists":
                 raise UsernameAlreadyExistsException()
-            if error == "email invalid":
+            if error == "invalid email":
                 raise InvalidEmailException()
             raise InvalidServerResponseException(response)
         if "token" not in response:
@@ -93,7 +93,7 @@ class Client:
         if "error" in response:
             self.close()
             error: str = response["error"]
-            if error == "permission denied":
+            if error == "permissions denied":
                 raise InvalidLoginException()
             raise InvalidServerResponseException(response)
         if "token" not in response:

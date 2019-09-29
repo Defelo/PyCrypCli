@@ -78,10 +78,7 @@ def handle_bruteforce(game: Game, args: List[str]):
         return
 
     try:
-        game.client.bruteforce_attack(
-            game.device_uuid, service.uuid,
-            target_device, target_service
-        )
+        game.client.bruteforce_attack(game.device_uuid, service.uuid, target_device, target_service)
     except ServiceNotFoundException:
         print("The target service does not exist.")
         return
@@ -95,14 +92,19 @@ def handle_bruteforce(game: Game, args: List[str]):
     d: int = duration * steps
     i: int = 0
     try:
-        game.presence.update(state=f"Logged in: {game.username}@{game.host}", details="Hacking Remote Device",
-                             end=int(time.time()) + duration, large_image="cryptic", large_text="Cryptic")
+        game.presence.update(
+            state=f"Logged in: {game.username}@{game.host}",
+            details="Hacking Remote Device",
+            end=int(time.time()) + duration,
+            large_image="cryptic",
+            large_text="Cryptic",
+        )
         for i in range(d):
             progress: int = int(i / d * width)
             j = i // steps
-            text: str = f"\rBruteforcing {j // 60:02d}:{j % 60:02d} " + \
-                        "[" + "=" * progress + ">" + " " * (width - progress) + "] " + \
-                        f"({i / d * 100:.1f}%) "
+            text: str = f"\rBruteforcing {j // 60:02d}:{j % 60:02d} " + "[" + "=" * progress + ">" + " " * (
+                width - progress
+            ) + "] " + f"({i / d * 100:.1f}%) "
             print(end=text, flush=True)
             time.sleep(1 / steps)
         i: int = (i + 1) // steps
@@ -156,8 +158,12 @@ def handle_service(game: Game, args: List[str]):
 
             try:
                 wallet_uuid: str = game.get_wallet_from_file(args[2]).uuid
-            except (FileNotFoundException, InvalidWalletFile,
-                    UnknownSourceOrDestinationException, PermissionDeniedException):
+            except (
+                FileNotFoundException,
+                InvalidWalletFile,
+                UnknownSourceOrDestinationException,
+                PermissionDeniedException,
+            ):
                 if is_uuid(args[2]):
                     wallet_uuid: str = args[2]
                 else:

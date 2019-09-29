@@ -72,7 +72,7 @@ def handle_rm(game: Game, args: List[str]):
         choice: str = game.ask(
             f"\033[38;2;255;51;51mThis file contains {wallet.amount} morphcoin. "
             f"Do you want to delete the corresponding wallet? [yes|no] \033[0m",
-            ["yes", "no"]
+            ["yes", "no"],
         )
         if choice == "yes":
             game.client.delete_wallet(wallet)

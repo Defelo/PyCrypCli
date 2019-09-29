@@ -19,14 +19,8 @@ class Device(GameObject):
         self.powered_on: bool = powered_on
 
     @staticmethod
-    def deserialize(data: dict) -> 'Device':
-        return Device(
-            data.get("uuid"),
-            data.get("name"),
-            data.get("owner"),
-            data.get("power"),
-            data.get("powered_on")
-        )
+    def deserialize(data: dict) -> "Device":
+        return Device(data.get("uuid"), data.get("name"), data.get("owner"), data.get("power"), data.get("powered_on"))
 
 
 class File(GameObject):
@@ -37,18 +31,14 @@ class File(GameObject):
         self.content: str = content
 
     @staticmethod
-    def deserialize(data: dict) -> 'File':
-        return File(
-            data.get("uuid"),
-            data.get("device"),
-            data.get("filename"),
-            data.get("content")
-        )
+    def deserialize(data: dict) -> "File":
+        return File(data.get("uuid"), data.get("device"), data.get("filename"), data.get("content"))
 
 
 class Transaction(GameObject):
-    def __init__(self, time_stamp: datetime, source_uuid: str, destination_uuid: str, amount: int,
-                 usage: str, origin: int):
+    def __init__(
+        self, time_stamp: datetime, source_uuid: str, destination_uuid: str, amount: int, usage: str, origin: int
+    ):
         self.time_stamp: datetime = time_stamp
         self.source_uuid: str = source_uuid
         self.destination_uuid: str = destination_uuid
@@ -57,7 +47,7 @@ class Transaction(GameObject):
         self.origin: int = origin
 
     @staticmethod
-    def deserialize(data: dict) -> 'Transaction':
+    def deserialize(data: dict) -> "Transaction":
         time_stamp: Optional[str] = data.get("time_stamp")
         if time_stamp is not None:
             time_stamp: datetime = datetime.fromisoformat(time_stamp)
@@ -68,7 +58,7 @@ class Transaction(GameObject):
             data.get("destination_uuid"),
             data.get("send_amount"),
             data.get("usage"),
-            data.get("origin")
+            data.get("origin"),
         )
 
 
@@ -81,19 +71,20 @@ class Wallet(GameObject):
         self.transactions: List[Transaction] = transactions
 
     @staticmethod
-    def deserialize(data: dict) -> 'Wallet':
+    def deserialize(data: dict) -> "Wallet":
         return Wallet(
             data.get("source_uuid"),
             data.get("key"),
             data.get("amount"),
             data.get("user_uuid"),
-            [Transaction.deserialize(transaction) for transaction in data.get("transactions")]
+            [Transaction.deserialize(transaction) for transaction in data.get("transactions")],
         )
 
 
 class Service(GameObject):
-    def __init__(self, uuid: str, device: str, owner: str, name: str, running: bool, running_port: int,
-                 part_owner: str):
+    def __init__(
+        self, uuid: str, device: str, owner: str, name: str, running: bool, running_port: int, part_owner: str
+    ):
         self.uuid: str = uuid
         self.device: str = device
         self.owner: str = owner
@@ -103,7 +94,7 @@ class Service(GameObject):
         self.part_owner: str = part_owner
 
     @staticmethod
-    def deserialize(data: dict) -> 'Service':
+    def deserialize(data: dict) -> "Service":
         return Service(
             data.get("uuid"),
             data.get("device"),
@@ -111,7 +102,7 @@ class Service(GameObject):
             data.get("name"),
             data.get("running"),
             data.get("running_port"),
-            data.get("part_owner")
+            data.get("part_owner"),
         )
 
 
@@ -123,10 +114,5 @@ class Miner(GameObject):
         self.power: int = power
 
     @staticmethod
-    def deserialize(data: dict) -> 'Miner':
-        return Miner(
-            data.get("uuid"),
-            data.get("wallet"),
-            data.get("started"),
-            data.get("power")
-        )
+    def deserialize(data: dict) -> "Miner":
+        return Miner(data.get("uuid"), data.get("wallet"), data.get("started"), data.get("power"))

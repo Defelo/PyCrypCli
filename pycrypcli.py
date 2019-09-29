@@ -16,7 +16,9 @@ except ImportError:
 SERVER: str = "wss://ws.cryptic-game.net/"
 if len(sys.argv) > 1:
     SERVER: str = sys.argv[1]
-    if not SERVER.startswith("wss://") and not SERVER.startswith("ws://"):
+    if SERVER.lower() == "test":
+        SERVER: str = "wss://ws.test.cryptic-game.net/"
+    elif not SERVER.startswith("wss://") and not SERVER.startswith("ws://"):
         SERVER: str = "ws://" + SERVER
 
 
@@ -48,7 +50,7 @@ class Frontend(Game):
         readline.parse_and_bind("tab: complete")
         readline.set_completer(self.completer)
         readline.set_completer_delims(" ")
-        self.override_completions: List[str] = None
+        self.override_completions: Optional[List[str]] = None
 
     def get_filenames(self) -> List[str]:
         return [file.filename for file in self.client.get_files(self.device_uuid)]
@@ -106,7 +108,7 @@ class Frontend(Game):
         while True:
             self.override_completions: List[str] = options
             choice: str = input(prompt).strip()
-            self.override_completions: List[str] = None
+            self.override_completions: Optional[List[str]] = None
             if choice in options:
                 return choice
             print(f"'{choice}' is not one of the following:", ", ".join(options))
@@ -128,11 +130,16 @@ class Frontend(Game):
             print("You are not logged in.")
             print("Type `register` to create a new account or `login` if you already have one.")
 
-        self.presence.update(state=f"Server: {self.host}", details="Logging in", start=int(time.time()),
-                             large_image="cryptic", large_text="Cryptic")
+        self.presence.update(
+            state=f"Server: {self.host}",
+            details="Logging in",
+            start=int(time.time()),
+            large_image="cryptic",
+            large_text="Cryptic",
+        )
 
         while True:
-            cmd: str = None
+            cmd: str = ""
             try:
                 cmd: str = input("$ ").strip()
                 if not cmd:
@@ -302,14 +309,18 @@ class Frontend(Game):
 
 
 def main():
-    print("""\033[32m\033[1m
+    print(
+        "\033[32m\033[1m"
+        + r"""
        ______                 __  _     
       / ____/______  ______  / /_(_)____
      / /   / ___/ / / / __ \/ __/ / ___/
     / /___/ /  / /_/ / /_/ / /_/ / /__  
     \____/_/   \__, / .___/\__/_/\___/  
               /____/_/                  
-\033[0m""")
+"""
+        + "\033[0m"
+    )
     print("Python Cryptic Game Client (https://github.com/Defelo/PyCrypCli)")
     print("You can always type `help` for a list of available commands.")
 
@@ -317,5 +328,5 @@ def main():
     frontend.login_loop()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -42,7 +42,7 @@ class Game:
         if device_uuid is None:
             devices: List[Device] = self.client.get_devices()
             if not devices:
-                devices: List[Device] = [self.client.create_device()]
+                devices: List[Device] = [self.client.create_starter_device()]
             self.hostname: str = devices[0].name
             self.device_uuid: str = devices[0].uuid
         else:

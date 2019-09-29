@@ -40,10 +40,10 @@ class Client:
         self.websocket.send(json.dumps(command))
         while True:
             response: dict = json.loads(self.websocket.recv())
-            if "ms" not in command or "data" in response:
-                break
-            else:
+            if "notify-id" in response:
                 self.notifications.append(response)
+            else:
+                break
         self.waiting_for_response: bool = False
         return response
 

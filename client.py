@@ -237,7 +237,7 @@ class Client:
     def get_miner(self, service_uuid: str) -> Miner:
         return Miner.deserialize(self.microservice("service", ["miner", "get"], {"service_uuid": service_uuid}))
 
-    def miner_power(self, service_uuid: str, power: int):
+    def miner_power(self, service_uuid: str, power: float):
         self.microservice("service", ["miner", "power"], {"service_uuid": service_uuid, "power": power})
 
     def miner_wallet(self, service_uuid: str, wallet_uuid: str):

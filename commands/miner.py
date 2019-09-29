@@ -23,17 +23,21 @@ def handle_miner(game: Game, args: List[str]):
     if args[0] == "look":
         print("Destination wallet: " + miner.wallet)
         print("Running: " + ["no", "yes"][service.running])
-        print(f"Power: {miner.power}%")
+        print(f"Power: {miner.power * 100}%")
     elif args[0] == "power":
         if len(args) != 2:
             print("usage: miner power <percentage>")
             return
 
-        if not args[1].isnumeric() or not 0 <= int(args[1]) <= 100:
+        try:
+            power: float = float(args[1]) / 100
+            if not 0 <= power <= 1:
+                raise ValueError
+        except ValueError:
             print("percentage has to be an integer between 0 and 100")
             return
 
-        game.client.miner_power(service.uuid, int(args[1]))
+        game.client.miner_power(service.uuid, power)
     elif args[0] == "wallet":
         if len(args) != 2:
             print("usage: miner wallet <uuid>")

@@ -107,11 +107,11 @@ class Service(GameObject):
 
 
 class Miner(GameObject):
-    def __init__(self, uuid: str, wallet: str, started: int, power: int):
+    def __init__(self, uuid: str, wallet: str, started: int, power: float):
         self.uuid: str = uuid
         self.wallet: str = wallet
         self.started: int = started
-        self.power: int = power
+        self.power: float = power
 
     @staticmethod
     def deserialize(data: dict) -> "Miner":

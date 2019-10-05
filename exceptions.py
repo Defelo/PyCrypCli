@@ -31,6 +31,11 @@ class InvalidLoginException(Exception):
         super().__init__("Invalid Login Credentials")
 
 
+class PermissionsDeniedException(Exception):
+    def __init__(self):
+        super().__init__("Permissions Denied")
+
+
 class InvalidWalletFile(Exception):
     def __init__(self):
         super().__init__("Invalid wallet file")

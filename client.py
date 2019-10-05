@@ -33,11 +33,15 @@ class Client:
         self.websocket.close()
         self.websocket = None
 
-    def request(self, command: dict) -> dict:
+    def request(self, command: dict, no_response: bool = False) -> dict:
+        assert self.websocket
         while self.waiting_for_response:
             time.sleep(0.01)
         self.waiting_for_response: bool = True
         self.websocket.send(json.dumps(command))
+        if no_response:
+            self.waiting_for_response: bool = False
+            return {}
         while True:
             response: dict = json.loads(self.websocket.recv())
             if "notify-id" in response:
@@ -116,6 +120,18 @@ class Client:
             raise InvalidServerResponseException(response)
         self.timer.start()
 
+    def change_password(self, username: str, old_password: str, new_password: str):
+        self.init()
+        response: dict = self.request(
+            {"action": "password", "name": username, "password": old_password, "new": new_password}
+        )
+        if "error" in response:
+            self.close()
+            error: str = response["error"]
+            if error == "permissions denied":
+                raise PermissionsDeniedException()
+        self.close()
+
     def logout(self):
         self.close()
 
@@ -124,6 +140,10 @@ class Client:
         if "error" in response:
             raise InvalidServerResponseException(response)
         return response
+
+    def delete_user(self):
+        self.request({"action": "delete"}, no_response=True)
+        self.close()
 
     def get_devices(self) -> List[Device]:
         return [Device.deserialize(device) for device in self.microservice("device", ["device", "all"], {})["devices"]]

@@ -1,8 +1,16 @@
 # PyCrypCli
 Python [Cryptic Game](https://github.com/cryptic-game/cryptic) Client
 
-## Installation
-`sudo pip3 install -r requirements.txt`
+## Install via pip
+```
+$ sudo pip3 install pycrypcli
+$ pycrypcli [<server>]
+```
 
-## Usage
-`python3.7 pycrypcli.py`
+## Or clone from GitHub
+```
+$ git clone https://github.com/Defelo/PyCrypCli.git
+$ cd PyCrypCli/
+$ git checkout experimental  # optional
+$ python3.7 pycrypcli.py [<server>]
+```

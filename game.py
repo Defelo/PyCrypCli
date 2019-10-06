@@ -26,7 +26,10 @@ class Game:
         self.startup_time: int = int(time.time())
 
         self.presence: Presence = Presence(client_id="596676243144048640")
-        self.presence.connect()
+        try:
+            self.presence.connect()
+        except FileNotFoundError:
+            pass
 
     def is_logged_in(self):
         return self.client.logged_in

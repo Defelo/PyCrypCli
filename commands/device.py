@@ -7,7 +7,7 @@ from game_objects import Device
 from util import is_uuid
 
 
-@command(["device"], CTX_MAIN, "Manage your devices")
+@command(["device"], CTX_MAIN | CTX_DEVICE, "Manage your devices")
 def handle_device(game: Game, _, args: List[str]):
     if not args:
         print("usage: device list|create|connect")
@@ -64,6 +64,8 @@ def handle_device(game: Game, _, args: List[str]):
             device: Device = found_devices[0]
 
         game.login_stack.append(device)
+    else:
+        print("usage: device list|create|connect")
 
 
 @command(["hostname"], CTX_DEVICE, "Show or modify the name of the device")

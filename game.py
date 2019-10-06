@@ -84,6 +84,9 @@ class Game:
 
         return self.user_uuid == self.get_device().owner
 
+    def get_hacked_devices(self) -> List[Device]:
+        return list({self.client.device_info(service.device) for service in self.client.list_part_owner()})
+
     def get_file(self, filename: str) -> Optional[File]:
         files: List[File] = self.client.get_files(self.get_device().uuid)
         for file in files:

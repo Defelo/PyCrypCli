@@ -77,6 +77,13 @@ class Frontend(Game):
                 if args[0] == "connect":
                     device_names: List[str] = [device.name for device in self.client.get_devices()]
                     return [name for name in device_names if device_names.count(name) == 1]
+        elif cmd == "remote":
+            if len(args) == 1:
+                return ["list", "connect"]
+            elif len(args) == 2:
+                if args[0] == "connect":
+                    device_names: List[str] = [device.name for device in self.get_hacked_devices()]
+                    return [name for name in device_names if device_names.count(name) == 1]
         return []
 
     def complete_command(self, text: str) -> List[str]:

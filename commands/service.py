@@ -14,7 +14,7 @@ def stop_bruteforce(game: Game, service: Service):
     target_device: str = result["target_device"]
     if result["access"]:
         if game.ask("Access granted. Do you want to connect to the device? [yes|no] ", ["yes", "no"]) == "yes":
-            handle_connect(game, CTX_DEVICE, [target_device])
+            handle_connect(game, CTX_DEVICE, ["connect", target_device])
         else:
             print(f"To connect to the device type `connect {target_device}`")
     else:
@@ -216,19 +216,51 @@ def handle_spot(game: Game, *_):
     handle_portscan(game, [device.uuid])
 
 
-@command(["connect"], CTX_MAIN | CTX_DEVICE, "Connect to a device you hacked before")
+@command(["remote"], CTX_MAIN | CTX_DEVICE, "Manage and connect to the devices you hacked before")
 def handle_connect(game: Game, _, args: List[str]):
-    if len(args) != 1:
-        print("usage: connect <device>")
+    if not args:
+        print("usage: remote list|connect")
         return
 
-    uuid: str = args[0]
-    if not is_uuid(uuid):
-        print("Invalid device")
-        return
+    if args[0] == "list":
+        devices: List[Device] = game.get_hacked_devices()
 
-    print(f"Connecting to {uuid} ...")
-    if game.client.part_owner(uuid):
-        game.remote_login(uuid)
+        if not devices:
+            print("You don't have access to any remote device.")
+        else:
+            print("Remote devices:")
+        for device in devices:
+            print(f" - [{['off', 'on'][device.powered_on]}] {device.name} (UUID: {device.uuid})")
+    elif args[0] == "connect":
+        if len(args) != 2:
+            print("usage: remote connect <name|uuid>")
+            return
+
+        name: str = args[1]
+        if is_uuid(name):
+            device: Device = game.client.device_info(name)
+            if device is None:
+                print("This device does not exist or you have no permission to access it.")
+                return
+        else:
+            found_devices: List[Device] = []
+            for device in game.get_hacked_devices():
+                if device.name == name:
+                    found_devices.append(device)
+
+            if not found_devices:
+                print(f"There is no device with the name '{name}'.")
+                return
+            elif len(found_devices) > 1:
+                print(f"There is more than one device with the name '{name}'. You need to specify its UUID.")
+                return
+
+            device: Device = found_devices[0]
+
+        print(f"Connecting to {device.name} (UUID: {device.uuid})")
+        if game.client.part_owner(device.uuid):
+            game.remote_login(device.uuid)
+        else:
+            print("This device does not exist or you have no permission to access it.")
     else:
-        print("Access denied")
+        print("usage: remote list|connect")

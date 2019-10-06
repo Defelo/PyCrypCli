@@ -303,6 +303,12 @@ class Client:
     def part_owner(self, device_uuid: str) -> bool:
         return self.microservice("service", ["part_owner"], {"device_uuid": device_uuid})["ok"]
 
+    def list_part_owner(self) -> List[Service]:
+        return [
+            Service.deserialize(service)
+            for service in self.microservice("service", ["list_part_owner"], {})["services"]
+        ]
+
     def get_miner(self, service_uuid: str) -> Miner:
         return Miner.deserialize(self.microservice("service", ["miner", "get"], {"service_uuid": service_uuid}))
 

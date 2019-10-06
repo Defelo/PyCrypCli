@@ -1,14 +1,14 @@
 from typing import List
 
-from commands.command import command
+from commands.command import command, CTX_DEVICE
 from exceptions import *
 from game import Game
 from game_objects import Service, Miner
 from util import is_uuid
 
 
-@command(["miner"], "Manager your Morphcoin miners")
-def handle_miner(game: Game, args: List[str]):
+@command(["miner"], CTX_DEVICE, "Manager your Morphcoin miners")
+def handle_miner(game: Game, _, args: List[str]):
     if len(args) not in (1, 2) or args[0] not in ("look", "power", "wallet"):
         print("usage: miner look|power|wallet")
         return

@@ -20,6 +20,7 @@ class Client:
         self.timer: Optional[Timer] = None
         self.waiting_for_response: bool = False
         self.notifications: List[dict] = []
+        self.logged_in: bool = False
 
     def init(self):
         self.websocket: WebSocket = create_connection(self.server)
@@ -32,6 +33,7 @@ class Client:
 
         self.websocket.close()
         self.websocket = None
+        self.logged_in: bool = False
 
     def request(self, command: dict, no_response: bool = False) -> dict:
         assert self.websocket
@@ -52,6 +54,8 @@ class Client:
         return response
 
     def microservice(self, ms: str, endpoint: List[str], data: dict, *, ignore_errors=False) -> dict:
+        assert self.logged_in
+
         response: dict = self.request({"ms": ms, "endpoint": endpoint, "data": data, "tag": uuid()})
 
         if "error" in response:
@@ -73,6 +77,8 @@ class Client:
         return data
 
     def register(self, username: str, email: str, password: str) -> str:
+        assert not self.logged_in
+
         self.init()
         response: dict = self.request({"action": "register", "name": username, "mail": email, "password": password})
         if "error" in response:
@@ -88,10 +94,13 @@ class Client:
         if "token" not in response:
             self.close()
             raise InvalidServerResponseException(response)
+        self.logged_in: bool = True
         self.timer.start()
         return response["token"]
 
     def login(self, username: str, password: str) -> str:
+        assert not self.logged_in
+
         self.init()
         response: dict = self.request({"action": "login", "name": username, "password": password})
         if "error" in response:
@@ -103,10 +112,13 @@ class Client:
         if "token" not in response:
             self.close()
             raise InvalidServerResponseException(response)
+        self.logged_in: bool = True
         self.timer.start()
         return response["token"]
 
     def session(self, token: str):
+        assert not self.logged_in
+
         self.init()
         response: dict = self.request({"action": "session", "token": token})
         if "error" in response:
@@ -118,9 +130,12 @@ class Client:
         if "token" not in response:
             self.close()
             raise InvalidServerResponseException(response)
+        self.logged_in: bool = True
         self.timer.start()
 
     def change_password(self, username: str, old_password: str, new_password: str):
+        assert not self.logged_in
+
         self.init()
         response: dict = self.request(
             {"action": "password", "name": username, "password": old_password, "new": new_password}
@@ -133,15 +148,31 @@ class Client:
         self.close()
 
     def logout(self):
+        assert self.logged_in
+
         self.close()
 
+    def status(self) -> dict:
+        assert not self.logged_in
+
+        self.init()
+        response: dict = self.request({"action": "status"})
+        self.close()
+        if "error" in response:
+            raise InvalidServerResponseException(response)
+        return response
+
     def info(self) -> dict:
+        assert self.logged_in
+
         response: dict = self.request({"action": "info"})
         if "error" in response:
             raise InvalidServerResponseException(response)
         return response
 
     def delete_user(self):
+        assert self.logged_in
+
         self.request({"action": "delete"}, no_response=True)
         self.close()
 
@@ -172,6 +203,24 @@ class Client:
 
     def device_info(self, device_uuid: str) -> Device:
         return Device.deserialize(self.microservice("device", ["device", "info"], {"device_uuid": device_uuid}))
+
+    def file_move(self, device_uuid: str, file_uuid: str, new_filename: str) -> File:
+        return File.deserialize(
+            self.microservice(
+                "device",
+                ["file", "move"],
+                {"device_uuid": device_uuid, "file_uuid": file_uuid, "filename": new_filename},
+            )
+        )
+
+    def file_update(self, device_uuid: str, file_uuid: str, new_content: str) -> File:
+        return File.deserialize(
+            self.microservice(
+                "device",
+                ["file", "update"],
+                {"device_uuid": device_uuid, "file_uuid": file_uuid, "content": new_content},
+            )
+        )
 
     def remove_file(self, device_uuid: str, file_uuid: str):
         self.microservice("device", ["file", "delete"], {"device_uuid": device_uuid, "file_uuid": file_uuid})

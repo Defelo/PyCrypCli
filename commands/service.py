@@ -2,7 +2,7 @@ import os
 import time
 from typing import List, Tuple
 
-from commands.command import command
+from commands.command import command, CTX_DEVICE, CTX_MAIN
 from exceptions import *
 from game import Game
 from game_objects import Device, Service
@@ -10,11 +10,11 @@ from util import is_uuid
 
 
 def stop_bruteforce(game: Game, service: Service):
-    result: dict = game.client.bruteforce_stop(game.device_uuid, service.uuid)
+    result: dict = game.client.bruteforce_stop(service.device, service.uuid)
     target_device: str = result["target_device"]
     if result["access"]:
         if game.ask("Access granted. Do you want to connect to the device? [yes|no] ", ["yes", "no"]) == "yes":
-            handle_connect(game, [target_device])
+            handle_connect(game, CTX_DEVICE, [target_device])
         else:
             print(f"To connect to the device type `connect {target_device}`")
     else:
@@ -68,7 +68,7 @@ def handle_bruteforce(game: Game, args: List[str]):
         print("You have to create a bruteforce service before you can use it.")
         return
 
-    result: dict = game.client.bruteforce_status(game.device_uuid, service.uuid)
+    result: dict = game.client.bruteforce_status(service.device, service.uuid)
     if result["running"]:
         print(f"You are already attacking a device.")
         print(f"Target device: {result['target_device']}")
@@ -78,7 +78,7 @@ def handle_bruteforce(game: Game, args: List[str]):
         return
 
     try:
-        game.client.bruteforce_attack(game.device_uuid, service.uuid, target_device, target_service)
+        game.client.bruteforce_attack(service.device, service.uuid, target_device, target_service)
     except ServiceNotFoundException:
         print("The target service does not exist.")
         return
@@ -92,7 +92,7 @@ def handle_bruteforce(game: Game, args: List[str]):
     d: int = duration * steps
     i: int = 0
     try:
-        game.presence.update(
+        game.update_presence(
             state=f"Logged in: {game.username}@{game.host}",
             details="Hacking Remote Device",
             end=int(time.time()) + duration,
@@ -130,7 +130,7 @@ def handle_portscan(game: Game, args: List[str]):
         print("You have to create a portscan service before you can use it.")
         return
 
-    result: dict = game.client.use_service(game.device_uuid, service.uuid, target_device=target)
+    result: dict = game.client.use_service(service.device, service.uuid, target_device=target)
     services: List[Service] = [Service.deserialize(s) for s in result["services"]]
     game.update_last_portscan((target, services))
     if not services:
@@ -139,8 +139,8 @@ def handle_portscan(game: Game, args: List[str]):
         print(f" - {service.name} on port {service.running_port} (UUID: {service.uuid})")
 
 
-@command(["service"], "Create or use a service")
-def handle_service(game: Game, args: List[str]):
+@command(["service"], CTX_DEVICE, "Create or use a service")
+def handle_service(game: Game, _, args: List[str]):
     if len(args) < 1 or args[0] not in ("create", "list", "delete", "bruteforce", "portscan"):
         print("usage: service create|list|delete|bruteforce|portscan")
         return
@@ -173,18 +173,18 @@ def handle_service(game: Game, args: List[str]):
             extra["wallet_uuid"] = wallet_uuid
 
         try:
-            game.client.create_service(game.device_uuid, args[1], extra)
+            game.client.create_service(game.get_device().uuid, args[1], extra)
             print("Service has been created")
         except AlreadyOwnThisServiceException:
             print("You already created this service")
         except WalletNotFoundException:
             print("Wallet does not exist.")
     elif args[0] == "list":
-        services: List[Service] = game.client.get_services(game.device_uuid)
-        if services:
-            print("Services:")
-        else:
+        services: List[Service] = game.client.get_services(game.get_device().uuid)
+        if not services:
             print("There are no services on this device.")
+        else:
+            print("Services:")
         for service in services:
             line: str = f" - {service.name}"
             if service.running_port is not None:
@@ -200,7 +200,7 @@ def handle_service(game: Game, args: List[str]):
             print(f"The service '{args[1]}' could not be found on this device")
             return
 
-        game.client.delete_service(game.device_uuid, service.uuid)
+        game.client.delete_service(service.device, service.uuid)
 
     elif args[0] == "bruteforce":
         handle_bruteforce(game, args[1:])
@@ -208,7 +208,7 @@ def handle_service(game: Game, args: List[str]):
         handle_portscan(game, args[1:])
 
 
-@command(["spot"], "Find a random device in the network")
+@command(["spot"], CTX_DEVICE, "Find a random device in the network")
 def handle_spot(game: Game, *_):
     device: Device = game.client.spot()
     print(f"Name: '{device.name}'")
@@ -216,8 +216,8 @@ def handle_spot(game: Game, *_):
     handle_portscan(game, [device.uuid])
 
 
-@command(["connect"], "Connect to a device you hacked before")
-def handle_connect(game: Game, args: List[str]):
+@command(["connect"], CTX_MAIN | CTX_DEVICE, "Connect to a device you hacked before")
+def handle_connect(game: Game, _, args: List[str]):
     if len(args) != 1:
         print("usage: connect <device>")
         return

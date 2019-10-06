@@ -1,20 +1,20 @@
 from typing import List
 
-from commands.command import command
+from commands.command import command, CTX_DEVICE
 from exceptions import *
 from game import Game
 from game_objects import File, Wallet
 
 
-@command(["ls", "l", "dir"], "List all files")
+@command(["ls", "l", "dir"], CTX_DEVICE, "List all files")
 def handle_ls(game: Game, *_):
-    files: List[File] = game.client.get_files(game.device_uuid)
+    files: List[File] = game.client.get_files(game.get_device().uuid)
     for file in files:
         print(file.filename)
 
 
-@command(["touch"], "Create a new file with given content")
-def handle_touch(game: Game, args: List[str]):
+@command(["touch"], CTX_DEVICE, "Create a new file with given content")
+def handle_touch(game: Game, _, args: List[str]):
     if not args:
         print("usage: touch <filename> [content]")
         return
@@ -27,16 +27,15 @@ def handle_touch(game: Game, args: List[str]):
     if len(filename) > 64:
         print("Filename cannot be longer than 64 characters.")
 
-    if game.get_file(filename) is not None:
-        print(f"File `{filename}` already exists.")
-        handle_rm(game, [filename])
+    file: File = game.get_file(filename)
+    if file is not None:
+        game.client.file_update(file.device, file.uuid, content)
+    else:
+        game.client.create_file(game.get_device().uuid, filename, content)
 
-    if game.get_file(filename) is None:
-        game.client.create_file(game.device_uuid, filename, content)
 
-
-@command(["cat"], "Print the content of a file")
-def handle_cat(game: Game, args: List[str]):
+@command(["cat"], CTX_DEVICE, "Print the content of a file")
+def handle_cat(game: Game, _, args: List[str]):
     if not args:
         print("usage: cat <filename>")
         return
@@ -50,8 +49,8 @@ def handle_cat(game: Game, args: List[str]):
     print(file.content)
 
 
-@command(["rm"], "Remove a file")
-def handle_rm(game: Game, args: List[str]):
+@command(["rm"], CTX_DEVICE, "Remove a file")
+def handle_rm(game: Game, _, args: List[str]):
     if not args:
         print("usage: rm <filename>")
         return
@@ -79,15 +78,15 @@ def handle_rm(game: Game, args: List[str]):
             print("The wallet has been deleted.")
         else:
             print("The following key might now be the only way to access your wallet.")
-            print("Note that you can't create another wallet without this key.")
             print(content)
     except (InvalidWalletFile, UnknownSourceOrDestinationException, PermissionDeniedException):
         pass
-    game.client.remove_file(game.device_uuid, file.uuid)
+
+    game.client.remove_file(file.device, file.uuid)
 
 
-@command(["cp"], "Create a copy of a file")
-def handle_cp(game: Game, args: List[str]):
+@command(["cp"], CTX_DEVICE, "Create a copy of a file")
+def handle_cp(game: Game, _, args: List[str]):
     if len(args) != 2:
         print("usage: cp <source> <destination>")
         return
@@ -106,15 +105,14 @@ def handle_cp(game: Game, args: List[str]):
         return
 
     if game.get_file(destination) is not None:
-        print(f"File `{destination}` already exists.")
-        handle_rm(game, [destination])
+        print(f"The file could not be copied because a file with the name '{destination}' already exists.")
+        return
 
-    if game.get_file(destination) is None:
-        game.client.create_file(game.device_uuid, destination, file.content)
+    game.client.create_file(file.device, destination, file.content)
 
 
-@command(["mv"], "Rename a file")
-def handle_mv(game: Game, args: List[str]):
+@command(["mv"], CTX_DEVICE, "Rename a file")
+def handle_mv(game: Game, _, args: List[str]):
     if len(args) != 2:
         print("usage: mv <source> <destination>")
         return
@@ -132,10 +130,7 @@ def handle_mv(game: Game, args: List[str]):
         print("File does not exist.")
         return
 
-    if game.get_file(destination) is not None:
-        print(f"File `{destination}` already exists.")
-        handle_rm(game, [destination])
-
-    if game.get_file(destination) is None:
-        game.client.create_file(game.device_uuid, destination, file.content)
-        game.client.remove_file(game.device_uuid, file.uuid)
+    try:
+        game.client.file_move(file.device, file.uuid, destination)
+    except FileAlreadyExistsException:
+        print(f"The file could not be renamed because a file with the name '{destination}' already exists.")

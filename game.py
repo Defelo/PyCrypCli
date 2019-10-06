@@ -2,7 +2,7 @@ import re
 import time
 from typing import List, Optional, Tuple
 
-from pypresence import Presence
+from pypresence import Presence, PyPresenceException
 
 from client import Client
 from exceptions import FileNotFoundException, InvalidWalletFile
@@ -16,55 +16,83 @@ class Game:
         self.session_token: Optional[str] = None
         self.host: str = re.match(r"^wss?://(.+)$", server).group(1).split("/")[0]
 
-        self.device_uuid: Optional[str] = None
-        self.hostname: Optional[str] = None
         self.username: Optional[str] = None
+        self.user_uuid: Optional[str] = None
+        self.login_stack: List[Device] = []
 
         self.last_portscan: Optional[Tuple[str, List[Service]]] = None
 
         self.login_time: Optional[int] = None
+        self.startup_time: int = int(time.time())
 
         self.presence: Presence = Presence(client_id="596676243144048640")
         self.presence.connect()
 
+    def is_logged_in(self):
+        return self.client.logged_in
+
+    def update_presence(
+        self,
+        state: str = None,
+        details: str = None,
+        start: int = None,
+        end: int = None,
+        large_image: str = None,
+        large_text: str = None,
+    ):
+        try:
+            self.presence.update(
+                state=state, details=details, start=start, end=end, large_image=large_image, large_text=large_text
+            )
+        except PyPresenceException:
+            pass
+
     def main_loop_presence(self):
-        self.presence.update(
+        self.update_presence(
             state=f"Logged in: {self.username}@{self.host}",
             details="in Cryptic Terminal",
-            start=self.login_time,
+            start=self.startup_time,
             large_image="cryptic",
             large_text="Cryptic",
         )
 
     def login_loop_presence(self):
-        self.presence.update(
+        self.update_presence(
             state=f"Server: {self.host}",
             details="Logging in",
-            start=int(time.time()),
+            start=self.startup_time,
             large_image="cryptic",
             large_text="Cryptic",
         )
 
     def update_username(self):
-        self.username: str = self.client.info()["name"]
+        result: dict = self.client.info()
+        self.username: str = result["name"]
+        self.user_uuid: str = result["uuid"]
 
-    def update_host(self, device_uuid: str = None):
-        if device_uuid is None:
-            devices: List[Device] = self.client.get_devices()
-            if not devices:
-                devices: List[Device] = [self.client.create_starter_device()]
-            self.hostname: str = devices[0].name
-            self.device_uuid: str = devices[0].uuid
-        else:
-            self.device_uuid: str = device_uuid
-            self.hostname: str = self.client.device_info(device_uuid).name
+    def update_host(self):
+        if self.login_stack:
+            self.login_stack[-1] = self.client.device_info(self.login_stack[-1].uuid)
+
+    def get_device(self) -> Device:
+        assert self.login_stack
+
+        return self.login_stack[-1]
+
+    def is_local_device(self) -> bool:
+        assert self.login_stack
+
+        return self.user_uuid == self.get_device().owner
 
     def get_file(self, filename: str) -> Optional[File]:
-        files: List[File] = self.client.get_files(self.device_uuid)
+        files: List[File] = self.client.get_files(self.get_device().uuid)
         for file in files:
             if file.filename == filename:
                 return file
         return None
+
+    def get_filenames(self) -> List[str]:
+        return [file.filename for file in self.client.get_files(self.get_device().uuid)]
 
     def get_wallet_from_file(self, filename: str) -> Wallet:
         file: File = self.get_file(filename)
@@ -80,7 +108,7 @@ class Game:
         return self.client.get_wallet(*wallet)
 
     def get_service(self, name: str) -> Optional[Service]:
-        services: List[Service] = self.client.get_services(self.device_uuid)
+        services: List[Service] = self.client.get_services(self.get_device().uuid)
         for service in services:
             if service.name == name:
                 return service

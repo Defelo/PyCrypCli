@@ -1,14 +1,14 @@
 from typing import List
 
-from commands.command import command
+from commands.command import command, CTX_DEVICE
 from exceptions import *
 from game import Game
 from game_objects import Wallet, Transaction
 from util import is_uuid
 
 
-@command(["morphcoin"], "Manage your Morphcoin wallet")
-def handle_morphcoin(game: Game, args: List[str]):
+@command(["morphcoin"], CTX_DEVICE, "Manage your Morphcoin wallet")
+def handle_morphcoin(game: Game, _, args: List[str]):
     if not ((len(args) == 2 and args[0] in ("create", "look", "transactions", "reset")) or (args == ["list"])):
         print("usage: morphcoin create|list|look|transactions [<filename>]")
         print("       morphcoin reset <uuid>")
@@ -16,9 +16,13 @@ def handle_morphcoin(game: Game, args: List[str]):
 
     if args[0] == "create":
         filename: str = args[1]
+        if game.get_file(filename) is not None:
+            print(f"A file with the name '{filename}' already exists.")
+            return
+
         try:
             wallet: Wallet = game.client.create_wallet()
-            game.client.create_file(game.device_uuid, filename, wallet.uuid + " " + wallet.key)
+            game.client.create_file(game.get_device().uuid, filename, wallet.uuid + " " + wallet.key)
         except AlreadyOwnAWalletException:
             print("You already own a wallet")
     elif args[0] == "list":
@@ -98,8 +102,8 @@ def handle_morphcoin(game: Game, args: List[str]):
             print("Permission denied.")
 
 
-@command(["pay"], "Send Morphcoins to another wallet")
-def handle_pay(game: Game, args: List[str]):
+@command(["pay"], CTX_DEVICE, "Send Morphcoins to another wallet")
+def handle_pay(game: Game, _, args: List[str]):
     if len(args) < 3:
         print("usage: pay <filename> <receiver> <amount> [usage]")
         return

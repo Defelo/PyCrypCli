@@ -11,16 +11,15 @@ class GameObject:
 
 
 class Device(GameObject):
-    def __init__(self, uuid: str, name: str, owner: str, power: int, powered_on: bool):
+    def __init__(self, uuid: str, name: str, owner: str, powered_on: bool):
         self.uuid: str = uuid
         self.name: str = name
         self.owner: str = owner
-        self.power: int = power
         self.powered_on: bool = powered_on
 
     @staticmethod
     def deserialize(data: dict) -> "Device":
-        return Device(data.get("uuid"), data.get("name"), data.get("owner"), data.get("power"), data.get("powered_on"))
+        return Device(data.get("uuid"), data.get("name"), data.get("owner"), data.get("powered_on"))
 
 
 class File(GameObject):

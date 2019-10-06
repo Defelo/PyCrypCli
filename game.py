@@ -29,7 +29,7 @@ class Game:
         try:
             self.presence.connect()
         except FileNotFoundError:
-            pass
+            self.presence = None
 
     def is_logged_in(self):
         return self.client.logged_in
@@ -43,6 +43,8 @@ class Game:
         large_image: str = None,
         large_text: str = None,
     ):
+        if self.presence is None:
+            return
         try:
             self.presence.update(
                 state=state, details=details, start=start, end=end, large_image=large_image, large_text=large_text

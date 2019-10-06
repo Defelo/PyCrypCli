@@ -2,11 +2,11 @@ import os
 import time
 from typing import List, Tuple
 
-from commands.command import command, CTX_DEVICE, CTX_MAIN
-from exceptions import *
-from game import Game
-from game_objects import Device, Service
-from util import is_uuid
+from ..commands.command import command, CTX_DEVICE, CTX_MAIN
+from ..exceptions import *
+from ..game import Game
+from ..game_objects import Device, Service
+from ..util import is_uuid
 
 
 def stop_bruteforce(game: Game, service: Service):

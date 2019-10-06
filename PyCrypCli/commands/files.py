@@ -1,9 +1,9 @@
 from typing import List
 
-from commands.command import command, CTX_DEVICE
-from exceptions import *
-from game import Game
-from game_objects import File, Wallet
+from ..commands.command import command, CTX_DEVICE
+from ..exceptions import *
+from ..game import Game
+from ..game_objects import File, Wallet
 
 
 @command(["ls", "l", "dir"], CTX_DEVICE, "List all files")

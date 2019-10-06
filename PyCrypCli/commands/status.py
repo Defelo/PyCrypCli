@@ -1,5 +1,5 @@
-from commands.command import command, CTX_LOGIN
-from game import Game
+from ..commands.command import command, CTX_LOGIN
+from ..game import Game
 
 
 @command(["whoami"], ~CTX_LOGIN, "Print the name of the current user")

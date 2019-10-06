@@ -4,10 +4,10 @@ from typing import List, Optional, Tuple
 
 from pypresence import Presence, PyPresenceException
 
-from client import Client
-from exceptions import FileNotFoundException, InvalidWalletFile
-from game_objects import Device, File, Wallet, Service
-from util import extract_wallet
+from .client import Client
+from .exceptions import FileNotFoundException, InvalidWalletFile
+from .game_objects import Device, File, Wallet, Service
+from .util import extract_wallet
 
 
 class Game:

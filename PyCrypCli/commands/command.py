@@ -1,11 +1,10 @@
 from typing import Callable, List, Tuple, Dict
 
-from game import Game
+from ..game import Game
 
 CTX_LOGIN = 1
 CTX_MAIN = 2
 CTX_DEVICE = 4
-MODULES: List[str] = ["status", "device", "files", "morphcoin", "service", "miner"]
 
 COMMAND_FUNCTION = Callable[[Game, int, List[str]], None]
 commands: [Tuple[List[str], int, str, COMMAND_FUNCTION]] = []
@@ -20,8 +19,9 @@ def command(cmds: List[str], context: int, desc: str) -> Callable:
 
 
 def make_commands() -> Dict[int, Dict[str, Tuple[str, COMMAND_FUNCTION]]]:
-    for module in MODULES:
-        __import__(f"commands.{module}")
+    # noinspection PyUnresolvedReferences
+    from . import status, device, files, morphcoin, service, miner
+
     result: Dict[int, Dict[str, Tuple[str, COMMAND_FUNCTION]]] = {}
     for ctx in [CTX_LOGIN, CTX_MAIN, CTX_DEVICE]:
         for cmds, context, desc, func in commands:

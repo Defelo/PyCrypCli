@@ -4,9 +4,9 @@ from uuid import uuid4
 
 from websocket import WebSocket, create_connection
 
-from exceptions import *
-from game_objects import Device, File, Wallet, Service, Miner
-from timer import Timer
+from .exceptions import *
+from .game_objects import Device, File, Wallet, Service, Miner
+from .timer import Timer
 
 
 def uuid() -> str:

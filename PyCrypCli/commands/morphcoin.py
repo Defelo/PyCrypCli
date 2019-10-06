@@ -1,10 +1,10 @@
 from typing import List
 
-from commands.command import command, CTX_DEVICE
-from exceptions import *
-from game import Game
-from game_objects import Wallet, Transaction
-from util import is_uuid
+from ..commands.command import command, CTX_DEVICE
+from ..exceptions import *
+from ..game import Game
+from ..game_objects import Wallet, Transaction
+from ..util import is_uuid
 
 
 @command(["morphcoin"], CTX_DEVICE, "Manage your Morphcoin wallet")

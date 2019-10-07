@@ -1,10 +1,10 @@
 from typing import List
 
-from ..commands.command import command, CTX_DEVICE
-from ..exceptions import *
-from ..game import Game
-from ..game_objects import Service, Miner
-from ..util import is_uuid
+from PyCrypCli.commands.command import command, CTX_DEVICE
+from PyCrypCli.exceptions import *
+from PyCrypCli.game import Game
+from PyCrypCli.game_objects import Service, Miner
+from PyCrypCli.util import is_uuid
 
 
 @command(["miner"], CTX_DEVICE, "Manager your Morphcoin miners")

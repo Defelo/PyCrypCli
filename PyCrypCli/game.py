@@ -4,10 +4,10 @@ from typing import List, Optional, Tuple
 
 from pypresence import Presence, PyPresenceException
 
-from .client import Client
-from .exceptions import FileNotFoundException, InvalidWalletFile
-from .game_objects import Device, File, Wallet, Service
-from .util import extract_wallet
+from PyCrypCli.client import Client
+from PyCrypCli.exceptions import FileNotFoundException, InvalidWalletFile
+from PyCrypCli.game_objects import Device, File, Wallet, Service
+from PyCrypCli.util import extract_wallet
 
 
 class Game:

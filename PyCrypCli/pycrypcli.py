@@ -3,9 +3,9 @@ import os
 import sys
 from typing import List, Optional, Tuple, Dict
 
-from .commands.command import make_commands, COMMAND_FUNCTION, command, CTX_LOGIN, CTX_MAIN, CTX_DEVICE
-from .exceptions import *
-from .game import Game
+from PyCrypCli.commands.command import make_commands, COMMAND_FUNCTION, command, CTX_LOGIN, CTX_MAIN, CTX_DEVICE
+from PyCrypCli.exceptions import *
+from PyCrypCli.game import Game
 
 try:
     import readline
@@ -84,6 +84,21 @@ class Frontend(Game):
                 if args[0] == "connect":
                     device_names: List[str] = [device.name for device in self.get_hacked_devices()]
                     return [name for name in device_names if device_names.count(name) == 1]
+        elif cmd == "inventory":
+            if len(args) == 1:
+                return ["list", "trade"]
+            elif len(args) == 2:
+                if args[0] == "trade":
+                    return [element.element_name.replace(" ", "") for element in self.client.inventory_list()]
+        elif cmd == "shop":
+            if len(args) == 1:
+                return ["list", "buy"]
+            elif len(args) == 2:
+                if args[0] == "buy":
+                    return [name.replace(" ", "") for name in self.client.shop_list()]
+            elif len(args) == 3:
+                if args[0] == "buy":
+                    return self.get_filenames()
         return []
 
     def complete_command(self, text: str) -> List[str]:

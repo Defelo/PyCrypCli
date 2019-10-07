@@ -115,3 +115,28 @@ class Miner(GameObject):
     @staticmethod
     def deserialize(data: dict) -> "Miner":
         return Miner(data.get("uuid"), data.get("wallet"), data.get("started"), data.get("power"))
+
+
+class InventoryElement(GameObject):
+    def __init__(self, element_uuid: str, element_name: str, related_ms: str, owner: str):
+        self.element_uuid: str = element_uuid
+        self.element_name: str = element_name
+        self.related_ms: str = related_ms
+        self.owner: str = owner
+
+    @staticmethod
+    def deserialize(data: dict) -> "InventoryElement":
+        return InventoryElement(
+            data.get("element_uuid"), data.get("element_name"), data.get("related_ms"), data.get("owner")
+        )
+
+
+class ShopProduct(GameObject):
+    def __init__(self, name: str, price: int, related_ms: str):
+        self.name: str = name
+        self.price: int = price
+        self.related_ms: str = related_ms
+
+    @staticmethod
+    def deserialize(data: dict) -> "ShopProduct":
+        return ShopProduct(data.get("name"), data.get("price"), data.get("related_ms"))

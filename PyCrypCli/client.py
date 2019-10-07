@@ -4,9 +4,9 @@ from uuid import uuid4
 
 from websocket import WebSocket, create_connection
 
-from .exceptions import *
-from .game_objects import Device, File, Wallet, Service, Miner
-from .timer import Timer
+from PyCrypCli.exceptions import *
+from PyCrypCli.game_objects import Device, File, Wallet, Service, Miner, InventoryElement, ShopProduct
+from PyCrypCli.timer import Timer
 
 
 def uuid() -> str:
@@ -320,3 +320,25 @@ class Client:
 
     def delete_service(self, device_uuid: str, service_uuid: str):
         self.microservice("service", ["delete"], {"device_uuid": device_uuid, "service_uuid": service_uuid})
+
+    def inventory_list(self) -> List[InventoryElement]:
+        return [
+            InventoryElement.deserialize(element)
+            for element in self.microservice("inventory", ["inventory", "list"], {})["elements"]
+        ]
+
+    def shop_list(self) -> List[str]:
+        return self.microservice("inventory", ["shop", "list"], {})["products"]
+
+    def shop_info(self, product: str) -> ShopProduct:
+        return ShopProduct.deserialize(self.microservice("inventory", ["shop", "info"], {"product": product}))
+
+    def shop_buy(self, product: str, wallet_uuid: str, key: str) -> InventoryElement:
+        return InventoryElement.deserialize(
+            self.microservice(
+                "inventory", ["shop", "buy"], {"product": product, "wallet_uuid": wallet_uuid, "key": key}
+            )
+        )
+
+    def inventory_trade(self, element_uuid: str, target: str):
+        self.microservice("inventory", ["inventory", "trade"], {"element_uuid": element_uuid, "target": target})

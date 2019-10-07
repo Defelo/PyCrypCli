@@ -1,10 +1,10 @@
 from typing import List
 
-from ..commands.command import command, CTX_DEVICE, CTX_MAIN
-from ..exceptions import AlreadyOwnADeviceException, DeviceNotFoundException
-from ..game import Game
-from ..game_objects import Device
-from ..util import is_uuid
+from PyCrypCli.commands.command import command, CTX_DEVICE, CTX_MAIN
+from PyCrypCli.exceptions import AlreadyOwnADeviceException, DeviceNotFoundException
+from PyCrypCli.game import Game
+from PyCrypCli.game_objects import Device
+from PyCrypCli.util import is_uuid
 
 
 @command(["device"], CTX_MAIN | CTX_DEVICE, "Manage your devices")

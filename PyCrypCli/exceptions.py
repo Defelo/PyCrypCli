@@ -127,3 +127,15 @@ class ServiceCannotBeUsedException(MicroserviceException):
 
 class AttackNotRunningException(MicroserviceException):
     error: str = "attack_not_running"
+
+
+class ItemNotFoundException(MicroserviceException):
+    error: str = "item_not_found"
+
+
+class CannotTradeWithYourselfException(MicroserviceException):
+    error: str = "cannot_trade_with_yourself"
+
+
+class UserUUIDDoesNotExistException(MicroserviceException):
+    error: str = "user_uuid_does_not_exist"

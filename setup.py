@@ -12,7 +12,5 @@ setup(
     long_description_content_type="text/markdown",
     packages=find_packages(),
     install_requires=open("requirements.txt").read().splitlines(),
-    entry_points={
-        'console_scripts': ['pycrypcli=PyCrypCli.pycrypcli:main']
-    }
+    entry_points={"console_scripts": ["pycrypcli=PyCrypCli.pycrypcli:main"]},
 )

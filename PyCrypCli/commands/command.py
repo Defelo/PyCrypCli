@@ -1,6 +1,6 @@
 from typing import Callable, List, Tuple, Dict
 
-from ..game import Game
+from PyCrypCli.game import Game
 
 CTX_LOGIN = 1
 CTX_MAIN = 2
@@ -20,7 +20,7 @@ def command(cmds: List[str], context: int, desc: str) -> Callable:
 
 def make_commands() -> Dict[int, Dict[str, Tuple[str, COMMAND_FUNCTION]]]:
     # noinspection PyUnresolvedReferences
-    from . import status, device, files, morphcoin, service, miner
+    from PyCrypCli.commands import status, device, files, morphcoin, service, miner, inventory, shop
 
     result: Dict[int, Dict[str, Tuple[str, COMMAND_FUNCTION]]] = {}
     for ctx in [CTX_LOGIN, CTX_MAIN, CTX_DEVICE]:

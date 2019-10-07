@@ -1,8 +1,9 @@
 from setuptools import setup, find_packages
+from os import environ
 
 setup(
     name="PyCrypCli",
-    version="1.0.0.dev0",
+    version=environ["VERSION"],
     url="https://github.com/Defelo/PyCrypCli",
     author="Defelo",
     author_email="elodef42@gmail.com",

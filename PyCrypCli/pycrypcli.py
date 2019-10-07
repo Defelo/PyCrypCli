@@ -30,9 +30,9 @@ def show_help(commands):
 
 
 class Frontend(Game):
-    def __init__(self, server: str, session_file: List[str]):
+    def __init__(self, server: str, config_file: List[str]):
         super().__init__(server)
-        self.session_file: List[str] = session_file
+        self.config_file: List[str] = config_file
 
         self.history: List[str] = []
 
@@ -117,32 +117,39 @@ class Frontend(Game):
         self.login_stack.append(self.client.device_info(uuid))
         self.update_host()
 
-    def load_session(self):
-        try:
-            content: dict = json.load(open(os.path.join(*self.session_file)))
-        except FileNotFoundError:
-            return
-        except json.JSONDecodeError:
-            return
-
-        if "token" not in content:
-            return
-
-        self.session_token: str = content["token"]
-        self.client.session(self.session_token)
-
-    def save_session(self):
-        for i in range(1, len(self.session_file)):
-            path: str = os.path.join(*self.session_file[:i])
+    def read_config_file(self) -> dict:
+        for i in range(1, len(self.config_file)):
+            path: str = os.path.join(*self.config_file[:i])
             if not os.path.exists(path):
                 os.mkdir(path)
-        path: str = os.path.join(*self.session_file)
+        path: str = os.path.join(*self.config_file)
+        if not os.path.exists(path):
+            self.write_config_file({"servers": {}})
+        return json.load(open(path))
+
+    def write_config_file(self, config: dict):
+        path: str = os.path.join(*self.config_file)
         with open(path, "w") as file:
-            json.dump({"token": self.session_token}, file)
+            json.dump(config, file)
             file.flush()
 
+    def load_session(self):
+        config: dict = self.read_config_file()
+
+        if "token" in config.setdefault("servers", {}).setdefault(self.host, {}):
+            self.session_token: str = config["servers"][self.host]["token"]
+            self.client.session(self.session_token)
+
+    def save_session(self):
+        config: dict = self.read_config_file()
+        config.setdefault("servers", {}).setdefault(self.host, {})["token"] = self.session_token
+        self.write_config_file(config)
+
     def delete_session(self):
-        os.remove(os.path.join(*self.session_file))
+        config: dict = self.read_config_file()
+        if "token" in config.setdefault("servers", {}).setdefault(self.host, {}):
+            del config["servers"][self.host]["token"]
+        self.write_config_file(config)
         self.session_token = None
 
     def get_context(self) -> int:
@@ -291,7 +298,7 @@ def main():
     print("Python Cryptic Game Client (https://github.com/Defelo/PyCrypCli)")
     print("You can always type `help` for a list of available commands.")
 
-    frontend: Frontend = Frontend(SERVER, [os.path.expanduser("~"), ".config", "PyCrypCli", "session.json"])
+    frontend: Frontend = Frontend(SERVER, [os.path.expanduser("~"), ".config", "PyCrypCli", "config.json"])
     frontend.mainloop()
 
 

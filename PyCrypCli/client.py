@@ -150,6 +150,7 @@ class Client:
     def logout(self):
         assert self.logged_in
 
+        self.request({"action": "logout"})
         self.close()
 
     def status(self) -> dict:

@@ -232,6 +232,24 @@ class Frontend(Game):
         self.delete_session()
         print("Logged out.")
 
+    @command(["passwd"], CTX_MAIN, "Change your password")
+    def handle_passwd(self, *_):
+        old_password: str = getpass.getpass("Current password: ")
+        new_password: str = getpass.getpass("New password: ")
+        confirm_password: str = getpass.getpass("Confirm password: ")
+
+        if new_password != confirm_password:
+            print("Passwords don't match.")
+            return
+
+        self.client.close()
+        try:
+            self.client.change_password(self.username, old_password, new_password)
+            print("Password updated successfully.")
+        except PermissionsDeniedException:
+            print("Incorrect password or the new password does not meet the requirements.")
+        self.client.session(self.session_token)
+
     @command(["help"], -1, "Show a list of available commands")
     def handle_main_help(self, *_):
         show_help([(c, d) for c, (d, _) in self.COMMANDS[self.get_context()].items()])

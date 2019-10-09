@@ -211,7 +211,7 @@ def handle_service(game: Game, _, args: List[str]):
 @command(["spot"], CTX_DEVICE, "Find a random device in the network")
 def handle_spot(game: Game, *_):
     device: Device = game.client.spot()
-    print(f"Name: '{device.name}'")
+    print(f"Name: '{device.name}'" + " (hacked)" * game.client.part_owner(device.uuid))
     print(f"UUID: {device.uuid}")
     handle_portscan(game, [device.uuid])
 

@@ -12,22 +12,6 @@ try:
 except ImportError:
     import pyreadline as readline
 
-SERVER: str = "wss://ws.cryptic-game.net/"
-if len(sys.argv) > 1:
-    SERVER: str = sys.argv[1]
-    if SERVER.lower() == "test":
-        SERVER: str = "wss://ws.test.cryptic-game.net/"
-    elif not SERVER.startswith("wss://") and not SERVER.startswith("ws://"):
-        SERVER: str = "ws://" + SERVER
-
-
-def show_help(commands):
-    print("Available commands:")
-    max_length: int = max(len(cmd[0]) for cmd in commands)
-    for com, desc in commands:
-        com: str = com.ljust(max_length)
-        print(f" - {com}    {desc}")
-
 
 class Frontend(Game):
     def __init__(self, server: str, config_file: List[str]):
@@ -267,7 +251,12 @@ class Frontend(Game):
 
     @command(["help"], -1, "Show a list of available commands")
     def handle_main_help(self, *_):
-        show_help([(c, d) for c, (d, _) in self.COMMANDS[self.get_context()].items()])
+        commands: List[Tuple[str, str]] = ([(c, d) for c, (d, _) in self.COMMANDS[self.get_context()].items()])
+        print("Available commands:")
+        max_length: int = max(len(cmd[0]) for cmd in commands)
+        for com, desc in commands:
+            com: str = com.ljust(max_length)
+            print(f" - {com}    {desc}")
 
     @command(["clear"], -1, "Clear the console")
     def handle_main_clear(self, *_):
@@ -346,7 +335,15 @@ def main():
     print("Python Cryptic Game Client (https://github.com/Defelo/PyCrypCli)")
     print("You can always type `help` for a list of available commands.")
 
-    frontend: Frontend = Frontend(SERVER, [os.path.expanduser("~"), ".config", "PyCrypCli", "config.json"])
+    server: str = "wss://ws.cryptic-game.net/"
+    if len(sys.argv) > 1:
+        server: str = sys.argv[1]
+        if server.lower() == "test":
+            server: str = "wss://ws.test.cryptic-game.net/"
+        elif not server.startswith("wss://") and not server.startswith("ws://"):
+            server: str = "ws://" + server
+
+    frontend: Frontend = Frontend(server, [os.path.expanduser("~"), ".config", "PyCrypCli", "config.json"])
     frontend.mainloop()
 
 

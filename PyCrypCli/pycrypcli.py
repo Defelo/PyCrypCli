@@ -250,6 +250,21 @@ class Frontend(Game):
             print("Incorrect password or the new password does not meet the requirements.")
         self.client.session(self.session_token)
 
+    @command(["_delete_user"], CTX_MAIN, "Delete this account")
+    def handle_delete_user(self, *_):
+        if self.ask("Are you sure you want to delete your account? [yes|no] ", ["yes", "no"]) == "no":
+            print("Your account has NOT been deleted.")
+            return
+
+        print("Warning! This action cannot be undone!")
+        print("Are you absolutely sure you want to delete this account?")
+        if input("Type in the name of this account to confirm: ") == self.username:
+            self.client.delete_user()
+            self.delete_session()
+            print(f"The account '{self.username}' has been deleted successfully.")
+        else:
+            print("Your account has NOT been deleted.")
+
     @command(["help"], -1, "Show a list of available commands")
     def handle_main_help(self, *_):
         show_help([(c, d) for c, (d, _) in self.COMMANDS[self.get_context()].items()])

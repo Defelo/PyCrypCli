@@ -1,20 +1,20 @@
 from typing import List
 
-from PyCrypCli.commands.command import command, CTX_DEVICE
+from PyCrypCli.commands.command import command, completer
+from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import *
-from PyCrypCli.game import Game
 from PyCrypCli.game_objects import File, Wallet
 
 
-@command(["ls", "l", "dir"], CTX_DEVICE, "List all files")
-def handle_ls(game: Game, *_):
-    files: List[File] = game.client.get_files(game.get_device().uuid)
+@command(["ls", "l", "dir"], [DeviceContext], "List all files")
+def handle_ls(context: DeviceContext, *_):
+    files: List[File] = context.get_client().get_files(context.host.uuid)
     for file in files:
         print(file.filename)
 
 
-@command(["touch"], CTX_DEVICE, "Create a new file with given content")
-def handle_touch(game: Game, _, args: List[str]):
+@command(["touch"], [DeviceContext], "Create a new file with given content")
+def handle_touch(context: DeviceContext, args: List[str]):
     if not args:
         print("usage: touch <filename> [content]")
         return
@@ -27,21 +27,21 @@ def handle_touch(game: Game, _, args: List[str]):
     if len(filename) > 64:
         print("Filename cannot be longer than 64 characters.")
 
-    file: File = game.get_file(filename)
+    file: File = context.get_file(filename)
     if file is not None:
-        game.client.file_update(file.device, file.uuid, content)
+        context.get_client().file_update(file.device, file.uuid, content)
     else:
-        game.client.create_file(game.get_device().uuid, filename, content)
+        context.get_client().create_file(context.host.uuid, filename, content)
 
 
-@command(["cat"], CTX_DEVICE, "Print the content of a file")
-def handle_cat(game: Game, _, args: List[str]):
+@command(["cat"], [DeviceContext], "Print the content of a file")
+def handle_cat(context: DeviceContext, args: List[str]):
     if not args:
         print("usage: cat <filename>")
         return
 
     filename: str = args[0]
-    file: File = game.get_file(filename)
+    file: File = context.get_file(filename)
     if file is None:
         print("File does not exist.")
         return
@@ -49,32 +49,32 @@ def handle_cat(game: Game, _, args: List[str]):
     print(file.content)
 
 
-@command(["rm"], CTX_DEVICE, "Remove a file")
-def handle_rm(game: Game, _, args: List[str]):
+@command(["rm"], [DeviceContext], "Remove a file")
+def handle_rm(context: DeviceContext, args: List[str]):
     if not args:
         print("usage: rm <filename>")
         return
 
     filename: str = args[0]
-    file: File = game.get_file(filename)
+    file: File = context.get_file(filename)
     if file is None:
         print("File does not exist.")
         return
 
-    if game.ask(f"Are you sure you want to delete `{filename}`? [yes|no] ", ["yes", "no"]) == "no":
+    if context.ask(f"Are you sure you want to delete `{filename}`? [yes|no] ", ["yes", "no"]) == "no":
         print("File has not been deleted.")
         return
 
     content: str = file.content
     try:
-        wallet: Wallet = game.extract_wallet(content)
-        choice: str = game.ask(
+        wallet: Wallet = context.extract_wallet(content)
+        choice: str = context.ask(
             f"\033[38;2;255;51;51mThis file contains {wallet.amount} morphcoin. "
             f"Do you want to delete the corresponding wallet? [yes|no] \033[0m",
             ["yes", "no"],
         )
         if choice == "yes":
-            game.client.delete_wallet(wallet)
+            context.get_client().delete_wallet(wallet)
             print("The wallet has been deleted.")
         else:
             print("The following key might now be the only way to access your wallet.")
@@ -82,11 +82,11 @@ def handle_rm(game: Game, _, args: List[str]):
     except (InvalidWalletFile, UnknownSourceOrDestinationException, PermissionDeniedException):
         pass
 
-    game.client.remove_file(file.device, file.uuid)
+    context.get_client().remove_file(file.device, file.uuid)
 
 
-@command(["cp"], CTX_DEVICE, "Create a copy of a file")
-def handle_cp(game: Game, _, args: List[str]):
+@command(["cp"], [DeviceContext], "Create a copy of a file")
+def handle_cp(context: DeviceContext, args: List[str]):
     if len(args) != 2:
         print("usage: cp <source> <destination>")
         return
@@ -99,20 +99,20 @@ def handle_cp(game: Game, _, args: List[str]):
     if len(destination) > 64:
         print("Destination filename cannot be longer than 64 characters.")
 
-    file: File = game.get_file(source)
+    file: File = context.get_file(source)
     if file is None:
         print("File does not exist.")
         return
 
-    if game.get_file(destination) is not None:
+    if context.get_file(destination) is not None:
         print(f"The file could not be copied because a file with the name '{destination}' already exists.")
         return
 
-    game.client.create_file(file.device, destination, file.content)
+    context.get_client().create_file(file.device, destination, file.content)
 
 
-@command(["mv"], CTX_DEVICE, "Rename a file")
-def handle_mv(game: Game, _, args: List[str]):
+@command(["mv"], [DeviceContext], "Rename a file")
+def handle_mv(context: DeviceContext, args: List[str]):
     if len(args) != 2:
         print("usage: mv <source> <destination>")
         return
@@ -125,12 +125,18 @@ def handle_mv(game: Game, _, args: List[str]):
     if len(destination) > 64:
         print("Destination filename cannot be longer than 64 characters.")
 
-    file: File = game.get_file(source)
+    file: File = context.get_file(source)
     if file is None:
         print("File does not exist.")
         return
 
     try:
-        game.client.file_move(file.device, file.uuid, destination)
+        context.get_client().file_move(file.device, file.uuid, destination)
     except FileAlreadyExistsException:
         print(f"The file could not be renamed because a file with the name '{destination}' already exists.")
+
+
+@completer([handle_cat, handle_touch, handle_rm, handle_cp, handle_mv])
+def file_completer(context: DeviceContext, args: List[str]) -> List[str]:
+    if len(args) == 1:
+        return context.get_filenames()

@@ -1,14 +1,14 @@
 from typing import List
 
-from PyCrypCli.commands.command import command, CTX_DEVICE
+from PyCrypCli.commands.command import command, completer
+from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import *
-from PyCrypCli.game import Game
 from PyCrypCli.game_objects import Wallet, Transaction
 from PyCrypCli.util import is_uuid
 
 
-@command(["morphcoin"], CTX_DEVICE, "Manage your Morphcoin wallet")
-def handle_morphcoin(game: Game, _, args: List[str]):
+@command(["morphcoin"], [DeviceContext], "Manage your Morphcoin wallet")
+def handle_morphcoin(context: DeviceContext, args: List[str]):
     if not ((len(args) == 2 and args[0] in ("create", "look", "transactions", "reset")) or (args == ["list"])):
         print("usage: morphcoin create|list|look|transactions [<filename>]")
         print("       morphcoin reset <uuid>")
@@ -16,17 +16,17 @@ def handle_morphcoin(game: Game, _, args: List[str]):
 
     if args[0] == "create":
         filename: str = args[1]
-        if game.get_file(filename) is not None:
+        if context.get_file(filename) is not None:
             print(f"A file with the name '{filename}' already exists.")
             return
 
         try:
-            wallet: Wallet = game.client.create_wallet()
-            game.client.create_file(game.get_device().uuid, filename, wallet.uuid + " " + wallet.key)
+            wallet: Wallet = context.get_client().create_wallet()
+            context.get_client().create_file(context.host.uuid, filename, wallet.uuid + " " + wallet.key)
         except AlreadyOwnAWalletException:
             print("You already own a wallet")
     elif args[0] == "list":
-        wallets = game.client.list_wallets()
+        wallets = context.get_client().list_wallets()
         if not wallets:
             print("You don't own any wallet.")
         else:
@@ -36,7 +36,7 @@ def handle_morphcoin(game: Game, _, args: List[str]):
     elif args[0] == "look":
         filename: str = args[1]
         try:
-            wallet: Wallet = game.get_wallet_from_file(filename)
+            wallet: Wallet = context.get_wallet_from_file(filename)
         except FileNotFoundException:
             print("File does not exist.")
             return
@@ -55,7 +55,7 @@ def handle_morphcoin(game: Game, _, args: List[str]):
     elif args[0] == "transactions":
         filename: str = args[1]
         try:
-            wallet: Wallet = game.get_wallet_from_file(filename)
+            wallet: Wallet = context.get_wallet_from_file(filename)
         except FileNotFoundException:
             print("File does not exist.")
             return
@@ -95,22 +95,31 @@ def handle_morphcoin(game: Game, _, args: List[str]):
             return
 
         try:
-            game.client.reset_wallet(wallet_uuid)
+            context.get_client().reset_wallet(wallet_uuid)
         except UnknownSourceOrDestinationException:
             print("Wallet does not exist.")
         except PermissionDeniedException:
             print("Permission denied.")
 
 
-@command(["pay"], CTX_DEVICE, "Send Morphcoins to another wallet")
-def handle_pay(game: Game, _, args: List[str]):
+@completer([handle_morphcoin])
+def morphcoin_completer(context: DeviceContext, args: List[str]) -> List[str]:
+    if len(args) == 1:
+        return ["create", "list", "look", "transactions", "reset"]
+    elif len(args) == 2:
+        if args[0] in ("look", "transactions"):
+            return context.get_filenames()
+
+
+@command(["pay"], [DeviceContext], "Send Morphcoins to another wallet")
+def handle_pay(context: DeviceContext, args: List[str]):
     if len(args) < 3:
         print("usage: pay <filename> <receiver> <amount> [usage]")
         return
 
     filename: str = args[0]
     try:
-        wallet: Wallet = game.get_wallet_from_file(filename)
+        wallet: Wallet = context.get_wallet_from_file(filename)
     except FileNotFoundException:
         print("File does not exist.")
         return
@@ -139,7 +148,13 @@ def handle_pay(game: Game, _, args: List[str]):
         return
 
     try:
-        game.client.send(wallet, receiver, amount, " ".join(args[3:]))
+        context.get_client().send(wallet, receiver, amount, " ".join(args[3:]))
         print(f"Sent {amount} morphcoin to {receiver}.")
     except UnknownSourceOrDestinationException:
         print("Destination wallet does not exist.")
+
+
+@completer([handle_pay])
+def pay_completer(context: DeviceContext, args: List[str]) -> List[str]:
+    if len(args) == 1:
+        return context.get_filenames()

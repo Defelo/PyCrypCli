@@ -1,14 +1,14 @@
 from typing import List
 
-from PyCrypCli.commands.command import command, CTX_DEVICE, CTX_MAIN
+from PyCrypCli.commands.command import command, completer
+from PyCrypCli.context import MainContext, DeviceContext
 from PyCrypCli.exceptions import AlreadyOwnADeviceException, DeviceNotFoundException
-from PyCrypCli.game import Game
 from PyCrypCli.game_objects import Device
 from PyCrypCli.util import is_uuid
 
 
-@command(["device"], CTX_MAIN | CTX_DEVICE, "Manage your devices")
-def handle_device(game: Game, _, args: List[str]):
+@command(["device"], [MainContext, DeviceContext], "Manage your devices")
+def handle_device(context: MainContext, args: List[str]):
     if not args:
         print("usage: device list|create|connect")
         return
@@ -18,7 +18,7 @@ def handle_device(game: Game, _, args: List[str]):
             print("usage: device list")
             return
 
-        devices: List[Device] = game.client.get_devices()
+        devices: List[Device] = context.get_client().get_devices()
         if not devices:
             print("You don't have any devices.")
         else:
@@ -31,7 +31,7 @@ def handle_device(game: Game, _, args: List[str]):
             return
 
         try:
-            device: Device = game.client.create_starter_device()
+            device: Device = context.get_client().create_starter_device()
         except AlreadyOwnADeviceException:
             print("You already own a device.")
             return
@@ -46,13 +46,13 @@ def handle_device(game: Game, _, args: List[str]):
         name: str = args[1]
         if is_uuid(name):
             try:
-                device: Device = game.client.device_info(name)
+                device: Device = context.get_client().device_info(name)
             except DeviceNotFoundException:
                 print(f"There is no device with the uuid '{name}'.")
                 return
         else:
             found_devices: List[Device] = []
-            for device in game.client.get_devices():
+            for device in context.get_client().get_devices():
                 if device.name == name:
                     found_devices.append(device)
             if not found_devices:
@@ -63,13 +63,22 @@ def handle_device(game: Game, _, args: List[str]):
                 return
             device: Device = found_devices[0]
 
-        game.login_stack.append(device)
+        context.open(DeviceContext(context.root_context, context.session_token, device))
     else:
         print("usage: device list|create|connect")
 
 
-@command(["hostname"], CTX_DEVICE, "Show or modify the name of the device")
-def handle_hostname(game: Game, _, args: List[str]):
+@completer([handle_device])
+def complete_device(context: MainContext, args: List[str]) -> List[str]:
+    if len(args) == 1:
+        return ["list", "create", "connect"]
+    elif len(args) == 2:
+        device_names: List[str] = [device.name for device in context.get_client().get_devices()]
+        return [name for name in device_names if device_names.count(name) == 1]
+
+
+@command(["hostname"], [DeviceContext], "Show or modify the name of the device")
+def handle_hostname(context: DeviceContext, args: List[str]):
     if args:
         name: str = " ".join(args)
         if not name:
@@ -78,6 +87,6 @@ def handle_hostname(game: Game, _, args: List[str]):
         if len(name) > 15:
             print("The name cannot be longer than 15 characters.")
             return
-        game.client.change_device_name(game.get_device().uuid, name)
+        context.get_client().change_device_name(context.host.uuid, name)
     else:
-        print(game.get_device().name)
+        print(context.host.name)

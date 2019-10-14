@@ -231,7 +231,8 @@ class MainContext(LoginContext):
         print(f"Logged in as {self.username}.")
 
     def leave_context(self):
-        self.get_client().logout()
+        if self.get_client().logged_in:
+            self.get_client().logout()
         self.delete_session()
         print("Logged out.")
 

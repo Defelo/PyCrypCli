@@ -5,7 +5,7 @@ import time
 from typing import Optional, List, Dict, Type, Tuple, Callable
 
 import readline
-from pypresence import PyPresenceException, Presence
+from pypresence import PyPresenceException, InvalidPipe, Presence
 
 from PyCrypCli.client import Client
 from PyCrypCli.exceptions import InvalidSessionTokenException, InvalidWalletFile, FileNotFoundException
@@ -32,7 +32,7 @@ class RootContext:
         self.presence: Presence = Presence(client_id="596676243144048640")
         try:
             self.presence.connect()
-        except FileNotFoundError:
+        except (FileNotFoundError, InvalidPipe):
             self.presence = None
 
     def open(self, context: "Context"):

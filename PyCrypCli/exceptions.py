@@ -77,8 +77,36 @@ class FileNotFoundException(MicroserviceException):
     error: str = "file_not_found"
 
 
+class FileNotChangeableException(MicroserviceException):
+    error: str = "file_not_changeable"
+
+
 class FileAlreadyExistsException(MicroserviceException):
     error: str = "file_already_exists"
+
+
+class ParentDirectoryNotFound(MicroserviceException):
+    error: str = "parent_directory_not_found"
+
+
+class CanNotMoveDirIntoItselfException(MicroserviceException):
+    error: str = "can_not_move_dir_into_itself"
+
+
+class DirectoriesCanNotBeUpdatedException(MicroserviceException):
+    error: str = "directories_can_not_be_updated"
+
+
+class ErrorWhileDeletingException(MicroserviceException):
+    error: str = "error_while_deleting"
+
+
+class ParentDirDoesNotExistException(MicroserviceException):
+    error: str = "parent_dir_does_not_exist"
+
+
+class DirectoryCanNotHaveTextContentException(MicroserviceException):
+    error: str = "directory_can_not_have_textcontent"
 
 
 class AlreadyOwnAWalletException(MicroserviceException):

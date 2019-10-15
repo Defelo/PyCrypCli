@@ -189,28 +189,50 @@ class Client:
     def change_device_name(self, device_uuid: str, name: str):
         self.microservice("device", ["device", "change_name"], {"device_uuid": device_uuid, "name": name})
 
-    def get_files(self, device_uuid: str) -> List[File]:
+    def get_files(self, device_uuid: str, parent_dir_uuid: str) -> List[File]:
         return [
             File.deserialize(file)
-            for file in self.microservice("device", ["file", "all"], {"device_uuid": device_uuid})["files"]
+            for file in self.microservice(
+                "device", ["file", "all"], {"device_uuid": device_uuid, "parent_dir_uuid": parent_dir_uuid}
+            )["files"]
         ]
 
-    def create_file(self, device_uuid: str, filename: str, content: str) -> File:
+    def get_file(self, device_uuid: str, file_uuid: str) -> File:
+        return File.deserialize(
+            self.microservice("device", ["file", "info"], {"device_uuid": device_uuid, "file_uuid": file_uuid})
+        )
+
+    def create_file(
+        self, device_uuid: str, filename: str, content: str, is_directory: bool, parent_dir_uuid: Optional[str]
+    ) -> File:
         return File.deserialize(
             self.microservice(
-                "device", ["file", "create"], {"device_uuid": device_uuid, "filename": filename, "content": content}
+                "device",
+                ["file", "create"],
+                {
+                    "device_uuid": device_uuid,
+                    "filename": filename,
+                    "content": content,
+                    "is_directory": is_directory,
+                    "parent_dir_uuid": parent_dir_uuid,
+                },
             )
         )
 
     def device_info(self, device_uuid: str) -> Device:
         return Device.deserialize(self.microservice("device", ["device", "info"], {"device_uuid": device_uuid}))
 
-    def file_move(self, device_uuid: str, file_uuid: str, new_filename: str) -> File:
+    def file_move(self, device_uuid: str, file_uuid: str, new_filename: str, new_parent_dir_uuid: str) -> File:
         return File.deserialize(
             self.microservice(
                 "device",
                 ["file", "move"],
-                {"device_uuid": device_uuid, "file_uuid": file_uuid, "filename": new_filename},
+                {
+                    "device_uuid": device_uuid,
+                    "file_uuid": file_uuid,
+                    "new_filename": new_filename,
+                    "new_parent_dir_uuid": new_parent_dir_uuid,
+                },
             )
         )
 

@@ -23,15 +23,35 @@ class Device(GameObject):
 
 
 class File(GameObject):
-    def __init__(self, uuid: str, device: str, filename: str, content: str):
+    def __init__(
+        self,
+        uuid: str,
+        device: str,
+        filename: str,
+        content: str,
+        is_directory: bool,
+        parent_dir_uuid: str,
+        is_changeable: bool,
+    ):
         self.uuid: str = uuid
         self.device: str = device
         self.filename: str = filename
         self.content: str = content
+        self.is_directory: bool = is_directory
+        self.parent_dir_uuid: str = parent_dir_uuid
+        self.is_changeable: bool = is_changeable
 
     @staticmethod
     def deserialize(data: dict) -> "File":
-        return File(data.get("uuid"), data.get("device"), data.get("filename"), data.get("content"))
+        return File(
+            data.get("uuid"),
+            data.get("device"),
+            data.get("filename"),
+            data.get("content"),
+            data.get("is_directory"),
+            data.get("parent_dir_uuid"),
+            data.get("is_changeable"),
+        )
 
 
 class Transaction(GameObject):

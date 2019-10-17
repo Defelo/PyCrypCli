@@ -1,6 +1,7 @@
 from typing import List
 
 from PyCrypCli.commands.command import command, completer
+from PyCrypCli.commands.files import create_file
 from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import Wallet, Transaction
@@ -10,19 +11,20 @@ from PyCrypCli.util import is_uuid
 @command(["morphcoin"], [DeviceContext], "Manage your Morphcoin wallet")
 def handle_morphcoin(context: DeviceContext, args: List[str]):
     if not ((len(args) == 2 and args[0] in ("create", "look", "transactions", "reset")) or (args == ["list"])):
-        print("usage: morphcoin create|list|look|transactions [<filename>]")
+        print("usage: morphcoin create|list|look|transactions [<filepath>]")
         print("       morphcoin reset <uuid>")
         return
 
     if args[0] == "create":
-        filename: str = args[1]
-        if context.get_file(filename) is not None:
-            print(f"A file with the name '{filename}' already exists.")
+        filepath: str = args[1]
+        if context.path_to_file(filepath) is not None:
+            print(f"A file with the name '{filepath}' already exists.")
             return
 
         try:
             wallet: Wallet = context.get_client().create_wallet()
-            context.get_client().create_file(context.host.uuid, filename, wallet.uuid + " " + wallet.key)
+            if not create_file(context, filepath, wallet.uuid + " " + wallet.key):
+                context.get_client().delete_wallet(wallet)
         except AlreadyOwnAWalletException:
             print("You already own a wallet")
     elif args[0] == "list":
@@ -34,9 +36,8 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
         for wallet in wallets:
             print(f" - {wallet}")
     elif args[0] == "look":
-        filename: str = args[1]
         try:
-            wallet: Wallet = context.get_wallet_from_file(filename)
+            wallet: Wallet = context.get_wallet_from_file(args[1])
         except FileNotFoundException:
             print("File does not exist.")
             return
@@ -53,9 +54,8 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
         print(f"UUID: {wallet.uuid}")
         print(f"Balance: {wallet.amount} morphcoin")
     elif args[0] == "transactions":
-        filename: str = args[1]
         try:
-            wallet: Wallet = context.get_wallet_from_file(filename)
+            wallet: Wallet = context.get_wallet_from_file(args[1])
         except FileNotFoundException:
             print("File does not exist.")
             return
@@ -108,7 +108,9 @@ def morphcoin_completer(context: DeviceContext, args: List[str]) -> List[str]:
         return ["create", "list", "look", "transactions", "reset"]
     elif len(args) == 2:
         if args[0] in ("look", "transactions"):
-            return context.get_filenames()
+            return context.file_path_completer(args[1])
+        elif args[0] == "create":
+            return context.file_path_completer(args[1], dirs_only=True)
 
 
 @command(["pay"], [DeviceContext], "Send Morphcoins to another wallet")
@@ -117,9 +119,8 @@ def handle_pay(context: DeviceContext, args: List[str]):
         print("usage: pay <filename> <receiver> <amount> [usage]")
         return
 
-    filename: str = args[0]
     try:
-        wallet: Wallet = context.get_wallet_from_file(filename)
+        wallet: Wallet = context.get_wallet_from_file(args[0])
     except FileNotFoundException:
         print("File does not exist.")
         return
@@ -143,7 +144,10 @@ def handle_pay(context: DeviceContext, args: List[str]):
         return
 
     amount: int = int(args[2])
-    if amount > wallet.amount:
+    if amount < 1:
+        print("amount is not a positive number.")
+        return
+    elif amount > wallet.amount:
         print("Not enough coins. Transaction cancelled.")
         return
 
@@ -157,4 +161,4 @@ def handle_pay(context: DeviceContext, args: List[str]):
 @completer([handle_pay])
 def pay_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
-        return context.get_filenames()
+        return context.file_path_completer(args[0])

@@ -97,14 +97,6 @@ class DirectoriesCanNotBeUpdatedException(MicroserviceException):
     error: str = "directories_can_not_be_updated"
 
 
-class ErrorWhileDeletingException(MicroserviceException):
-    error: str = "error_while_deleting"
-
-
-class ParentDirDoesNotExistException(MicroserviceException):
-    error: str = "parent_dir_does_not_exist"
-
-
 class DirectoryCanNotHaveTextContentException(MicroserviceException):
     error: str = "directory_can_not_have_textcontent"
 

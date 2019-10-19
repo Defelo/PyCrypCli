@@ -158,7 +158,7 @@ def handle_rm(context: DeviceContext, args: List[str]):
 
     try:
         context.get_client().remove_file(file.device, file.uuid)
-    except (ErrorWhileDeletingException, FileNotChangeableException):
+    except FileNotChangeableException:
         print("Some files could not be deleted.")
 
 

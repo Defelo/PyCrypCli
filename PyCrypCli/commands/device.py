@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from PyCrypCli.commands.command import command, completer
 from PyCrypCli.context import MainContext, DeviceContext
@@ -7,10 +7,31 @@ from PyCrypCli.game_objects import Device, ResourceUsage, DeviceHardware
 from PyCrypCli.util import is_uuid
 
 
+def get_device(context: MainContext, name_or_uuid: str) -> Optional[Device]:
+    if is_uuid(name_or_uuid):
+        try:
+            return context.get_client().device_info(name_or_uuid)
+        except DeviceNotFoundException:
+            print(f"There is no device with the uuid '{name_or_uuid}'.")
+            return None
+    else:
+        found_devices: List[Device] = []
+        for device in context.get_client().get_devices():
+            if device.name == name_or_uuid:
+                found_devices.append(device)
+        if not found_devices:
+            print(f"There is no device with the name '{name_or_uuid}'.")
+            return None
+        elif len(found_devices) > 1:
+            print(f"There is more than one device with the name '{name_or_uuid}'. You need to specify its UUID.")
+            return None
+        return found_devices[0]
+
+
 @command(["device"], [MainContext, DeviceContext], "Manage your devices")
 def handle_device(context: MainContext, args: List[str]):
     if not args:
-        print("usage: device list|create|connect")
+        print("usage: device list|create|boot|shutdown|connect")
         return
 
     if args[0] == "list":
@@ -38,43 +59,54 @@ def handle_device(context: MainContext, args: List[str]):
 
         print("Your device has been created!")
         print(f"Hostname: {device.name} (UUID: {device.uuid})")
+    elif args[0] == "boot":
+        if len(args) != 2:
+            print("usage: device boot <name|uuid>")
+            return
+
+        device: Optional[Device] = get_device(context, args[1])
+        if device is None:
+            return
+        elif device.powered_on:
+            print("This device is already running.")
+            return
+
+        context.get_client().device_power(device.uuid)
+    elif args[0] == "shutdown":
+        if len(args) != 2:
+            print("usage: device shutdown <name|uuid>")
+            return
+
+        device: Optional[Device] = get_device(context, args[1])
+        if device is None:
+            return
+        elif not device.powered_on:
+            print("This device is not running.")
+            return
+
+        context.get_client().device_power(device.uuid)
     elif args[0] == "connect":
         if len(args) != 2:
             print("usage: device connect <name|uuid>")
             return
 
-        name: str = args[1]
-        if is_uuid(name):
-            try:
-                device: Device = context.get_client().device_info(name)
-            except DeviceNotFoundException:
-                print(f"There is no device with the uuid '{name}'.")
-                return
-        else:
-            found_devices: List[Device] = []
-            for device in context.get_client().get_devices():
-                if device.name == name:
-                    found_devices.append(device)
-            if not found_devices:
-                print(f"There is no device with the name '{name}'.")
-                return
-            elif len(found_devices) > 1:
-                print(f"There is more than one device with the name '{name}'. You need to specify its UUID.")
-                return
-            device: Device = found_devices[0]
+        device: Optional[Device] = get_device(context, args[1])
+        if device is None:
+            return
 
         context.open(DeviceContext(context.root_context, context.session_token, device))
     else:
-        print("usage: device list|create|connect")
+        print("usage: device list|create|boot|shutdown|connect")
 
 
 @completer([handle_device])
 def complete_device(context: MainContext, args: List[str]) -> List[str]:
     if len(args) == 1:
-        return ["list", "create", "connect"]
+        return ["list", "create", "boot", "shutdown", "connect"]
     elif len(args) == 2:
-        device_names: List[str] = [device.name for device in context.get_client().get_devices()]
-        return [name for name in device_names if device_names.count(name) == 1]
+        if args[0] in ("boot", "shutdown", "connect"):
+            device_names: List[str] = [device.name for device in context.get_client().get_devices()]
+            return [name for name in device_names if device_names.count(name) == 1]
 
 
 @command(["hostname"], [DeviceContext], "Show or modify the name of the device")

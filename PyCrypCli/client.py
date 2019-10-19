@@ -200,6 +200,9 @@ class Client:
     def create_starter_device(self) -> Device:
         return Device.deserialize(self.microservice("device", ["device", "starter_device"], {}))
 
+    def device_power(self, device_uuid: str) -> Device:
+        return Device.deserialize(self.microservice("device", ["device", "power"], {"device_uuid": device_uuid}))
+
     def change_device_name(self, device_uuid: str, name: str):
         self.microservice("device", ["device", "change_name"], {"device_uuid": device_uuid, "name": name})
 

@@ -81,7 +81,11 @@ def create_file(context: DeviceContext, filepath: str, content: str) -> bool:
 
     file: File = context.get_file(filename, parent.uuid)
     if file is not None:
-        context.get_client().file_update(file.device, file.uuid, content)
+        if file.is_directory:
+            print("A directory with this name already exists.")
+            return False
+        else:
+            context.get_client().file_update(file.device, file.uuid, content)
     else:
         context.get_client().create_file(context.host.uuid, filename, content, False, parent.uuid)
     return True

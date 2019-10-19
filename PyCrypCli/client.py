@@ -194,14 +194,23 @@ class Client:
     def get_devices(self) -> List[Device]:
         return [Device.deserialize(device) for device in self.microservice("device", ["device", "all"], {})["devices"]]
 
-    # def create_device(self) -> Device:
-    #     return Device.deserialize(self.microservice("device", ["device", "create"], {}))
+    def build_device(self, mainboard: str, cpu: str, gpu: str, ram: List[str], disk: List[str]) -> Device:
+        return Device.deserialize(
+            self.microservice(
+                "device",
+                ["device", "create"],
+                {"motherboard": mainboard, "cpu": cpu, "gpu": gpu, "ram": ram, "disk": disk},
+            )
+        )
 
     def create_starter_device(self) -> Device:
         return Device.deserialize(self.microservice("device", ["device", "starter_device"], {}))
 
     def device_power(self, device_uuid: str) -> Device:
         return Device.deserialize(self.microservice("device", ["device", "power"], {"device_uuid": device_uuid}))
+
+    def get_hardware_config(self) -> dict:
+        return self.microservice("device", ["hardware", "list"], {})
 
     def change_device_name(self, device_uuid: str, name: str):
         self.microservice("device", ["device", "change_name"], {"device_uuid": device_uuid, "name": name})

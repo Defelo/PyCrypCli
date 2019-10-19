@@ -13,6 +13,27 @@ from PyCrypCli.exceptions import (
 from PyCrypCli.game_objects import ShopProduct, Wallet
 
 
+def label_product_name(hardware: dict, name: str) -> str:
+    for key, prod_type in {
+        "mainboards": "Mainboard",
+        "cpu": "CPU",
+        "processorCooler": "Processor Cooler",
+        "ram": "RAM",
+        "gpu": "GPU",
+        "disk": "Disk",
+        "powerPack": "Power Pack",
+        "case": "Case",
+    }.items():
+        if (
+            isinstance(hardware[key], dict)
+            and name in hardware[key]
+            or isinstance(hardware[key], list)
+            and any(e.get("name") == name for e in hardware[key])
+        ):
+            return f"{name} ({prod_type})"
+    return name
+
+
 @command(["shop"], [DeviceContext], "Buy new hardware and more in the shop")
 def handle_shop(context: DeviceContext, args: List[str]):
     if not args:
@@ -21,10 +42,13 @@ def handle_shop(context: DeviceContext, args: List[str]):
 
     if args[0] == "list":
         product_names: List[str] = context.get_client().shop_list()
-        maxlength: int = max(map(len, product_names))
-        for product_name in context.get_client().shop_list():
+        hardware: dict = context.get_client().get_hardware_config()
+        product_titles: List[str] = [label_product_name(hardware, name) for name in product_names]
+        maxlength: int = max(map(len, product_titles))
+
+        for product_name, product_title in zip(product_names, product_titles):
             product: ShopProduct = context.get_client().shop_info(product_name)
-            print(" - " + product.name.ljust(maxlength + 2) + f"{product.price} MC")
+            print(f" - {product_title.ljust(maxlength)}  {product.price} MC")
     elif args[0] == "buy":
         if len(args) not in (3, 4):
             print("usage: shop buy <product> <wallet>")

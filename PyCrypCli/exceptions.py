@@ -73,6 +73,22 @@ class DeviceNotFoundException(MicroserviceException):
     error: str = "device_not_found"
 
 
+class IncompatibleCPUSocket(MicroserviceException):
+    error: str = "incompatible_cpu_socket"
+
+
+class NotEnoughRAMSlots(MicroserviceException):
+    error: str = "not_enough_ram_slots"
+
+
+class IncompatibleRAMTypes(MicroserviceException):
+    error: str = "incompatible_ram_types"
+
+
+class IncompatibleDriverInterface(MicroserviceException):
+    error: str = "incompatible_drive_interface"
+
+
 class FileNotFoundException(MicroserviceException):
     error: str = "file_not_found"
 

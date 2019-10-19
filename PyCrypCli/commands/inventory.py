@@ -2,6 +2,7 @@ from collections import Counter
 from typing import List, Tuple
 
 from PyCrypCli.commands.command import command, completer
+from PyCrypCli.commands.shop import label_product_name
 from PyCrypCli.context import MainContext, DeviceContext
 from PyCrypCli.exceptions import CannotTradeWithYourselfException, UserUUIDDoesNotExistException
 from PyCrypCli.game_objects import InventoryElement
@@ -20,10 +21,12 @@ def handle_inventory(context: MainContext, args: List[str]):
 
         if not inventory:
             print("Your inventory is empty.")
-        else:
-            print("Your inventory:")
-        for element, count in inventory:
-            print(f" - {count}x {element}")
+            return
+
+        hardware: dict = context.get_client().get_hardware_config()
+        print("Your inventory:")
+        for element_name, count in inventory:
+            print(f" - {count}x {label_product_name(hardware, element_name)}")
     elif args[0] == "trade":
         if len(args) != 3:
             print("usage: inventory trade <item> <user>")

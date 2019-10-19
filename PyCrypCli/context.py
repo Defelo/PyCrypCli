@@ -151,6 +151,9 @@ class Context:
     def loop_tick(self):
         pass
 
+    def before_command(self) -> bool:
+        return True
+
 
 COMMAND_FUNCTION = Callable[[Context, List[str]], None]
 COMPLETER_FUNCTION = Callable[[Context, List[str]], List[str]]
@@ -289,6 +292,19 @@ class DeviceContext(MainContext):
         super().loop_tick()
 
         self.host: Device = self.root_context.client.device_info(self.host.uuid)
+        self.check_device_permission()
+
+    def check_device_permission(self) -> bool:
+        if self.host.owner != self.user_uuid and all(
+            service.device != self.host.uuid for service in self.get_client().list_part_owner()
+        ):
+            print("You don't have access to this device anymore.")
+            self.close()
+            return False
+        return True
+
+    def before_command(self) -> bool:
+        return self.check_device_permission()
 
     def enter_context(self):
         Context.enter_context(self)

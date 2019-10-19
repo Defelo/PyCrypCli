@@ -279,9 +279,14 @@ class Client:
             for service in self.microservice("service", ["list"], {"device_uuid": device_uuid})["services"]
         ]
 
-    def use_service(self, device_uuid, service_uuid: str, **kwargs) -> dict:
+    def use_service(self, device_uuid: str, service_uuid: str, **kwargs) -> dict:
         return self.microservice(
             "service", ["use"], {"device_uuid": device_uuid, "service_uuid": service_uuid, **kwargs}
+        )
+
+    def toggle_service(self, device_uuid: str, service_uuid: str) -> Service:
+        return Service.deserialize(
+            self.microservice("service", ["toggle"], {"device_uuid": device_uuid, "service_uuid": service_uuid})
         )
 
     def bruteforce_attack(self, device_uuid: str, service_uuid: str, target_device: str, target_service: str) -> dict:

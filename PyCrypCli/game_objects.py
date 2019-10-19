@@ -100,7 +100,15 @@ class Wallet(GameObject):
 
 class Service(GameObject):
     def __init__(
-        self, uuid: str, device: str, owner: str, name: str, running: bool, running_port: int, part_owner: str
+        self,
+        uuid: str,
+        device: str,
+        owner: str,
+        name: str,
+        running: bool,
+        running_port: int,
+        part_owner: str,
+        speed: float,
     ):
         self.uuid: str = uuid
         self.device: str = device
@@ -109,6 +117,7 @@ class Service(GameObject):
         self.running: bool = running
         self.running_port: int = running_port
         self.part_owner: str = part_owner
+        self.speed: float = speed
 
     @staticmethod
     def deserialize(data: dict) -> "Service":
@@ -120,6 +129,7 @@ class Service(GameObject):
             data.get("running"),
             data.get("running_port"),
             data.get("part_owner"),
+            data.get("speed"),
         )
 
 

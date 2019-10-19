@@ -105,6 +105,14 @@ class ServiceNotRunningException(MicroserviceException):
     error: str = "service_not_running"
 
 
+class CannotToggleDirectlyException(MicroserviceException):
+    error: str = "cannot_toggle_directly"
+
+
+class CouldNotStartService(MicroserviceException):
+    error: str = "could_not_start_service"
+
+
 class WalletNotFoundException(MicroserviceException):
     error: str = "wallet_not_found"
 

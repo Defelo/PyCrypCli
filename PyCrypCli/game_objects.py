@@ -9,6 +9,10 @@ class GameObject:
         out += ")"
         return out
 
+    @staticmethod
+    def deserialize(data: dict):
+        pass
+
 
 class Device(GameObject):
     def __init__(self, uuid: str, name: str, owner: str, powered_on: bool):
@@ -20,6 +24,20 @@ class Device(GameObject):
     @staticmethod
     def deserialize(data: dict) -> "Device":
         return Device(data.get("uuid"), data.get("name"), data.get("owner"), data.get("powered_on"))
+
+
+class DeviceHardware(GameObject):
+    def __init__(self, uuid: str, device_uuid: str, hardware_element: str, hardware_type: str):
+        self.uuid: str = uuid
+        self.device_uuid: str = device_uuid
+        self.hardware_element: str = hardware_element
+        self.hardware_type: str = hardware_type
+
+    @staticmethod
+    def deserialize(data: dict) -> "DeviceHardware":
+        return DeviceHardware(
+            data.get("uuid"), data.get("device_uuid"), data.get("hardware_element"), data.get("hardware_type")
+        )
 
 
 class File(GameObject):
@@ -140,3 +158,16 @@ class ShopProduct(GameObject):
     @staticmethod
     def deserialize(data: dict) -> "ShopProduct":
         return ShopProduct(data.get("name"), data.get("price"), data.get("related_ms"))
+
+
+class ResourceUsage(GameObject):
+    def __init__(self, cpu: float, ram: float, gpu: float, disk: float, network: float):
+        self.cpu: float = cpu
+        self.ram: float = ram
+        self.gpu: float = gpu
+        self.disk: float = disk
+        self.network: float = network
+
+    @staticmethod
+    def deserialize(data: dict) -> "ResourceUsage":
+        return ResourceUsage(data.get("cpu"), data.get("ram"), data.get("gpu"), data.get("disk"), data.get("network"))

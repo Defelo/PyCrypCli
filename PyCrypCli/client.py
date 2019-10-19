@@ -6,7 +6,17 @@ from websocket import WebSocket, create_connection
 import ssl
 
 from PyCrypCli.exceptions import *
-from PyCrypCli.game_objects import Device, File, Wallet, Service, Miner, InventoryElement, ShopProduct
+from PyCrypCli.game_objects import (
+    Device,
+    File,
+    Wallet,
+    Service,
+    Miner,
+    InventoryElement,
+    ShopProduct,
+    ResourceUsage,
+    DeviceHardware,
+)
 from PyCrypCli.timer import Timer
 
 
@@ -347,3 +357,14 @@ class Client:
 
     def inventory_trade(self, element_uuid: str, target: str):
         self.microservice("inventory", ["inventory", "trade"], {"element_uuid": element_uuid, "target": target})
+
+    def hardware_resources(self, device_uuid: str) -> ResourceUsage:
+        return ResourceUsage.deserialize(
+            self.microservice("device", ["hardware", "resources"], {"device_uuid": device_uuid})
+        )
+
+    def get_device_hardware(self, device_uuid: str) -> List[DeviceHardware]:
+        return [
+            DeviceHardware.deserialize(dh)
+            for dh in self.microservice("device", ["device", "info"], {"device_uuid": device_uuid})["hardware"]
+        ]

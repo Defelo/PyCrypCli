@@ -1,9 +1,9 @@
-from typing import List
+from typing import List, Dict
 
 from PyCrypCli.commands.command import command, completer
 from PyCrypCli.context import MainContext, DeviceContext
 from PyCrypCli.exceptions import AlreadyOwnADeviceException, DeviceNotFoundException
-from PyCrypCli.game_objects import Device
+from PyCrypCli.game_objects import Device, ResourceUsage, DeviceHardware
 from PyCrypCli.util import is_uuid
 
 
@@ -90,3 +90,35 @@ def handle_hostname(context: DeviceContext, args: List[str]):
         context.get_client().change_device_name(context.host.uuid, name)
     else:
         print(context.host.name)
+
+
+@command(["top"], [DeviceContext], "Display the current resource usage of this device")
+def handle_top(context: DeviceContext, *_):
+    print(f"Resource usage of '{context.host.name}':")
+    print()
+    resource_usage: ResourceUsage = context.get_client().hardware_resources(context.host.uuid)
+    hardware: Dict[str, DeviceHardware] = {
+        dh.hardware_type: dh for dh in (context.get_client().get_device_hardware(context.host.uuid))
+    }
+
+    print(f"  Mainboard: {hardware['mainboard'].hardware_element}")
+    print()
+
+    print(f"  CPU: {hardware['cpu'].hardware_element}")
+    print(f"    => Usage: {resource_usage.cpu * 100:.1f}%")
+    print()
+
+    print(f"  RAM: {hardware['ram'].hardware_element}")
+    print(f"    => Usage: {resource_usage.ram * 100:.1f}%")
+    print()
+
+    print(f"  GPU: {hardware['gpu'].hardware_element}")
+    print(f"    => Usage: {resource_usage.gpu * 100:.1f}%")
+    print()
+
+    print(f"  Disk: {hardware['disk'].hardware_element}")
+    print(f"    => Usage: {resource_usage.disk * 100:.1f}%")
+    print()
+
+    print(f"  Network:")
+    print(f"    => Usage: {resource_usage.network * 100:.1f}%")

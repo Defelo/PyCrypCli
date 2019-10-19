@@ -3,6 +3,7 @@ from typing import List, Optional
 from uuid import uuid4
 
 from websocket import WebSocket, create_connection
+import ssl
 
 from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import Device, File, Wallet, Service, Miner, InventoryElement, ShopProduct
@@ -23,7 +24,10 @@ class Client:
         self.logged_in: bool = False
 
     def init(self):
-        self.websocket: WebSocket = create_connection(self.server)
+        try:
+            self.websocket: WebSocket = create_connection(self.server)
+        except ssl.SSLCertVerificationError:
+            self.websocket: WebSocket = create_connection(self.server, sslopt={"cert_reqs": ssl.CERT_NONE})
         self.timer: Timer = Timer(10, self.info)
 
     def close(self):

@@ -5,7 +5,7 @@ import time
 from typing import Optional, List, Dict, Type, Tuple, Callable
 
 import readline
-from pypresence import PyPresenceException, Presence
+from pypresence import PyPresenceException, InvalidPipe, Presence
 
 from PyCrypCli.client import Client
 from PyCrypCli.exceptions import InvalidSessionTokenException, InvalidWalletFile, FileNotFoundException
@@ -32,7 +32,7 @@ class RootContext:
         self.presence: Presence = Presence(client_id="596676243144048640")
         try:
             self.presence.connect()
-        except FileNotFoundError:
+        except (FileNotFoundError, InvalidPipe):
             self.presence = None
 
     def open(self, context: "Context"):
@@ -150,6 +150,9 @@ class Context:
 
     def loop_tick(self):
         pass
+
+    def before_command(self) -> bool:
+        return True
 
 
 COMMAND_FUNCTION = Callable[[Context, List[str]], None]
@@ -291,6 +294,19 @@ class DeviceContext(MainContext):
         super().loop_tick()
 
         self.host: Device = self.root_context.client.device_info(self.host.uuid)
+        self.check_device_permission()
+
+    def check_device_permission(self) -> bool:
+        if self.host.owner != self.user_uuid and all(
+            service.device != self.host.uuid for service in self.get_client().list_part_owner()
+        ):
+            print("You don't have access to this device anymore.")
+            self.close()
+            return False
+        return True
+
+    def before_command(self) -> bool:
+        return self.check_device_permission()
 
     def enter_context(self):
         Context.enter_context(self)

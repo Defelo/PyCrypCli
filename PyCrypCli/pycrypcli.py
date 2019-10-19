@@ -180,8 +180,8 @@ class Frontend:
 
     def mainloop(self):
         while True:
+            self.get_context().loop_tick()
             context: Context = self.get_context()
-            context.loop_tick()
 
             prompt: str = context.get_prompt()
             try:
@@ -193,6 +193,9 @@ class Frontend:
                 cmd, args = "exit", []
             except KeyboardInterrupt:  # Ctrl-C
                 print("^C")
+                continue
+
+            if not context.before_command():
                 continue
 
             context.add_to_history(cmd + " " + " ".join(args))

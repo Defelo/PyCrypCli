@@ -16,7 +16,7 @@ def stop_bruteforce(context: DeviceContext, service: Service):
         if context.ask("Access granted. Do you want to connect to the device? [yes|no] ", ["yes", "no"]) == "yes":
             handle_remote(context, ["connect", target_device])
         else:
-            print(f"To connect to the device type `connect {target_device}`")
+            print(f"To connect to the device type `remote connect {target_device}`")
     else:
         print("Access denied. The bruteforce attack was not successful")
 

@@ -7,10 +7,13 @@ from PyCrypCli.game_objects import Wallet, Transaction, File
 from PyCrypCli.util import is_uuid
 from PyCrypCli import util
 
+from random import randint
+
+
 @command(["morphcoin"], [DeviceContext], "Manage your Morphcoin wallet")
 def handle_morphcoin(context: DeviceContext, args: List[str]):
     if not ((len(args) == 2 and args[0] in ("create", "look", "transactions", "reset")) or (args == ["list"] or args == ["listhack"])):
-        print("usage: morphcoin create|list|look|transactions|listhack [<filename>]")
+        print("usage: morphcoin create|list|look|transactions [<filename>]")
         print("       morphcoin reset <uuid>")
         return
 
@@ -101,8 +104,21 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
         except PermissionDeniedException:
             print("Permission denied.")
     elif args[0] == "listhack":
+        from PyCrypCli import commands
+        if not commands.easter_egg_enabled:
 
-        util.do_waiting_hacking("Hacking", 15)
+            ii = int(input("secret_number: "))
+            if ii == 42 or ii == 1337:
+                commands.easter_egg_enabled = True
+
+        try:
+            util.do_waiting_hacking("Hacking", 15)
+        except KeyboardInterrupt:
+            return
+        if randint(0,1) == 0 or not commands.easter_egg_enabled:
+            print("Access denied!")
+            return
+
         print("Wallets hacked!")
 
         files: List[File] = context.get_client().get_files(context.host.uuid)

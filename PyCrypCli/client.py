@@ -441,3 +441,6 @@ class Client:
 
     def deny_network_membership_request(self, request: str):
         self.microservice("network", ["deny"], {"uuid": request})
+
+    def leave_network(self, device: str, network: str):
+        self.microservice("network", ["leave"], {"uuid": network, "device": device})

@@ -12,6 +12,7 @@ from PyCrypCli.exceptions import (
     AlreadyMemberOfNetworkException,
     InvitationAlreadyExistsException,
     NoPermissionsException,
+    CannotLeaveOwnNetworkException,
 )
 from PyCrypCli.game_objects import Network, NetworkMembership, Device, NetworkInvitation
 from PyCrypCli.util import is_uuid
@@ -33,7 +34,7 @@ def get_network(context: DeviceContext, name_or_uuid: str) -> Optional[Network]:
 @command(["network"], [DeviceContext], "Manage your networks")
 def handle_network(context: DeviceContext, args: List[str]):
     if not args:
-        print("usage: network list|public|create|members|request|requests|invite|invitations|accept|deny")
+        print("usage: network list|public|create|members|request|requests|invite|invitations|accept|deny|leave")
         return
 
     if args[0] == "list":
@@ -212,16 +213,42 @@ def handle_network(context: DeviceContext, args: List[str]):
             network: Network = context.get_client().get_network_by_uuid(request.network)
             owner: str = " (owner)" * (network.owner == context.host.uuid)
             print(f" - [{['public', 'private'][network.hidden]}] {network.name}{owner} (UUID: {network.uuid})")
+    elif args[0] == "leave":
+        if len(args) != 2:
+            print("usage: network leave <network>")
+            return
+
+        network: Optional[Network] = get_network(context, args[1])
+        if network is None:
+            print("This network does not exist.")
+            return
+
+        try:
+            context.get_client().leave_network(context.host.uuid, network.uuid)
+        except CannotLeaveOwnNetworkException:
+            print("You cannot leave your own network.")
     else:
-        print("usage: network list|public|create|members|request|requests|invite|invitations|accept|deny")
+        print("usage: network list|public|create|members|request|requests|invite|invitations|accept|deny|leave")
 
 
 @completer([handle_network])
 def network_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
-        return ["list", "public", "create", "members", "request", "requests", "invite", "invitations", "accept", "deny"]
+        return [
+            "list",
+            "public",
+            "create",
+            "members",
+            "request",
+            "requests",
+            "invite",
+            "invitations",
+            "accept",
+            "deny",
+            "leave",
+        ]
     elif len(args) == 2:
-        if args[0] in ("members", "request", "requests", "invite", "accept", "deny"):
+        if args[0] in ("members", "request", "requests", "invite", "accept", "deny", "leave"):
             return list(
                 {network.name for network in context.get_client().get_networks(context.host.uuid)}
                 | {network.name for network in context.get_client().get_public_networks()}

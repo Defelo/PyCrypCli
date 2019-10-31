@@ -181,6 +181,10 @@ class InvitationAlreadyExistsException(MicroserviceException):
     error: str = "invitation_already_exists"
 
 
+class CannotLeaveOwnNetworkException(MicroserviceException):
+    error: str = "cannot_leave_own_network"
+
+
 class MaximumNetworksReachedException(MicroserviceException):
     error: str = "maximum_networks_reached"
 

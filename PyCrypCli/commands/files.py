@@ -56,7 +56,7 @@ def handle_rm(context: DeviceContext, args: List[str]):
         return
 
     filename: str = args[0]
-    if filename == '*':
+    if filename == "*":
         # Remove all files
 
         if context.ask(f"Are you sure you want to delete all files? [yes|no] ", ["yes", "no"]) == "no":
@@ -85,7 +85,6 @@ def handle_rm(context: DeviceContext, args: List[str]):
             context.get_client().remove_file(file_file.device, file_file.uuid)
         print("Files have been deleted")
         return
-
 
     file: File = context.get_file(filename)
     if file is None:

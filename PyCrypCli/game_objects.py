@@ -181,3 +181,38 @@ class ResourceUsage(GameObject):
     @staticmethod
     def deserialize(data: dict) -> "ResourceUsage":
         return ResourceUsage(data.get("cpu"), data.get("ram"), data.get("gpu"), data.get("disk"), data.get("network"))
+
+
+class Network(GameObject):
+    def __init__(self, uuid: str, hidden: bool, owner: str, name: str):
+        self.uuid: str = uuid
+        self.hidden: bool = hidden
+        self.owner: str = owner
+        self.name: str = name
+
+    @staticmethod
+    def deserialize(data: dict) -> "Network":
+        return Network(data.get("uuid"), data.get("hidden"), data.get("owner"), data.get("name"))
+
+
+class NetworkMembership(GameObject):
+    def __init__(self, uuid: str, network: str, device: str):
+        self.uuid: str = uuid
+        self.network: str = network
+        self.device: str = device
+
+    @staticmethod
+    def deserialize(data: dict) -> "NetworkMembership":
+        return NetworkMembership(data.get("uuid"), data.get("network"), data.get("device"))
+
+
+class NetworkInvitation(GameObject):
+    def __init__(self, uuid: str, network: str, device: str, request: bool):
+        self.uuid: str = uuid
+        self.network: str = network
+        self.device: str = device
+        self.request: bool = request
+
+    @staticmethod
+    def deserialize(data: dict) -> "NetworkInvitation":
+        return NetworkInvitation(data.get("uuid"), data.get("network"), data.get("device"), data.get("request"))

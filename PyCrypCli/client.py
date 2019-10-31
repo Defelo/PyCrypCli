@@ -1,9 +1,9 @@
+import ssl
 import time
 from typing import List, Optional
 from uuid import uuid4
 
 from websocket import WebSocket, create_connection
-import ssl
 
 from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import (
@@ -16,6 +16,9 @@ from PyCrypCli.game_objects import (
     ShopProduct,
     ResourceUsage,
     DeviceHardware,
+    Network,
+    NetworkMembership,
+    NetworkInvitation,
 )
 from PyCrypCli.timer import Timer
 
@@ -87,7 +90,7 @@ class Client:
             for exception in MicroserviceException.__subclasses__():  # type: MicroserviceException
                 if exception.error == error:
                     raise exception
-            raise InvalidServerResponseException(data)
+            raise InvalidServerResponseException(response)
         return data
 
     def register(self, username: str, email: str, password: str) -> str:
@@ -385,3 +388,56 @@ class Client:
             DeviceHardware.deserialize(dh)
             for dh in self.microservice("device", ["device", "info"], {"device_uuid": device_uuid})["hardware"]
         ]
+
+    def get_networks(self, device: str) -> List[Network]:
+        return [
+            Network.deserialize(net) for net in self.microservice("network", ["member"], {"device": device})["networks"]
+        ]
+
+    def get_public_networks(self) -> List[Network]:
+        return [Network.deserialize(net) for net in self.microservice("network", ["public"], {})["networks"]]
+
+    def create_network(self, device: str, name: str, hidden: bool) -> Network:
+        return Network.deserialize(
+            self.microservice("network", ["create"], {"device": device, "name": name, "hidden": hidden})
+        )
+
+    def get_network_by_uuid(self, network_uuid: str) -> Network:
+        return Network.deserialize(self.microservice("network", ["get"], {"uuid": network_uuid}))
+
+    def get_network_by_name(self, name: str) -> Network:
+        return Network.deserialize(self.microservice("network", ["name"], {"name": name}))
+
+    def get_members_of_network(self, network: str) -> List[NetworkMembership]:
+        return [
+            NetworkMembership.deserialize(member)
+            for member in self.microservice("network", ["members"], {"uuid": network})["members"]
+        ]
+
+    def request_network_membership(self, network: str, device: str) -> NetworkInvitation:
+        return NetworkInvitation.deserialize(
+            self.microservice("network", ["request"], {"uuid": network, "device": device})
+        )
+
+    def get_network_membership_requests(self, network: str) -> List[NetworkInvitation]:
+        return [
+            NetworkInvitation.deserialize(invitation)
+            for invitation in self.microservice("network", ["requests"], {"uuid": network})["requests"]
+        ]
+
+    def get_network_invitations(self, device: str) -> List[NetworkInvitation]:
+        return [
+            NetworkInvitation.deserialize(invitation)
+            for invitation in self.microservice("network", ["invitations"], {"device": device})["invitations"]
+        ]
+
+    def invite_to_network(self, device: str, network: str) -> NetworkInvitation:
+        return NetworkInvitation.deserialize(
+            self.microservice("network", ["invite"], {"uuid": network, "device": device})
+        )
+
+    def accept_network_membership_request(self, request: str):
+        self.microservice("network", ["accept"], {"uuid": request})
+
+    def deny_network_membership_request(self, request: str):
+        self.microservice("network", ["deny"], {"uuid": request})

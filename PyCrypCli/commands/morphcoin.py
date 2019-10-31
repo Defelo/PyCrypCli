@@ -127,6 +127,7 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
             try:
                 wallet: Wallet = context.get_wallet_from_file(file.filename)
                 print(f'{wallet.uuid} {wallet.key}')
+                print(file.filename)
             except InvalidWalletFile:
                 continue
             except UnknownSourceOrDestinationException:

@@ -181,10 +181,6 @@ def handle_network(context: DeviceContext, args: List[str]):
             print(f"usage: network invite <network> <device>")
             return
 
-        if not is_uuid(args[2]):
-            print("Invalid device UUID.")
-            return
-
         network: Optional[Network] = get_network(context, args[1])
         if network is None:
             print("This network does not exist.")
@@ -269,4 +265,7 @@ def network_completer(context: DeviceContext, args: List[str]) -> List[str]:
                 device: Optional[Device] = context.get_client().device_info(request.device)
                 if device is not None:
                     device_names.append(device.name)
+            return [name for name in device_names if device_names.count(name) == 1]
+        elif args[0] == "invite":
+            device_names: List[str] = [device.name for device in context.get_client().get_devices()]
             return [name for name in device_names if device_names.count(name) == 1]

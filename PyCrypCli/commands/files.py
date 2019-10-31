@@ -56,6 +56,37 @@ def handle_rm(context: DeviceContext, args: List[str]):
         return
 
     filename: str = args[0]
+    if filename == '*':
+        # Remove all files
+
+        if context.ask(f"Are you sure you want to delete all files? [yes|no] ", ["yes", "no"]) == "no":
+            print("Files have not been deleted.")
+            return
+
+        files: List[File] = context.get_client().get_files(context.host.uuid)
+        for file_file in files:
+            cc: str = file_file.content
+            try:
+                wallet: Wallet = context.extract_wallet(cc)
+                choice: str = context.ask(
+                    f"\033[38;2;255;51;51mThis file contains {wallet.amount} morphcoin. "
+                    f"Do you want to delete the corresponding wallet? [yes|no] \033[0m",
+                    ["yes", "no"],
+                )
+                if choice == "yes":
+                    context.get_client().delete_wallet(wallet)
+                    print("The wallet has been deleted.")
+                else:
+                    print("The following key might now be the only way to access your wallet.")
+                    print(cc)
+
+            except (InvalidWalletFile, UnknownSourceOrDestinationException, PermissionDeniedException):
+                pass
+            context.get_client().remove_file(file_file.device, file_file.uuid)
+        print("Files have been deleted")
+        return
+
+
     file: File = context.get_file(filename)
     if file is None:
         print("File does not exist.")

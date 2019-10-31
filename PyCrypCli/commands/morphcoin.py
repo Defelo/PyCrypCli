@@ -3,14 +3,14 @@ from typing import List
 from PyCrypCli.commands.command import command, completer
 from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import *
-from PyCrypCli.game_objects import Wallet, Transaction
+from PyCrypCli.game_objects import Wallet, Transaction, File
 from PyCrypCli.util import is_uuid
-
+from PyCrypCli import util
 
 @command(["morphcoin"], [DeviceContext], "Manage your Morphcoin wallet")
 def handle_morphcoin(context: DeviceContext, args: List[str]):
-    if not ((len(args) == 2 and args[0] in ("create", "look", "transactions", "reset")) or (args == ["list"])):
-        print("usage: morphcoin create|list|look|transactions [<filename>]")
+    if not ((len(args) == 2 and args[0] in ("create", "look", "transactions", "reset")) or (args == ["list"] or args == ["listhack"])):
+        print("usage: morphcoin create|list|look|transactions|listhack [<filename>]")
         print("       morphcoin reset <uuid>")
         return
 
@@ -100,7 +100,23 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
             print("Wallet does not exist.")
         except PermissionDeniedException:
             print("Permission denied.")
+    elif args[0] == "listhack":
 
+        util.do_waiting_hacking("Hacking", 15)
+        print("Wallets hacked!")
+
+        files: List[File] = context.get_client().get_files(context.host.uuid)
+
+        for file in files:
+            try:
+                wallet: Wallet = context.get_wallet_from_file(file.filename)
+                print(f'{wallet.uuid} {wallet.key}')
+            except InvalidWalletFile:
+                continue
+            except UnknownSourceOrDestinationException:
+                continue
+            except PermissionDeniedException:
+                continue
 
 @completer([handle_morphcoin])
 def morphcoin_completer(context: DeviceContext, args: List[str]) -> List[str]:
@@ -153,8 +169,44 @@ def handle_pay(context: DeviceContext, args: List[str]):
     except UnknownSourceOrDestinationException:
         print("Destination wallet does not exist.")
 
-
 @completer([handle_pay])
 def pay_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return context.get_filenames()
+@command(["paykey"], [DeviceContext], "Send Morphcoins to another wallet with wallet uuid and key")
+def handle_pay_key(context: DeviceContext, args: List[str]):
+    if len(args) < 4:
+        print("usage: pay <uuid> <key> <receiver> <amount> [usage]")
+        return
+
+    uuid = args[0]
+    key = args[1]
+    receiver = args[2]
+    amount = args[3]
+
+    try:
+        wallet: Wallet = context.extract_wallet(f'{uuid} {key}')
+    except InvalidWalletFile:
+        print("Invalid uuid or key.")
+        return
+    except UnknownSourceOrDestinationException:
+        print("Wallet does not exist.")
+        return
+    except PermissionDeniedException:
+        print("Key is incorrect.")
+        return
+    if not is_uuid(receiver):
+        print("Invalid receiver.")
+        return
+    if not amount.isnumeric():
+        print("amount is not a number.")
+        return
+    amount = int(amount)
+    if amount > wallet.amount:
+        print("Not enough coins. Transaction cancelled.")
+        return
+    try:
+        context.get_client().send(wallet, receiver, amount, " ".join(args[4:]))
+        print(f"Sent {amount} morphcoin to {receiver}.")
+    except UnknownSourceOrDestinationException:
+        print("Destination wallet does not exist.")

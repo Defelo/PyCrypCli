@@ -20,18 +20,8 @@ def extract_wallet(content: str) -> Optional[Tuple[str, str]]:
 
 
 def raw_do_waiting(text: str, status: int):
-    status_ident = "|/-\\"[status]
-    print(end=f"\r{text} {status_ident}", flush=False)
-
-
-def do_waiting(message, t):
-    pt = 0
-    while pt < t:
-        for i in range(4):
-            raw_do_waiting(message, i)
-            time.sleep(0.25)
-        pt += 1
-    print()
+    status_ident = "|/-\\"[status % 4]
+    print(end=f"\r{text} {status_ident} ", flush=False)
 
 
 def make_random_message(message: str) -> str:
@@ -41,33 +31,30 @@ def make_random_message(message: str) -> str:
 def do_waiting_hacking(message, t):
     pt = 0
     while pt < t:
-        for i in range(4):
+        for i in range(12):
             raw_do_waiting(make_random_message(message), i)
-            time.sleep(0.25)
+            time.sleep(1 / 12)
         pt += 1
     print()
 
 
 class DoWaitingHackingThread(threading.Thread):
-    def __init__(self, message: str, t: int):
+    def __init__(self, message: str):
         super().__init__()
 
         self.message: str = message
-        self.t: int = t
         self.running: bool = True
         self.stopped: bool = False
 
     def run(self):
-        pt = 0
-        while pt < self.t and self.running:
-            for i in range(4):
+        while self.running:
+            for i in range(12):
                 raw_do_waiting(make_random_message(self.message), i)
-                time.sleep(0.25)
-            pt += 1
+                time.sleep(1 / 12)
         self.stopped = True
 
     def stop(self):
         self.running = False
         while not self.stopped:
-            time.sleep(.05)
+            time.sleep(0.05)
         print()

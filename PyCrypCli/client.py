@@ -444,3 +444,6 @@ class Client:
 
     def leave_network(self, device: str, network: str):
         self.microservice("network", ["leave"], {"uuid": network, "device": device})
+
+    def kick_from_network(self, device: str, network: str):
+        self.microservice("network", ["kick"], {"uuid": network, "device": device})

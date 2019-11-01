@@ -8,7 +8,7 @@ from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import Device, Service
 from PyCrypCli.util import is_uuid
 
-
+from PyCrypCli import util
 def stop_bruteforce(context: DeviceContext, service: Service):
     result: dict = context.get_client().bruteforce_stop(service.device, service.uuid)
     target_device: str = result["target_device"]
@@ -257,7 +257,22 @@ def service_completer(context: DeviceContext, args: List[str]) -> List[str]:
 
 
 @command(["spot"], [DeviceContext], "Find a random device in the network")
-def handle_spot(context: DeviceContext, *_):
+def handle_spot(context: DeviceContext, args: List[str]):
+
+    if len(args) == 1:
+        # Find device
+        util.do_waiting_hacking("Find device (25 seconds)", 25)
+        device = args[0]
+
+        for i in range(20):
+            device: Device = context.get_client().spot()
+            if device.name == args[0]:
+                print(f"Name: '{device.name}'" + " (hacked)" * context.get_client().part_owner(device.uuid))
+                print(f"UUID: {device.uuid}")
+                handle_portscan(context, [device.uuid])
+                return
+            print((i+1) , " : Unknow device")
+
     device: Device = context.get_client().spot()
     print(f"Name: '{device.name}'" + " (hacked)" * context.get_client().part_owner(device.uuid))
     print(f"UUID: {device.uuid}")

@@ -1,4 +1,3 @@
-import json
 from typing import List, Dict, Optional
 
 from PyCrypCli.commands.command import command, completer
@@ -15,7 +14,7 @@ from PyCrypCli.game_objects import Device, ResourceUsage, DeviceHardware
 from PyCrypCli.util import is_uuid
 
 
-def get_device(context: MainContext, name_or_uuid: str) -> Optional[Device]:
+def get_device(context: MainContext, name_or_uuid: str, devices: Optional[List[Device]] = None) -> Optional[Device]:
     if is_uuid(name_or_uuid):
         try:
             return context.get_client().device_info(name_or_uuid)
@@ -24,7 +23,7 @@ def get_device(context: MainContext, name_or_uuid: str) -> Optional[Device]:
             return None
     else:
         found_devices: List[Device] = []
-        for device in context.get_client().get_devices():
+        for device in devices or context.get_client().get_devices():
             if device.name == name_or_uuid:
                 found_devices.append(device)
         if not found_devices:

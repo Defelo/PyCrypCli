@@ -174,15 +174,9 @@ def handle_device(context: MainContext, args: List[str]):
         context.get_client().device_power(device.uuid)
     elif args[0] == "connect":
         if len(args) != 2:
-            print("usage: device connect <name|uuid|0>")
+            print("usage: device connect <name|uuid>")
             return
-        if args[1] == "0":
-            devices: List[Device] = context.get_client().get_devices()
-            if not devices:
-                print("You dont have devices.")
-                return
-            context.open(DeviceContext(context.root_context, context.session_token, devices[0]))
-            return
+
         device: Optional[Device] = get_device(context, args[1])
         if device is None:
             return

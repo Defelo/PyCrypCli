@@ -34,8 +34,23 @@ def get_network(context: DeviceContext, name_or_uuid: str) -> Optional[Network]:
 
 @command(["network"], [DeviceContext], "Manage your networks")
 def handle_network(context: DeviceContext, args: List[str]):
+    subcommands = [
+        "list",
+        "public",
+        "create",
+        "members",
+        "request",
+        "requests",
+        "invite",
+        "invitations",
+        "accept",
+        "deny",
+        "leave",
+        "kick",
+        "delete",
+    ]
     if not args:
-        print("usage: network list|public|create|members|request|requests|invite|invitations|accept|deny|leave|kick")
+        print("usage: network " + "|".join(subcommands))
         return
 
     if args[0] == "list":
@@ -251,8 +266,22 @@ def handle_network(context: DeviceContext, args: List[str]):
             print("Permission denied.")
         except CannotKickOwnerException:
             print("You cannot kick the owner of the network.")
+    elif args[0] == "delete":
+        if len(args) != 2:
+            print("usage: network delete <network>")
+            return
+
+        network: Optional[Network] = get_network(context, args[1])
+        if network is None:
+            print("This network does not exist.")
+            return
+
+        try:
+            context.get_client().delete_network(network.uuid)
+        except NetworkNotFoundException:
+            print("Permission denied.")
     else:
-        print("usage: network list|public|create|members|request|requests|invite|invitations|accept|deny|leave|kick")
+        print("usage: network " + "|".join(subcommands))
 
 
 @completer([handle_network])
@@ -271,9 +300,10 @@ def network_completer(context: DeviceContext, args: List[str]) -> List[str]:
             "deny",
             "leave",
             "kick",
+            "delete",
         ]
     elif len(args) == 2:
-        if args[0] in ("members", "request", "requests", "invite", "accept", "deny", "leave", "kick"):
+        if args[0] in ("members", "request", "requests", "invite", "accept", "deny", "leave", "kick", "delete"):
             return list(
                 {network.name for network in context.get_client().get_networks(context.host.uuid)}
                 | {network.name for network in context.get_client().get_public_networks()}

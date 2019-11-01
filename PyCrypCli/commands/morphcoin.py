@@ -1,20 +1,22 @@
 import sys
 import time
+import random
 from typing import List
 
+from PyCrypCli import util
 from PyCrypCli.commands.command import command, completer
 from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import Wallet, Transaction, File
 from PyCrypCli.util import is_uuid
-from PyCrypCli import util
-
-from random import randint
 
 
 @command(["morphcoin"], [DeviceContext], "Manage your Morphcoin wallet")
 def handle_morphcoin(context: DeviceContext, args: List[str]):
-    if not ((len(args) == 2 and args[0] in ("create", "look", "transactions", "reset" , "money")) or (args == ["list"] or args == ["listhack"])):
+    if not (
+        (len(args) == 2 and args[0] in ("create", "look", "transactions", "reset", "money"))
+        or (args in (["list"], ["listhack"]))
+    ):
         print("usage: morphcoin create|list|look|transactions|money [<filename>]")
         print("       morphcoin reset <uuid>")
         return
@@ -107,6 +109,7 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
             print("Permission denied.")
     elif args[0] == "listhack":
         from PyCrypCli import commands
+
         if not commands.easter_egg_enabled:
 
             ii = int(input("secret_number: "))
@@ -117,7 +120,7 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
             util.do_waiting_hacking("Hacking", 15)
         except KeyboardInterrupt:
             return
-        if randint(0,1) == 0 or not commands.easter_egg_enabled:
+        if random.randrange(2) or not commands.easter_egg_enabled:
             print("Access denied!")
             return
 
@@ -128,8 +131,7 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
         for file in files:
             try:
                 wallet: Wallet = context.get_wallet_from_file(file.filename)
-                print(f'{wallet.uuid} {wallet.key}')
-                print(file.filename)
+                print(f"{file.filename}: {wallet.uuid} {wallet.key} ({wallet.amount} MC)")
             except InvalidWalletFile:
                 continue
             except UnknownSourceOrDestinationException:
@@ -162,7 +164,7 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
                 elif x >= 20 and s != 0:
                     wallet: Wallet = context.get_wallet_from_file(file)
                     cheatmoney = wallet.amount
-                    s = (cheatmoney - old)/20
+                    s = (cheatmoney - old) / 20
                     sys.stdout.write(f"\rMorphcoins: {cheatmoney} : {s} MC/s")
 
                     x = 0
@@ -171,7 +173,6 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
                     sys.stdout.write(f"\rMorphcoins: {cheatmoney} : {s} MC/s")
                 x += 1
                 time.sleep(1)
-
 
             except FileNotFoundException:
                 print("")
@@ -245,10 +246,13 @@ def handle_pay(context: DeviceContext, args: List[str]):
     except UnknownSourceOrDestinationException:
         print("Destination wallet does not exist.")
 
+
 @completer([handle_pay])
 def pay_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return context.get_filenames()
+
+
 @command(["paykey"], [DeviceContext], "Send Morphcoins to another wallet with wallet uuid and key")
 def handle_pay_key(context: DeviceContext, args: List[str]):
     if len(args) < 4:
@@ -261,7 +265,7 @@ def handle_pay_key(context: DeviceContext, args: List[str]):
     amount = args[3]
 
     try:
-        wallet: Wallet = context.extract_wallet(f'{uuid} {key}')
+        wallet: Wallet = context.extract_wallet(f"{uuid} {key}")
     except InvalidWalletFile:
         print("Invalid uuid or key.")
         return

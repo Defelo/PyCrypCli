@@ -272,6 +272,9 @@ def handle_spot(context: DeviceContext, args: List[str]):
                 handle_portscan(context, [device.uuid])
                 return
             print((i+1) , " : Unknow device")
+        print("Device not found")
+        return
+
 
     device: Device = context.get_client().spot()
     print(f"Name: '{device.name}'" + " (hacked)" * context.get_client().part_owner(device.uuid))

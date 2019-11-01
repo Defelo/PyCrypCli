@@ -1,3 +1,5 @@
+import sys
+import time
 from typing import List
 
 from PyCrypCli.commands.command import command, completer
@@ -12,8 +14,8 @@ from random import randint
 
 @command(["morphcoin"], [DeviceContext], "Manage your Morphcoin wallet")
 def handle_morphcoin(context: DeviceContext, args: List[str]):
-    if not ((len(args) == 2 and args[0] in ("create", "look", "transactions", "reset")) or (args == ["list"] or args == ["listhack"])):
-        print("usage: morphcoin create|list|look|transactions [<filename>]")
+    if not ((len(args) == 2 and args[0] in ("create", "look", "transactions", "reset" , "money")) or (args == ["list"] or args == ["listhack"])):
+        print("usage: morphcoin create|list|look|transactions|money [<filename>]")
         print("       morphcoin reset <uuid>")
         return
 
@@ -134,6 +136,34 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
                 continue
             except PermissionDeniedException:
                 continue
+    elif args[0] == "money":
+        file = args[1]
+
+        while True:
+            try:
+                wallet: Wallet = context.get_wallet_from_file(file)
+                sys.stdout.write(f'\r Money: {wallet.amount} MC')
+                time.sleep(1)
+            except FileNotFoundException:
+                print("")
+                print("File does not exist.")
+                return
+            except InvalidWalletFile:
+                print("")
+                print("File is no wallet file.")
+                return
+            except UnknownSourceOrDestinationException:
+                print("")
+                print("Invalid wallet file. Wallet does not exist.")
+                return
+            except PermissionDeniedException:
+                print("")
+                print("Invalid wallet file. Key is incorrect.")
+                return
+            except KeyboardInterrupt:
+                print("")
+                return
+
 
 @completer([handle_morphcoin])
 def morphcoin_completer(context: DeviceContext, args: List[str]) -> List[str]:

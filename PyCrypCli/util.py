@@ -1,12 +1,12 @@
-import re
-import sys
-import time
 import random
+import re
+import string
 import threading
-
+import time
 from typing import Optional, Tuple
 
-hacking_letters = list("ABCDEFGHIKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyt123457890")
+hacking_letters = string.ascii_letters + string.digits
+
 
 def is_uuid(x: str) -> bool:
     return bool(re.match(r"^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$", x))
@@ -17,75 +17,57 @@ def extract_wallet(content: str) -> Optional[Tuple[str, str]]:
         uuid, key = content.split()
         return uuid, key
     return None
-def raw_do_waiting(writing_text, status):
-    status_ident = '|'
-    if status == 2:
-        status_ident = '/'
-    elif status == 3:
-        status_ident = '-'
-    elif status == 4:
-        status_ident = '\\'
 
-    sys.stdout.write(f'\r{writing_text} {status_ident}')
+
+def raw_do_waiting(text: str, status: int):
+    status_ident = "|/-\\"[status]
+    print(end=f"\r{text} {status_ident}", flush=False)
+
 
 def do_waiting(message, t):
     pt = 0
     while pt < t:
-        raw_do_waiting(message, 1)
-        time.sleep(0.25)
-        raw_do_waiting(message, 2)
-        time.sleep(0.25)
-        raw_do_waiting(message, 3)
-        time.sleep(0.25)
-        raw_do_waiting(message, 4)
-        time.sleep(0.25)
+        for i in range(4):
+            raw_do_waiting(message, i)
+            time.sleep(0.25)
         pt += 1
-    print("")
-def make_random_message (message: str) -> str:
-    message += " : "
-    for i in range(6):
-        message += random.choice(hacking_letters)
-    return message
+    print()
+
+
+def make_random_message(message: str) -> str:
+    return message + " : " + "".join(random.choice(hacking_letters) for _ in range(6))
+
 
 def do_waiting_hacking(message, t):
     pt = 0
     while pt < t:
-        raw_do_waiting(make_random_message(message), 1)
-        time.sleep(0.25)
-        raw_do_waiting(make_random_message(message), 2)
-        time.sleep(0.25)
-        raw_do_waiting(make_random_message(message), 3)
-        time.sleep(0.25)
-        raw_do_waiting(make_random_message(message), 4)
-        time.sleep(0.25)
+        for i in range(4):
+            raw_do_waiting(make_random_message(message), i)
+            time.sleep(0.25)
         pt += 1
-    print("")
-
+    print()
 
 
 class DoWaitingHackingThread(threading.Thread):
-    """Thread class with a stop() method. The thread itself has to check
-    regularly for the stopped() condition."""
-    stopped = False
+    def __init__(self, message: str, t: int):
+        super().__init__()
+
+        self.message: str = message
+        self.t: int = t
+        self.running: bool = True
+        self.stopped: bool = False
+
     def run(self):
         pt = 0
-        while pt < self.t and not self.stopped:
-            raw_do_waiting(make_random_message(self.message), 1)
-            time.sleep(0.25)
-            raw_do_waiting(make_random_message(self.message), 2)
-            time.sleep(0.25)
-            raw_do_waiting(make_random_message(self.message), 3)
-            time.sleep(0.25)
-            raw_do_waiting(make_random_message(self.message), 4)
-            time.sleep(0.25)
+        while pt < self.t and self.running:
+            for i in range(4):
+                raw_do_waiting(make_random_message(self.message), i)
+                time.sleep(0.25)
             pt += 1
-        print("")
-    def __init__(self, message, t):
-        threading.Thread.__init__(self)
-        self.message = message
-        self.t = t
+        self.stopped = True
 
     def stop(self):
-        self.stopped = True
-        print("")
-
+        self.running = False
+        while not self.stopped:
+            time.sleep(.05)
+        print()

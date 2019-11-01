@@ -1,5 +1,4 @@
 import os
-import threading
 import time
 from typing import List, Tuple
 
@@ -7,9 +6,9 @@ from PyCrypCli.commands.command import command, completer
 from PyCrypCli.context import DeviceContext, MainContext
 from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import Device, Service
-from PyCrypCli.util import is_uuid
+from PyCrypCli.util import is_uuid, DoWaitingHackingThread, do_waiting_hacking
 
-from PyCrypCli import util
+
 def stop_bruteforce(context: DeviceContext, service: Service):
     result: dict = context.get_client().bruteforce_stop(service.device, service.uuid)
     target_device: str = result["target_device"]
@@ -259,45 +258,37 @@ def service_completer(context: DeviceContext, args: List[str]) -> List[str]:
 
 @command(["spot"], [DeviceContext], "Find a random device in the network")
 def handle_spot(context: DeviceContext, args: List[str]):
-
     if len(args) == 1:
-
-        device = args[0]
-        if device == "nothacked":
-            t = util.DoWaitingHackingThread("Searching device (200 seconds min)", 200)
-            t.start()
+        if args[0] == "nothacked":
+            hacking_thread: DoWaitingHackingThread = DoWaitingHackingThread("Searching device (200 seconds min)", 200)
+            hacking_thread.start()
             for i in range(40):
                 try:
                     time.sleep(5)
                     device: Device = context.get_client().spot()
                     if not context.get_client().part_owner(device.uuid):
-                        t.stop()
-                        print(f"Name: '{device.name}'")
-                        print(f"UUID: {device.uuid}")
-                        handle_portscan(context, [device.uuid])
-                        return
+                        hacking_thread.stop()
+                        break
                 except KeyboardInterrupt:
-                    t.stop()
+                    hacking_thread.stop()
                     return
-
-
-        # Find device
-        util.do_waiting_hacking("Find device (25 seconds)", 25)
-
-        for i in range(20):
-            time.sleep(2)
-            device: Device = context.get_client().spot()
-            if device.name == args[0]:
-                print(f"Name: '{device.name}'" + " (hacked)" * context.get_client().part_owner(device.uuid))
-                print(f"UUID: {device.uuid}")
-                handle_portscan(context, [device.uuid])
+            else:
+                print("Device not found")
                 return
-            print((i+1) , " : Unknow device")
-        print("Device not found")
-        return
+        else:
+            do_waiting_hacking("Find device (25 seconds)", 25)
 
+            for i in range(20):
+                time.sleep(2)
+                device: Device = context.get_client().spot()
+                if device.name == args[0]:
+                    break
+            else:
+                print("Device not found")
+                return
+    else:
+        device: Device = context.get_client().spot()
 
-    device: Device = context.get_client().spot()
     print(f"Name: '{device.name}'" + " (hacked)" * context.get_client().part_owner(device.uuid))
     print(f"UUID: {device.uuid}")
     handle_portscan(context, [device.uuid])

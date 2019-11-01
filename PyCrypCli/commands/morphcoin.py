@@ -138,16 +138,41 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
                 continue
     elif args[0] == "money":
         file = args[1]
+        x = 20
+        cheatmoney = 0
         old = 0
+        s = 0
+
         while True:
             try:
-                wallet: Wallet = context.get_wallet_from_file(file)
                 if old == 0:
-                    sys.stdout.write(f'\r Money: {wallet.amount} MC')
+                    wallet: Wallet = context.get_wallet_from_file(file)
+                    old = wallet.amount
+                    cheatmoney = wallet.amount
+                    sys.stdout.write(f"\rMorphcoins: {cheatmoney}")
+                    time.sleep(2)
+                    continue
+                if x >= 20 and s == 0:
+                    wallet: Wallet = context.get_wallet_from_file(file)
+                    cheatmoney = wallet.amount
+                    s = cheatmoney - old
+                    sys.stdout.write(f"\rMorphcoins: {cheatmoney} : {s} MC/s")
+
+                    x = 0
+                elif x >= 20 and s != 0:
+                    wallet: Wallet = context.get_wallet_from_file(file)
+                    cheatmoney = wallet.amount
+                    s = (cheatmoney - old)/20
+                    sys.stdout.write(f"\rMorphcoins: {cheatmoney} : {s} MC/s")
+
+                    x = 0
                 else:
-                    sys.stdout.write(f'\r Money: {wallet.amount} MC : {wallet.amount - old} MC/S')
+                    cheatmoney += s
+                    sys.stdout.write(f"\rMorphcoins: {cheatmoney} : {s} MC/s")
+                x += 1
                 time.sleep(1)
-                old = wallet.amount
+
+
             except FileNotFoundException:
                 print("")
                 print("File does not exist.")

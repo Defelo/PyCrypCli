@@ -1,4 +1,5 @@
 import os
+import threading
 import time
 from typing import List, Tuple
 
@@ -260,11 +261,31 @@ def service_completer(context: DeviceContext, args: List[str]) -> List[str]:
 def handle_spot(context: DeviceContext, args: List[str]):
 
     if len(args) == 1:
+
+        device = args[0]
+        if device == "nothacked":
+            t = util.DoWaitingHackingThread("Searching device (200 seconds min)", 200)
+            t.start()
+            for i in range(40):
+                try:
+                    time.sleep(5)
+                    device: Device = context.get_client().spot()
+                    if not context.get_client().part_owner(device.uuid):
+                        t.stop()
+                        print(f"Name: '{device.name}'")
+                        print(f"UUID: {device.uuid}")
+                        handle_portscan(context, [device.uuid])
+                        return
+                except KeyboardInterrupt:
+                    t.stop()
+                    return
+
+
         # Find device
         util.do_waiting_hacking("Find device (25 seconds)", 25)
-        device = args[0]
 
         for i in range(20):
+            time.sleep(2)
             device: Device = context.get_client().spot()
             if device.name == args[0]:
                 print(f"Name: '{device.name}'" + " (hacked)" * context.get_client().part_owner(device.uuid))

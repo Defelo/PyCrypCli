@@ -2,6 +2,7 @@ import re
 import sys
 import time
 import random
+import threading
 
 from typing import Optional, Tuple
 
@@ -59,3 +60,32 @@ def do_waiting_hacking(message, t):
         time.sleep(0.25)
         pt += 1
     print("")
+
+
+
+class DoWaitingHackingThread(threading.Thread):
+    """Thread class with a stop() method. The thread itself has to check
+    regularly for the stopped() condition."""
+    stopped = False
+    def run(self):
+        pt = 0
+        while pt < self.t and not self.stopped:
+            raw_do_waiting(make_random_message(self.message), 1)
+            time.sleep(0.25)
+            raw_do_waiting(make_random_message(self.message), 2)
+            time.sleep(0.25)
+            raw_do_waiting(make_random_message(self.message), 3)
+            time.sleep(0.25)
+            raw_do_waiting(make_random_message(self.message), 4)
+            time.sleep(0.25)
+            pt += 1
+        print("")
+    def __init__(self, message, t):
+        threading.Thread.__init__(self)
+        self.message = message
+        self.t = t
+
+    def stop(self):
+        self.stopped = True
+        print("")
+

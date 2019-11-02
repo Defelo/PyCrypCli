@@ -6,7 +6,7 @@ from PyCrypCli.commands.command import command, completer
 from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import Wallet, Transaction
-from PyCrypCli.util import is_uuid, DoWaitingHackingThread
+from PyCrypCli.util import is_uuid, DoWaitingHackingThread, extract_wallet
 
 
 @command(["morphcoin"], [DeviceContext], "Manage your Morphcoin wallet")
@@ -196,11 +196,15 @@ def morphcoin_completer(context: DeviceContext, args: List[str]) -> List[str]:
 def handle_pay(context: DeviceContext, args: List[str]):
     if len(args) < 3:
         print("usage: pay <filename> <receiver> <amount> [usage]")
+        print("   or: pay <uuid> <key> <receiver> <amount> [usage]")
         return
 
-    filename: str = args[0]
     try:
-        wallet: Wallet = context.get_wallet_from_file(filename)
+        if extract_wallet(f"{args[0]} {args[1]}") is not None:
+            wallet: Wallet = context.get_client().get_wallet(args[0], args[1])
+            args.pop(0)
+        else:
+            wallet: Wallet = context.get_wallet_from_file(args[0])
     except FileNotFoundException:
         print("File does not exist.")
         return
@@ -239,42 +243,3 @@ def handle_pay(context: DeviceContext, args: List[str]):
 def pay_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return context.get_filenames()
-
-
-@command(["paykey"], [DeviceContext], "Send Morphcoins to another wallet with wallet uuid and key")
-def handle_pay_key(context: DeviceContext, args: List[str]):
-    if len(args) < 4:
-        print("usage: pay <uuid> <key> <receiver> <amount> [usage]")
-        return
-
-    uuid = args[0]
-    key = args[1]
-    receiver = args[2]
-    amount = args[3]
-
-    try:
-        wallet: Wallet = context.extract_wallet(f"{uuid} {key}")
-    except InvalidWalletFile:
-        print("Invalid uuid or key.")
-        return
-    except UnknownSourceOrDestinationException:
-        print("Wallet does not exist.")
-        return
-    except PermissionDeniedException:
-        print("Key is incorrect.")
-        return
-    if not is_uuid(receiver):
-        print("Invalid receiver.")
-        return
-    if not amount.isnumeric():
-        print("amount is not a number.")
-        return
-    amount = int(amount)
-    if amount > wallet.amount:
-        print("Not enough coins. Transaction cancelled.")
-        return
-    try:
-        context.get_client().send(wallet, receiver, amount, " ".join(args[4:]))
-        print(f"Sent {amount} morphcoin to {receiver}.")
-    except UnknownSourceOrDestinationException:
-        print("Destination wallet does not exist.")

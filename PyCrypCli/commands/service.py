@@ -6,7 +6,7 @@ from PyCrypCli.commands.command import command, completer
 from PyCrypCli.context import DeviceContext, MainContext
 from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import Device, Service
-from PyCrypCli.util import is_uuid
+from PyCrypCli.util import is_uuid, DoWaitingHackingThread
 
 
 def stop_bruteforce(context: DeviceContext, service: Service):
@@ -257,9 +257,36 @@ def service_completer(context: DeviceContext, args: List[str]) -> List[str]:
 
 
 @command(["spot"], [DeviceContext], "Find a random device in the network")
-def handle_spot(context: DeviceContext, *_):
-    device: Device = context.get_client().spot()
-    print(f"Name: '{device.name}'" + " (hacked)" * context.get_client().part_owner(device.uuid))
+def handle_spot(context: DeviceContext, args: List[str]):
+    if len(args) == 1:
+        hacking_thread: DoWaitingHackingThread = DoWaitingHackingThread("Searching device")
+        hacking_thread.start()
+        for i in range(40):
+            try:
+                time.sleep(5)
+                device: Device = context.get_client().spot()
+                part_owner: bool = context.get_client().part_owner(device.uuid)
+
+                if args[0] == "nothacked":
+                    found: bool = not part_owner
+                else:
+                    found: bool = device.name == args[0]
+
+                if found:
+                    hacking_thread.stop()
+                    break
+                else:
+                    print(f"\rfound {device.name}" + " [hacked]" * part_owner + f" (UUID: {device.uuid})")
+            except KeyboardInterrupt:
+                hacking_thread.stop()
+                return
+        else:
+            print("Device not found")
+            return
+    else:
+        device: Device = context.get_client().spot()
+
+    print(f"Name: '{device.name}'" + " [hacked]" * context.get_client().part_owner(device.uuid))
     print(f"UUID: {device.uuid}")
     handle_portscan(context, [device.uuid])
 

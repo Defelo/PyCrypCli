@@ -6,7 +6,7 @@ from PyCrypCli.commands.command import command, completer
 from PyCrypCli.context import DeviceContext, MainContext
 from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import Device, Service
-from PyCrypCli.util import is_uuid
+from PyCrypCli.util import is_uuid, DoWaitingHackingThread
 
 
 def stop_bruteforce(context: DeviceContext, service: Service):
@@ -141,8 +141,8 @@ def handle_portscan(context: DeviceContext, args: List[str]):
 
 @command(["service"], [DeviceContext], "Create or use a service")
 def handle_service(context: DeviceContext, args: List[str]):
-    if len(args) < 1 or args[0] not in ("create", "list", "delete", "bruteforce", "portscan"):
-        print("usage: service create|list|delete|bruteforce|portscan")
+    if len(args) < 1 or args[0] not in ("create", "list", "delete", "start", "stop", "bruteforce", "portscan"):
+        print("usage: service create|list|delete|start|stop|bruteforce|portscan")
         return
 
     if args[0] == "create":
@@ -186,7 +186,7 @@ def handle_service(context: DeviceContext, args: List[str]):
         else:
             print("Services:")
         for service in services:
-            line: str = f" - {service.name}"
+            line: str = f" - [{['stopped', 'running'][service.running]}] {service.name}"
             if service.running_port is not None:
                 line += f" on port {service.running_port}"
             print(line)
@@ -201,7 +201,41 @@ def handle_service(context: DeviceContext, args: List[str]):
             return
 
         context.get_client().delete_service(service.device, service.uuid)
+    elif args[0] == "start":
+        if len(args) < 2 or args[1] not in ("telnet", "ssh"):
+            print("usage: service start telnet|ssh")
+            return
 
+        service: Service = context.get_service(args[1])
+        if service is None:
+            print(f"The service '{args[1]}' could not be found on this device")
+            return
+        elif service.running:
+            print("This service is already running.")
+            return
+
+        try:
+            context.get_client().toggle_service(service.device, service.uuid)
+        except (CannotToggleDirectlyException, CouldNotStartService):
+            print("The service could not be started.")
+    elif args[0] == "stop":
+        if len(args) < 2 or args[1] not in ("telnet", "ssh"):
+            print("usage: service stop telnet|ssh")
+            return
+
+        service: Service = context.get_service(args[1])
+        if service is None:
+            print(f"The service '{args[1]}' could not be found on this device")
+            return
+        elif not service.running:
+            print("This service is not running.")
+            return
+
+        try:
+            context.get_client().toggle_service(service.device, service.uuid)
+        except CannotToggleDirectlyException:
+            print("The service could not be stopped.")
+        pass
     elif args[0] == "bruteforce":
         handle_bruteforce(context, args[1:])
     elif args[0] == "portscan":
@@ -211,11 +245,11 @@ def handle_service(context: DeviceContext, args: List[str]):
 @completer([handle_service])
 def service_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
-        return ["create", "list", "delete", "bruteforce", "portscan"]
+        return ["create", "list", "delete", "start", "stop", "bruteforce", "portscan"]
     elif len(args) == 2:
         if args[0] in ("create", "delete"):
             return ["bruteforce", "portscan", "ssh", "telnet", "miner"]
-        elif args[0] == "bruteforce":
+        elif args[0] in ("bruteforce", "start", "stop"):
             return ["ssh", "telnet"]
     elif len(args) == 3:
         if args[0] == "create" and args[1] == "miner":
@@ -223,9 +257,36 @@ def service_completer(context: DeviceContext, args: List[str]) -> List[str]:
 
 
 @command(["spot"], [DeviceContext], "Find a random device in the network")
-def handle_spot(context: DeviceContext, *_):
-    device: Device = context.get_client().spot()
-    print(f"Name: '{device.name}'" + " (hacked)" * context.get_client().part_owner(device.uuid))
+def handle_spot(context: DeviceContext, args: List[str]):
+    if len(args) == 1:
+        hacking_thread: DoWaitingHackingThread = DoWaitingHackingThread("Searching device")
+        hacking_thread.start()
+        for i in range(40):
+            try:
+                time.sleep(5)
+                device: Device = context.get_client().spot()
+                part_owner: bool = context.get_client().part_owner(device.uuid)
+
+                if args[0] == "nothacked":
+                    found: bool = not part_owner
+                else:
+                    found: bool = device.name == args[0]
+
+                if found:
+                    hacking_thread.stop()
+                    break
+                else:
+                    print(f"\rfound {device.name}" + " [hacked]" * part_owner + f" (UUID: {device.uuid})")
+            except KeyboardInterrupt:
+                hacking_thread.stop()
+                return
+        else:
+            print("Device not found")
+            return
+    else:
+        device: Device = context.get_client().spot()
+
+    print(f"Name: '{device.name}'" + " [hacked]" * context.get_client().part_owner(device.uuid))
     print(f"UUID: {device.uuid}")
     handle_portscan(context, [device.uuid])
 

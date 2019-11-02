@@ -1,17 +1,22 @@
+import time
 from typing import List
 
+from PyCrypCli import util
 from PyCrypCli.commands.command import command, completer
 from PyCrypCli.commands.files import create_file
 from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import Wallet, Transaction
-from PyCrypCli.util import is_uuid
+from PyCrypCli.util import is_uuid, DoWaitingHackingThread, extract_wallet
 
 
 @command(["morphcoin"], [DeviceContext], "Manage your Morphcoin wallet")
 def handle_morphcoin(context: DeviceContext, args: List[str]):
-    if not ((len(args) == 2 and args[0] in ("create", "look", "transactions", "reset")) or (args == ["list"])):
-        print("usage: morphcoin create|list|look|transactions [<filepath>]")
+    if not (
+        (len(args) == 2 and args[0] in ("create", "look", "transactions", "reset", "watch"))
+        or (args in (["list"], ["search"]))
+    ):
+        print("usage: morphcoin create|list|look|transactions|watch [<filepath>]")
         print("       morphcoin reset <uuid>")
         return
 
@@ -100,14 +105,90 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
             print("Wallet does not exist.")
         except PermissionDeniedException:
             print("Permission denied.")
+    elif args[0] == "search":
+        started: float = time.time()
+        try:
+            util.do_waiting_hacking("Initializing", 10)
+        except KeyboardInterrupt:
+            print()
+        if 6.5 < time.time() - started < 7.5:
+            print("Initialization successful.")
+        else:
+            print("Initialization failed.")
+            return
+
+        hacking_thread: DoWaitingHackingThread = DoWaitingHackingThread("Hacking")
+        hacking_thread.start()
+
+        for file in context.get_client().get_files(context.host.uuid):
+            time.sleep(5)
+            try:
+                wallet: Wallet = context.get_wallet_from_file(file.filename)
+                print(f"\r{file.filename}: {wallet.uuid} {wallet.key} ({wallet.amount} MC)")
+            except InvalidWalletFile:
+                print(f"\r{file.filename} is no wallet file.")
+            except UnknownSourceOrDestinationException:
+                print(f"\r{file.filename} contains an invalid wallet uuid.")
+            except PermissionDeniedException:
+                print(f"\r{file.filename} contains an invalid wallet key.")
+            except KeyboardInterrupt:
+                hacking_thread.stop()
+                return
+        hacking_thread.stop()
+    elif args[0] == "watch":
+        try:
+            wallet: Wallet = context.get_wallet_from_file(args[1])
+        except FileNotFoundException:
+            print("File does not exist.")
+            return
+        except InvalidWalletFile:
+            print("File is no wallet file.")
+            return
+        except UnknownSourceOrDestinationException:
+            print("Invalid wallet file. Wallet does not exist.")
+            return
+        except PermissionDeniedException:
+            print("Invalid wallet file. Key is incorrect.")
+            return
+
+        current_mining_rate: float = 0
+        last_update: float = 0
+
+        print(f"UUID: {wallet.uuid}")
+        try:
+            while True:
+                now = time.time()
+
+                if now - last_update > 20:
+                    try:
+                        wallet: Wallet = context.get_client().get_wallet(wallet.uuid, wallet.key)
+                    except UnknownSourceOrDestinationException:
+                        print("Invalid wallet file. Wallet does not exist.")
+                        return
+                    except PermissionDeniedException:
+                        print("Invalid wallet file. Key is incorrect.")
+                        return
+
+                    current_mining_rate: float = 0
+                    for _, service in context.get_client().get_miners(wallet.uuid):
+                        if service.running:
+                            current_mining_rate += service.speed
+
+                    last_update: float = now
+
+                current_balance: int = wallet.amount + int(current_mining_rate * (now - last_update))
+                print(end=f"\rBalance: {current_balance} morphcoin ({current_mining_rate:.2f} MC/s) ", flush=False)
+                time.sleep(0.1)
+        except KeyboardInterrupt:
+            print()
 
 
 @completer([handle_morphcoin])
 def morphcoin_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
-        return ["create", "list", "look", "transactions", "reset"]
+        return ["create", "list", "look", "transactions", "reset", "watch"]
     elif len(args) == 2:
-        if args[0] in ("look", "transactions"):
+        if args[0] in ("look", "transactions", "watch"):
             return context.file_path_completer(args[1])
         elif args[0] == "create":
             return context.file_path_completer(args[1], dirs_only=True)
@@ -117,10 +198,15 @@ def morphcoin_completer(context: DeviceContext, args: List[str]) -> List[str]:
 def handle_pay(context: DeviceContext, args: List[str]):
     if len(args) < 3:
         print("usage: pay <filename> <receiver> <amount> [usage]")
+        print("   or: pay <uuid> <key> <receiver> <amount> [usage]")
         return
 
     try:
-        wallet: Wallet = context.get_wallet_from_file(args[0])
+        if extract_wallet(f"{args[0]} {args[1]}") is not None:
+            wallet: Wallet = context.get_client().get_wallet(args[0], args[1])
+            args.pop(0)
+        else:
+            wallet: Wallet = context.get_wallet_from_file(args[0])
     except FileNotFoundException:
         print("File does not exist.")
         return

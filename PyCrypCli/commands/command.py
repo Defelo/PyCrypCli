@@ -28,7 +28,7 @@ def completer(cmds: List[COMMAND_FUNCTION]) -> Callable:
 
 def make_commands() -> Dict[Type[Context], Dict[str, Tuple[str, COMMAND_FUNCTION, COMPLETER_FUNCTION]]]:
     # noinspection PyUnresolvedReferences
-    from PyCrypCli.commands import status, device, files, morphcoin, service, miner, inventory, shop
+    from PyCrypCli.commands import status, device, files, morphcoin, service, miner, inventory, shop, network
 
     result: Dict[Type[Context], Dict[str, Tuple[str, COMMAND_FUNCTION, COMPLETER_FUNCTION]]] = {}
     for cmds, contexts, desc, func in commands:

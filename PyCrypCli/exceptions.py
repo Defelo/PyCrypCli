@@ -53,6 +53,10 @@ class MicroserviceException(Exception):
         super().__init__(self.error)
 
 
+class InternalErrorException(MicroserviceException):
+    error: str = "internal error"
+
+
 class NoResponseTimeoutException(MicroserviceException):
     error: str = "no response - timeout"
 
@@ -71,6 +75,22 @@ class PermissionDeniedException(MicroserviceException):
 
 class DeviceNotFoundException(MicroserviceException):
     error: str = "device_not_found"
+
+
+class IncompatibleCPUSocket(MicroserviceException):
+    error: str = "incompatible_cpu_socket"
+
+
+class NotEnoughRAMSlots(MicroserviceException):
+    error: str = "not_enough_ram_slots"
+
+
+class IncompatibleRAMTypes(MicroserviceException):
+    error: str = "incompatible_ram_types"
+
+
+class IncompatibleDriverInterface(MicroserviceException):
+    error: str = "incompatible_drive_interface"
 
 
 class FileNotFoundException(MicroserviceException):
@@ -125,6 +145,14 @@ class ServiceNotRunningException(MicroserviceException):
     error: str = "service_not_running"
 
 
+class CannotToggleDirectlyException(MicroserviceException):
+    error: str = "cannot_toggle_directly"
+
+
+class CouldNotStartService(MicroserviceException):
+    error: str = "could_not_start_service"
+
+
 class WalletNotFoundException(MicroserviceException):
     error: str = "wallet_not_found"
 
@@ -159,3 +187,39 @@ class CannotTradeWithYourselfException(MicroserviceException):
 
 class UserUUIDDoesNotExistException(MicroserviceException):
     error: str = "user_uuid_does_not_exist"
+
+
+class NetworkNotFoundException(MicroserviceException):
+    error: str = "network_not_found"
+
+
+class AlreadyMemberOfNetworkException(MicroserviceException):
+    error: str = "already_member_of_network"
+
+
+class InvitationAlreadyExistsException(MicroserviceException):
+    error: str = "invitation_already_exists"
+
+
+class CannotLeaveOwnNetworkException(MicroserviceException):
+    error: str = "cannot_leave_own_network"
+
+
+class CannotKickOwnerException(MicroserviceException):
+    error: str = "cannot_kick_owner"
+
+
+class MaximumNetworksReachedException(MicroserviceException):
+    error: str = "maximum_networks_reached"
+
+
+class InvalidNameException(MicroserviceException):
+    error: str = "invalid_name"
+
+
+class NameAlreadyInUseException(MicroserviceException):
+    error: str = "name_already_in_use"
+
+
+class NoPermissionsException(MicroserviceException):
+    error: str = "no_permissions"

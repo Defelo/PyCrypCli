@@ -120,7 +120,7 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
         hacking_thread: DoWaitingHackingThread = DoWaitingHackingThread("Hacking")
         hacking_thread.start()
 
-        for file in context.get_client().get_files(context.host.uuid):
+        for file in context.get_client().get_files(context.host.uuid, context.pwd.uuid):
             time.sleep(5)
             try:
                 wallet: Wallet = context.get_wallet_from_file(file.filename)

@@ -1,6 +1,6 @@
 import ssl
 import time
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from uuid import uuid4
 
 from websocket import WebSocket, create_connection
@@ -346,6 +346,12 @@ class Client:
 
     def get_miner(self, service_uuid: str) -> Miner:
         return Miner.deserialize(self.microservice("service", ["miner", "get"], {"service_uuid": service_uuid}))
+
+    def get_miners(self, wallet_uuid: str) -> List[Tuple[Miner, Service]]:
+        return [
+            (Miner.deserialize(miner["miner"]), Service.deserialize(miner["service"]))
+            for miner in self.microservice("service", ["miner", "list"], {"wallet_uuid": wallet_uuid})["miners"]
+        ]
 
     def miner_power(self, service_uuid: str, power: float):
         self.microservice("service", ["miner", "power"], {"service_uuid": service_uuid, "power": power})

@@ -1,6 +1,5 @@
-import sys
-import time
 import random
+import time
 from typing import List
 
 from PyCrypCli import util
@@ -14,10 +13,10 @@ from PyCrypCli.util import is_uuid
 @command(["morphcoin"], [DeviceContext], "Manage your Morphcoin wallet")
 def handle_morphcoin(context: DeviceContext, args: List[str]):
     if not (
-        (len(args) == 2 and args[0] in ("create", "look", "transactions", "reset", "money"))
+        (len(args) == 2 and args[0] in ("create", "look", "transactions", "reset", "watch"))
         or (args in (["list"], ["listhack"]))
     ):
-        print("usage: morphcoin create|list|look|transactions|money [<filename>]")
+        print("usage: morphcoin create|list|look|transactions|watch [<filename>]")
         print("       morphcoin reset <uuid>")
         return
 
@@ -138,69 +137,60 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
                 continue
             except PermissionDeniedException:
                 continue
-    elif args[0] == "money":
-        file = args[1]
-        x = 20
-        cheatmoney = 0
-        old = 0
-        s = 0
+    elif args[0] == "watch":
+        try:
+            wallet: Wallet = context.get_wallet_from_file(args[1])
+        except FileNotFoundException:
+            print("File does not exist.")
+            return
+        except InvalidWalletFile:
+            print("File is no wallet file.")
+            return
+        except UnknownSourceOrDestinationException:
+            print("Invalid wallet file. Wallet does not exist.")
+            return
+        except PermissionDeniedException:
+            print("Invalid wallet file. Key is incorrect.")
+            return
 
-        while True:
-            try:
-                if old == 0:
-                    wallet: Wallet = context.get_wallet_from_file(file)
-                    old = wallet.amount
-                    cheatmoney = wallet.amount
-                    sys.stdout.write(f"\rMorphcoins: {cheatmoney}")
-                    time.sleep(2)
-                    continue
-                if x >= 20 and s == 0:
-                    wallet: Wallet = context.get_wallet_from_file(file)
-                    cheatmoney = wallet.amount
-                    s = cheatmoney - old
-                    sys.stdout.write(f"\rMorphcoins: {cheatmoney} : {s} MC/s")
+        current_mining_rate: float = 0
+        last_update: float = 0
 
-                    x = 0
-                elif x >= 20 and s != 0:
-                    wallet: Wallet = context.get_wallet_from_file(file)
-                    cheatmoney = wallet.amount
-                    s = (cheatmoney - old) / 20
-                    sys.stdout.write(f"\rMorphcoins: {cheatmoney} : {s} MC/s")
+        print(f"UUID: {wallet.uuid}")
+        try:
+            while True:
+                now = time.time()
 
-                    x = 0
-                else:
-                    cheatmoney += s
-                    sys.stdout.write(f"\rMorphcoins: {cheatmoney} : {s} MC/s")
-                x += 1
-                time.sleep(1)
+                if now - last_update > 20:
+                    try:
+                        wallet: Wallet = context.get_client().get_wallet(wallet.uuid, wallet.key)
+                    except UnknownSourceOrDestinationException:
+                        print("Invalid wallet file. Wallet does not exist.")
+                        return
+                    except PermissionDeniedException:
+                        print("Invalid wallet file. Key is incorrect.")
+                        return
 
-            except FileNotFoundException:
-                print("")
-                print("File does not exist.")
-                return
-            except InvalidWalletFile:
-                print("")
-                print("File is no wallet file.")
-                return
-            except UnknownSourceOrDestinationException:
-                print("")
-                print("Invalid wallet file. Wallet does not exist.")
-                return
-            except PermissionDeniedException:
-                print("")
-                print("Invalid wallet file. Key is incorrect.")
-                return
-            except KeyboardInterrupt:
-                print("")
-                return
+                    current_mining_rate: float = 0
+                    for _, service in context.get_client().get_miners(wallet.uuid):
+                        if service.running:
+                            current_mining_rate += service.speed
+
+                    last_update: float = now
+
+                current_balance: int = wallet.amount + int(current_mining_rate * (now - last_update))
+                print(end=f"\rBalance: {current_balance} morphcoin ({current_mining_rate:.2f} MC/s) ", flush=False)
+                time.sleep(0.1)
+        except KeyboardInterrupt:
+            print()
 
 
 @completer([handle_morphcoin])
 def morphcoin_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
-        return ["create", "list", "look", "transactions", "reset"]
+        return ["create", "list", "look", "transactions", "reset", "watch"]
     elif len(args) == 2:
-        if args[0] in ("look", "transactions"):
+        if args[0] in ("look", "transactions", "watch"):
             return context.get_filenames()
 
 

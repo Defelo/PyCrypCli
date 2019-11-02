@@ -1,4 +1,3 @@
-import random
 import time
 from typing import List
 
@@ -6,15 +5,15 @@ from PyCrypCli import util
 from PyCrypCli.commands.command import command, completer
 from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import *
-from PyCrypCli.game_objects import Wallet, Transaction, File
-from PyCrypCli.util import is_uuid
+from PyCrypCli.game_objects import Wallet, Transaction
+from PyCrypCli.util import is_uuid, DoWaitingHackingThread
 
 
 @command(["morphcoin"], [DeviceContext], "Manage your Morphcoin wallet")
 def handle_morphcoin(context: DeviceContext, args: List[str]):
     if not (
         (len(args) == 2 and args[0] in ("create", "look", "transactions", "reset", "watch"))
-        or (args in (["list"], ["listhack"]))
+        or (args in (["list"], ["search"]))
     ):
         print("usage: morphcoin create|list|look|transactions|watch [<filename>]")
         print("       morphcoin reset <uuid>")
@@ -106,37 +105,36 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
             print("Wallet does not exist.")
         except PermissionDeniedException:
             print("Permission denied.")
-    elif args[0] == "listhack":
-        from PyCrypCli import commands
-
-        if not commands.easter_egg_enabled:
-
-            ii = int(input("secret_number: "))
-            if ii == 42 or ii == 1337:
-                commands.easter_egg_enabled = True
-
+    elif args[0] == "search":
+        started: float = time.time()
         try:
-            util.do_waiting_hacking("Hacking", 15)
+            util.do_waiting_hacking("Initializing", 10)
         except KeyboardInterrupt:
+            print()
+        if 6.5 < time.time() - started < 7.5:
+            print("Initialization successful.")
+        else:
+            print("Initialization failed.")
             return
-        if random.randrange(2) or not commands.easter_egg_enabled:
-            print("Access denied!")
-            return
 
-        print("Wallets hacked!")
+        hacking_thread: DoWaitingHackingThread = DoWaitingHackingThread("Hacking")
+        hacking_thread.start()
 
-        files: List[File] = context.get_client().get_files(context.host.uuid)
-
-        for file in files:
+        for file in context.get_client().get_files(context.host.uuid):
+            time.sleep(5)
             try:
                 wallet: Wallet = context.get_wallet_from_file(file.filename)
-                print(f"{file.filename}: {wallet.uuid} {wallet.key} ({wallet.amount} MC)")
+                print(f"\r{file.filename}: {wallet.uuid} {wallet.key} ({wallet.amount} MC)")
             except InvalidWalletFile:
-                continue
+                print(f"\r{file.filename} is no wallet file.")
             except UnknownSourceOrDestinationException:
-                continue
+                print(f"\r{file.filename} contains an invalid wallet uuid.")
             except PermissionDeniedException:
-                continue
+                print(f"\r{file.filename} contains an invalid wallet key.")
+            except KeyboardInterrupt:
+                hacking_thread.stop()
+                return
+        hacking_thread.stop()
     elif args[0] == "watch":
         try:
             wallet: Wallet = context.get_wallet_from_file(args[1])

@@ -24,6 +24,8 @@ def handle_miner(context: DeviceContext, args: List[str]):
         print("Destination wallet: " + miner.wallet)
         print("Running: " + ["no", "yes"][service.running])
         print(f"Power: {miner.power * 100}%")
+        if service.running:
+            print(f"Mining speed: {service.speed} MC/s")
     elif args[0] == "power":
         if len(args) != 2:
             print("usage: miner power <percentage>")

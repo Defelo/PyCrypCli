@@ -24,6 +24,8 @@ def handle_miner(context: DeviceContext, args: List[str]):
         print("Destination wallet: " + miner.wallet)
         print("Running: " + ["no", "yes"][service.running])
         print(f"Power: {miner.power * 100}%")
+        if service.running:
+            print(f"Mining speed: {service.speed} MC/s")
     elif args[0] == "power":
         if len(args) != 2:
             print("usage: miner power <percentage>")
@@ -37,7 +39,10 @@ def handle_miner(context: DeviceContext, args: List[str]):
             print("percentage has to be an integer between 0 and 100")
             return
 
-        context.get_client().miner_power(service.uuid, power)
+        try:
+            context.get_client().miner_power(service.uuid, power)
+        except WalletNotFoundException:
+            print("Wallet does not exist.")
     elif args[0] == "wallet":
         if len(args) != 2:
             print("usage: miner wallet <uuid>")

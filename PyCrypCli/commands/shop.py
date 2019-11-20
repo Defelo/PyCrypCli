@@ -41,13 +41,12 @@ def handle_shop(context: DeviceContext, args: List[str]):
         return
 
     if args[0] == "list":
-        product_names: List[str] = context.get_client().shop_list()
+        products: List[ShopProduct] = context.get_client().shop_list()
         hardware: dict = context.get_client().get_hardware_config()
-        product_titles: List[str] = [label_product_name(hardware, name) for name in product_names]
+        product_titles: List[str] = [label_product_name(hardware, product.name) for product in products]
         maxlength: int = max(map(len, product_titles))
 
-        for product_name, product_title in zip(product_names, product_titles):
-            product: ShopProduct = context.get_client().shop_info(product_name)
+        for product, product_title in zip(products, product_titles):
             print(f" - {product_title.ljust(maxlength)}  {product.price} MC")
     elif args[0] == "buy":
         if len(args) not in (3, 4):
@@ -71,9 +70,9 @@ def handle_shop(context: DeviceContext, args: List[str]):
             print("Invalid wallet file. Key is incorrect.")
             return
 
-        for name in context.get_client().shop_list():
-            if name.replace(" ", "") == product_name:
-                product_name = name
+        for product in context.get_client().shop_list():
+            if product.name.replace(" ", "") == product_name:
+                product_name = product.name
                 break
         else:
             print("This product does not exist in the shop.")
@@ -95,7 +94,7 @@ def shop_completer(context: DeviceContext, args: List[str]) -> List[str]:
         return ["list", "buy"]
     elif len(args) == 2:
         if args[0] == "buy":
-            return [name.replace(" ", "") for name in context.get_client().shop_list()]
+            return [product.name.replace(" ", "") for product in context.get_client().shop_list()]
     elif len(args) == 3:
         if args[0] == "buy":
             return context.file_path_completer(args[2])

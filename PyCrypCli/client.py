@@ -368,8 +368,11 @@ class Client:
             for element in self.microservice("inventory", ["inventory", "list"], {})["elements"]
         ]
 
-    def shop_list(self) -> List[str]:
-        return self.microservice("inventory", ["shop", "list"], {})["products"]
+    def shop_list(self) -> List[ShopProduct]:
+        return [
+            ShopProduct.deserialize(product)
+            for product in self.microservice("inventory", ["shop", "list"], {})["products"]
+        ]
 
     def shop_info(self, product: str) -> ShopProduct:
         return ShopProduct.deserialize(self.microservice("inventory", ["shop", "info"], {"product": product}))

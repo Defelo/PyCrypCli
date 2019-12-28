@@ -1,3 +1,4 @@
+import re
 import time
 from typing import List
 
@@ -7,7 +8,7 @@ from PyCrypCli.commands.files import create_file
 from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import Wallet, Transaction
-from PyCrypCli.util import is_uuid, DoWaitingHackingThread, extract_wallet
+from PyCrypCli.util import is_uuid, DoWaitingHackingThread, extract_wallet, strip_float
 
 
 @command(["morphcoin"], [DeviceContext], "Manage your Morphcoin wallet")
@@ -57,7 +58,7 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
             return
 
         print(f"UUID: {wallet.uuid}")
-        print(f"Balance: {wallet.amount} morphcoin")
+        print(f"Balance: {strip_float(wallet.amount / 1000, 3)} morphcoin")
     elif args[0] == "transactions":
         try:
             wallet: Wallet = context.get_wallet_from_file(args[1])
@@ -89,7 +90,7 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
                 destination: str = "self"
             amount: int = transaction.amount
             usage: str = transaction.usage
-            text = f"{transaction.time_stamp.ctime()}| {amount} MC: {source} -> {destination}"
+            text = f"{transaction.time_stamp.ctime()}| {strip_float(amount / 1000, 3)} MC: {source} -> {destination}"
             if usage:
                 text += f" (Usage: {usage})"
             print(text)
@@ -176,8 +177,12 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
 
                     last_update: float = now
 
-                current_balance: int = wallet.amount + int(current_mining_rate * (now - last_update))
-                print(end=f"\rBalance: {current_balance} morphcoin ({current_mining_rate:.2f} MC/s) ", flush=False)
+                current_balance: int = wallet.amount + int(current_mining_rate * 1000 * (now - last_update))
+                print(
+                    end=f"\rBalance: {strip_float(current_balance / 1000, 3)} morphcoin "
+                    f"({current_mining_rate:.2f} MC/s) ",
+                    flush=False,
+                )
                 time.sleep(0.1)
         except KeyboardInterrupt:
             print()
@@ -225,11 +230,11 @@ def handle_pay(context: DeviceContext, args: List[str]):
         print("Invalid receiver.")
         return
 
-    if not args[2].isnumeric():
-        print("amount is not a number.")
+    if not re.match(r"^\d+(\.\d+)?$", args[2]) or round(float(args[2]) * 1000) <= 0:
+        print("amount is not a valid number.")
         return
 
-    amount: int = int(args[2])
+    amount: int = round(float(args[2]) * 1000)
     if amount < 1:
         print("amount is not a positive number.")
         return
@@ -239,7 +244,7 @@ def handle_pay(context: DeviceContext, args: List[str]):
 
     try:
         context.get_client().send(wallet, receiver, amount, " ".join(args[3:]))
-        print(f"Sent {amount} morphcoin to {receiver}.")
+        print(f"Sent {strip_float(amount / 1000, 3)} morphcoin to {receiver}.")
     except UnknownSourceOrDestinationException:
         print("Destination wallet does not exist.")
 

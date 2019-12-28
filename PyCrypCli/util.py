@@ -19,6 +19,10 @@ def extract_wallet(content: str) -> Optional[Tuple[str, str]]:
     return None
 
 
+def strip_float(num: float, precision):
+    return f"{num:.{precision}f}".rstrip("0").rstrip(".")
+
+
 def raw_do_waiting(text: str, status: int):
     status_ident = "|/-\\"[status % 4]
     print(end=f"\r{text} {status_ident} ", flush=False)

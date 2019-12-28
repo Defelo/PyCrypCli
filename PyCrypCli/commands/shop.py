@@ -11,6 +11,7 @@ from PyCrypCli.exceptions import (
     NotEnoughCoinsException,
 )
 from PyCrypCli.game_objects import ShopProduct, Wallet
+from PyCrypCli.util import strip_float
 
 
 def label_product_name(hardware: dict, name: str) -> str:
@@ -47,7 +48,7 @@ def handle_shop(context: DeviceContext, args: List[str]):
         maxlength: int = max(map(len, product_titles))
 
         for product, product_title in zip(products, product_titles):
-            print(f" - {product_title.ljust(maxlength)}  {product.price} MC")
+            print(f" - {product_title.ljust(maxlength)}  {strip_float(product.price / 1000, 3)} MC")
     elif args[0] == "buy":
         if len(args) not in (3, 4):
             print("usage: shop buy <product> <wallet>")

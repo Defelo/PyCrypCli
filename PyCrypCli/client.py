@@ -1,6 +1,6 @@
 import ssl
 import time
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 from uuid import uuid4
 
 from websocket import WebSocket, create_connection
@@ -377,12 +377,13 @@ class Client:
     def shop_info(self, product: str) -> ShopProduct:
         return ShopProduct.deserialize(self.microservice("inventory", ["shop", "info"], {"product": product}))
 
-    def shop_buy(self, product: str, wallet_uuid: str, key: str) -> InventoryElement:
-        return InventoryElement.deserialize(
-            self.microservice(
-                "inventory", ["shop", "buy"], {"product": product, "wallet_uuid": wallet_uuid, "key": key}
-            )
-        )
+    def shop_buy(self, products: Dict[str, int], wallet_uuid: str, key: str) -> List[InventoryElement]:
+        return [
+            InventoryElement.deserialize(element)
+            for element in self.microservice(
+                "inventory", ["shop", "buy"], {"products": products, "wallet_uuid": wallet_uuid, "key": key}
+            )["bought_products"]
+        ]
 
     def inventory_trade(self, element_uuid: str, target: str):
         self.microservice("inventory", ["inventory", "trade"], {"element_uuid": element_uuid, "target": target})

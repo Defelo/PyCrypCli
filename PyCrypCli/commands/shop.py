@@ -80,7 +80,7 @@ def handle_shop(context: DeviceContext, args: List[str]):
             return
 
         try:
-            context.get_client().shop_buy(product_name, wallet.uuid, wallet.key)
+            context.get_client().shop_buy({product_name: 1}, wallet.uuid, wallet.key)
         except ItemNotFoundException:
             print("This product does not exist in the shop.")
         except NotEnoughCoinsException:

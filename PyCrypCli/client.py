@@ -218,6 +218,9 @@ class Client:
     def change_device_name(self, device_uuid: str, name: str):
         self.microservice("device", ["device", "change_name"], {"device_uuid": device_uuid, "name": name})
 
+    def delete_device(self, device_uuid: str):
+        self.microservice("device", ["device", "delete"], {"device_uuid": device_uuid})
+
     def get_files(self, device_uuid: str, parent_dir_uuid: Optional[str]) -> List[File]:
         return [
             File.deserialize(file)

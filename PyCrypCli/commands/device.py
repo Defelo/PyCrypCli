@@ -38,7 +38,7 @@ def get_device(context: MainContext, name_or_uuid: str, devices: Optional[List[D
 @command(["device"], [MainContext, DeviceContext], "Manage your devices")
 def handle_device(context: MainContext, args: List[str]):
     if not args:
-        print("usage: device list|create|build|boot|shutdown|connect")
+        print("usage: device list|create|build|boot|shutdown|connect|delete")
         return
 
     if args[0] == "list":
@@ -181,16 +181,27 @@ def handle_device(context: MainContext, args: List[str]):
             return
 
         context.open(DeviceContext(context.root_context, context.session_token, device))
+    elif args[0] == "delete":
+        if len(args) != 2:
+            print("usage: device delete <name|uuid>")
+            return
+
+        device: Optional[Device] = get_device(context, args[1])
+        if device is None:
+            return
+
+        context.get_client().delete_device(device.uuid)
+        print("Device has been deleted.")
     else:
-        print("usage: device list|create|build|boot|shutdown|connect")
+        print("usage: device list|create|build|boot|shutdown|connect|delete")
 
 
 @completer([handle_device])
 def complete_device(context: MainContext, args: List[str]) -> List[str]:
     if len(args) == 1:
-        return ["list", "create", "build", "boot", "shutdown", "connect"]
+        return ["list", "create", "build", "boot", "shutdown", "connect", "delete"]
     elif len(args) == 2:
-        if args[0] in ("boot", "shutdown", "connect"):
+        if args[0] in ("boot", "shutdown", "connect", "delete"):
             device_names: List[str] = [device.name for device in context.get_client().get_devices()]
             return [name for name in device_names if device_names.count(name) == 1]
         elif args[0] == "build":

@@ -43,13 +43,12 @@ class DeviceHardware(GameObject):
 class File(GameObject):
     def __init__(
         self,
-        uuid: str,
+        uuid: Optional[str],
         device: str,
-        filename: str,
-        content: str,
+        filename: Optional[str],
+        content: Optional[str],
         is_directory: bool,
-        parent_dir_uuid: str,
-        is_changeable: bool,
+        parent_dir_uuid: Optional[str],
     ):
         self.uuid: str = uuid
         self.device: str = device
@@ -57,7 +56,6 @@ class File(GameObject):
         self.content: str = content
         self.is_directory: bool = is_directory
         self.parent_dir_uuid: str = parent_dir_uuid
-        self.is_changeable: bool = is_changeable
 
     @staticmethod
     def deserialize(data: dict) -> "File":
@@ -68,7 +66,6 @@ class File(GameObject):
             data.get("content"),
             data.get("is_directory"),
             data.get("parent_dir_uuid"),
-            data.get("is_changeable"),
         )
 
 

@@ -317,11 +317,11 @@ class DeviceContext(MainContext):
     def reenter_context(self):
         Context.reenter_context(self)
 
-    def get_files(self, directory: str = None) -> List[File]:
-        return self.get_client().get_files(self.host.uuid, self.pwd.uuid if directory is None else directory)
+    def get_files(self, directory) -> List[File]:
+        return self.get_client().get_files(self.host.uuid, directory)
 
     def get_root_dir(self) -> File:
-        return self.get_client().get_files(self.host.uuid, None)[0]
+        return File(None, self.host.uuid, None, None, True, None)
 
     def get_file(self, filename: str, directory: str = None) -> Optional[File]:
         files: List[File] = self.get_files(directory)
@@ -374,7 +374,9 @@ class DeviceContext(MainContext):
             if not file_name or file_name == ".":
                 continue
             elif file_name == "..":
-                if pwd.parent_dir_uuid is not None:
+                if pwd.parent_dir_uuid is None:
+                    pwd = self.get_root_dir()
+                else:
                     pwd: File = self.get_client().get_file(self.host.uuid, pwd.parent_dir_uuid)
             else:
                 pwd: Optional[File] = self.get_file(file_name, pwd.uuid)
@@ -382,8 +384,10 @@ class DeviceContext(MainContext):
                     return None
         return pwd
 
-    def file_to_path(self, file: File) -> str:
+    def file_to_path(self, file: Optional[File]) -> str:
+        if file.uuid is None:
+            return "/"
         path: List[File] = [file]
         while path[-1].parent_dir_uuid is not None:
             path.append(self.get_client().get_file(self.host.uuid, path[-1].parent_dir_uuid))
-        return "/" + "/".join(f.filename for f in path[-2::-1])
+        return "/" + "/".join(f.filename for f in path[::-1])

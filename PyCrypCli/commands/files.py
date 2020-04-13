@@ -132,6 +132,15 @@ def handle_rm(context: DeviceContext, args: List[str]):
         return
 
     if file.is_directory:
+        pwd = context.pwd
+        while True:
+            if pwd.uuid == file.uuid:
+                print("Refusing to delete this directory.")
+                return
+            elif pwd.uuid is None:
+                break
+            pwd = context.get_parent_dir(pwd)
+
         question: str = f"Are you sure you want to delete the directory `{filepath}` including all contained files?"
     else:
         question: str = f"Are you sure you want to delete this file `{filepath}`?"
@@ -168,9 +177,6 @@ def check_file_movable(
     file: Optional[File] = context.path_to_file(source)
     if file is None:
         print("File does not exist.")
-        return
-    elif not file.is_changeable and move:
-        print("This file cannot be moved.")
         return
 
     dest_file: Optional[File] = context.path_to_file(destination)

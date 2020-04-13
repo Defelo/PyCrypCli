@@ -320,6 +320,12 @@ class DeviceContext(MainContext):
     def get_files(self, directory) -> List[File]:
         return self.get_client().get_files(self.host.uuid, directory)
 
+    def get_parent_dir(self, file: File) -> File:
+        if file.parent_dir_uuid is not None:
+            return self.get_client().get_file(self.host.uuid, file.parent_dir_uuid)
+        else:
+            return self.get_root_dir()
+
     def get_root_dir(self) -> File:
         return File(None, self.host.uuid, None, None, True, None)
 
@@ -374,10 +380,7 @@ class DeviceContext(MainContext):
             if not file_name or file_name == ".":
                 continue
             elif file_name == "..":
-                if pwd.parent_dir_uuid is None:
-                    pwd = self.get_root_dir()
-                else:
-                    pwd: File = self.get_client().get_file(self.host.uuid, pwd.parent_dir_uuid)
+                pwd = self.get_parent_dir(pwd)
             else:
                 pwd: Optional[File] = self.get_file(file_name, pwd.uuid)
                 if pwd is None:

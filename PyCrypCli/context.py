@@ -280,10 +280,15 @@ class DeviceContext(MainContext):
         self.pwd: File = self.get_root_dir()
         self.last_portscan: Optional[Tuple[str, List[Service]]] = None
 
+    def update_pwd(self):
+        if self.pwd.uuid is not None:
+            self.pwd = self.get_client().get_file(self.host.uuid, self.pwd.uuid)
+
     def is_localhost(self):
         return self.user_uuid == self.host.owner
 
     def get_prompt(self) -> str:
+        self.update_pwd()
         if self.is_localhost():
             color: str = "\033[38;2;100;221;23m"
         else:
@@ -317,7 +322,7 @@ class DeviceContext(MainContext):
     def reenter_context(self):
         Context.reenter_context(self)
 
-    def get_files(self, directory) -> List[File]:
+    def get_files(self, directory: str) -> List[File]:
         return self.get_client().get_files(self.host.uuid, directory)
 
     def get_parent_dir(self, file: File) -> File:
@@ -329,14 +334,14 @@ class DeviceContext(MainContext):
     def get_root_dir(self) -> File:
         return File(None, self.host.uuid, None, None, True, None)
 
-    def get_file(self, filename: str, directory: str = None) -> Optional[File]:
+    def get_file(self, filename: str, directory: str) -> Optional[File]:
         files: List[File] = self.get_files(directory)
         for file in files:
             if file.filename == filename:
                 return file
         return None
 
-    def get_filenames(self, directory: str = None) -> List[str]:
+    def get_filenames(self, directory: str) -> List[str]:
         return [file.filename for file in self.get_files(directory)]
 
     def get_wallet_from_file(self, filepath: str) -> Wallet:

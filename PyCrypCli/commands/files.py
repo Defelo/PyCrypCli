@@ -180,8 +180,8 @@ def check_file_movable(
         return
 
     dest_file: Optional[File] = context.path_to_file(destination)
-    *dest_parent_path, dest_name = destination.split("/")
-    dest_parent: Optional[File] = context.path_to_file("/".join(dest_parent_path))
+    dest_parent_path, _, dest_name = destination.rpartition("/")
+    dest_parent: Optional[File] = context.path_to_file(dest_parent_path)
 
     if file.is_directory:
         if dest_file is None:
@@ -237,12 +237,15 @@ def check_file_movable(
     if dest_dir == file.parent_dir_uuid and dest_name == file.filename:
         return
 
-    dir_to_check: File = context.get_client().get_file(file.device, dest_dir)
-    while dir_to_check.parent_dir_uuid is not None:
-        if dir_to_check.uuid == file.uuid:
-            print(f"You cannot {['copy', 'move'][move]} a directory into itself.")
-            return
-        dir_to_check: File = context.get_client().get_file(file.device, dir_to_check.parent_dir_uuid)
+    if dest_dir is not None:
+        dir_to_check: File = context.get_client().get_file(file.device, dest_dir)
+        while True:
+            if dir_to_check.uuid == file.uuid:
+                print(f"You cannot {['copy', 'move'][move]} a directory into itself.")
+                return
+            elif dir_to_check.uuid is None:
+                break
+            dir_to_check = context.get_parent_dir(dir_to_check)
 
     if not dest_name:
         print("Destination filename cannot be empty.")

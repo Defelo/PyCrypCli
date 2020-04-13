@@ -64,4 +64,4 @@ def miner_completer(context: DeviceContext, args: List[str]) -> List[str]:
         return ["look", "power", "wallet"]
     elif len(args) == 2:
         if args[0] == "wallet":
-            return context.get_filenames()
+            return context.file_path_completer(args[1])

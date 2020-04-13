@@ -253,7 +253,7 @@ def service_completer(context: DeviceContext, args: List[str]) -> List[str]:
             return ["ssh", "telnet"]
     elif len(args) == 3:
         if args[0] == "create" and args[1] == "miner":
-            return context.get_filenames()
+            return context.file_path_completer(args[2])
 
 
 @command(["spot"], [DeviceContext], "Find a random device in the network")

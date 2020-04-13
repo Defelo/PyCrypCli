@@ -54,10 +54,10 @@ def handle_shop(context: DeviceContext, args: List[str]):
             print("usage: shop buy <product> <wallet>")
             return
 
-        product_name, wallet_filename = args[1:]
+        product_name, wallet_filepath = args[1:]
 
         try:
-            wallet: Wallet = context.get_wallet_from_file(wallet_filename)
+            wallet: Wallet = context.get_wallet_from_file(wallet_filepath)
         except FileNotFoundException:
             print("File does not exist.")
             return
@@ -98,4 +98,4 @@ def shop_completer(context: DeviceContext, args: List[str]) -> List[str]:
             return [product.name.replace(" ", "") for product in context.get_client().shop_list()]
     elif len(args) == 3:
         if args[0] == "buy":
-            return context.get_filenames()
+            return context.file_path_completer(args[2])

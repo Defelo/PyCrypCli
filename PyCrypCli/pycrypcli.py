@@ -42,8 +42,9 @@ class Frontend:
                 return []
 
     def completer(self, text: str, state: int) -> Optional[str]:
+        readline.set_completer_delims(" ")
         options: List[str] = self.complete_command(readline.get_line_buffer())
-        options: List[str] = [o + " " for o in sorted(options) if o.startswith(text)]
+        options: List[str] = [o + " " if o[-1:] != "\0" else o[:-1] for o in sorted(options) if o.startswith(text)]
 
         if state < len(options):
             return options[state]

@@ -180,8 +180,9 @@ def check_file_movable(
         return
 
     dest_file: Optional[File] = context.path_to_file(destination)
-    dest_parent_path, _, dest_name = destination.rpartition("/")
-    dest_parent: Optional[File] = context.path_to_file(dest_parent_path)
+    absolute = destination[0] == "/"
+    dest_parent_path, _, dest_name = destination[absolute:].rpartition("/")
+    dest_parent: Optional[File] = context.path_to_file("/" * absolute + dest_parent_path)
 
     if file.is_directory:
         if dest_file is None:

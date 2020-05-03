@@ -200,7 +200,10 @@ def handle_service(context: DeviceContext, args: List[str]):
             print(f"The service '{args[1]}' could not be found on this device")
             return
 
-        context.get_client().delete_service(service.device, service.uuid)
+        try:
+            context.get_client().delete_service(service.device, service.uuid)
+        except CannotDeleteEnforcedServiceException:
+            print("The service could not be deleted.")
     elif args[0] == "start":
         if len(args) < 2 or args[1] not in ("telnet", "ssh"):
             print("usage: service start telnet|ssh")

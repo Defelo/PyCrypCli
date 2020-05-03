@@ -173,6 +173,10 @@ class ServiceCannotBeUsedException(MicroserviceException):
     error: str = "service_cannot_be_used"
 
 
+class CannotDeleteEnforcedServiceException(MicroserviceException):
+    error: str = "cannot_delete_enforced_service"
+
+
 class AttackNotRunningException(MicroserviceException):
     error: str = "attack_not_running"
 

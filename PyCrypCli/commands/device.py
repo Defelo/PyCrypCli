@@ -256,9 +256,10 @@ def handle_top(context: DeviceContext, *_):
     print(f"    => Usage: {resource_usage.ram * 100:.1f}%")
     print()
 
-    print(f"  GPU: {hardware['gpu'].hardware_element}")
-    print(f"    => Usage: {resource_usage.gpu * 100:.1f}%")
-    print()
+    if "gpu" in hardware:
+        print(f"  GPU: {hardware['gpu'].hardware_element}")
+        print(f"    => Usage: {resource_usage.gpu * 100:.1f}%")
+        print()
 
     print(f"  Disk: {hardware['disk'].hardware_element}")
     print(f"    => Usage: {resource_usage.disk * 100:.1f}%")

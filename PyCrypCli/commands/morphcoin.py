@@ -75,7 +75,7 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
             print("Invalid wallet file. Key is incorrect.")
             return
 
-        transactions: List[Transaction] = wallet.transactions
+        transactions: List[Transaction] = context.get_client().get_transactions(wallet, wallet.transactions, 0)
 
         if not transactions:
             print("No transactions found for this wallet.")

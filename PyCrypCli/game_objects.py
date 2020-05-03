@@ -1,5 +1,7 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
+
+from dateutil import tz
 
 
 class GameObject:
@@ -87,7 +89,7 @@ class Transaction(GameObject):
             time_stamp: datetime = datetime.fromisoformat(time_stamp)
 
         return Transaction(
-            time_stamp,
+            time_stamp.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal()),
             data.get("source_uuid"),
             data.get("destination_uuid"),
             data.get("send_amount"),
@@ -97,12 +99,12 @@ class Transaction(GameObject):
 
 
 class Wallet(GameObject):
-    def __init__(self, uuid: str, key: str, amount: int, user: str, transactions: List[Transaction]):
+    def __init__(self, uuid: str, key: str, amount: int, user: str, transactions: int):
         self.uuid: str = uuid
         self.key: str = key
         self.amount: int = amount
         self.user: str = user
-        self.transactions: List[Transaction] = transactions
+        self.transactions: int = transactions
 
     @staticmethod
     def deserialize(data: dict) -> "Wallet":
@@ -111,7 +113,7 @@ class Wallet(GameObject):
             data.get("key"),
             data.get("amount"),
             data.get("user_uuid"),
-            [Transaction.deserialize(transaction) for transaction in data.get("transactions")],
+            data.get("transactions"),
         )
 
 

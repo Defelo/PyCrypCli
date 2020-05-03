@@ -19,6 +19,7 @@ from PyCrypCli.game_objects import (
     Network,
     NetworkMembership,
     NetworkInvitation,
+    Transaction,
 )
 from PyCrypCli.timer import Timer
 
@@ -285,6 +286,16 @@ class Client:
 
     def get_wallet(self, wallet_uuid: str, key: str) -> Wallet:
         return Wallet.deserialize(self.microservice("currency", ["get"], {"source_uuid": wallet_uuid, "key": key}))
+
+    def get_transactions(self, wallet: Wallet, count: int, offset: int) -> List[Transaction]:
+        return [
+            Transaction.deserialize(t)
+            for t in self.microservice(
+                "currency",
+                ["transactions"],
+                {"source_uuid": wallet.uuid, "key": wallet.key, "count": count, "offset": offset},
+            )["transactions"]
+        ]
 
     def list_wallets(self) -> List[str]:
         return self.microservice("currency", ["list"], {})["wallets"]

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from dateutil import tz
 
@@ -175,6 +175,24 @@ class InventoryElement(GameObject):
     def deserialize(data: dict) -> "InventoryElement":
         return InventoryElement(
             data.get("element_uuid"), data.get("element_name"), data.get("related_ms"), data.get("owner")
+        )
+
+
+class ShopCategory(GameObject):
+    def __init__(self, name: str, index: int, items: List["ShopProduct"], subcategories: List["ShopCategory"]):
+        self.name = name
+        self.index = index
+        self.items = items
+        self.subcategories = subcategories
+        self.subcategories.sort(key=lambda c: c.index)
+
+    @staticmethod
+    def deserialize(data: dict) -> "ShopCategory":
+        return ShopCategory(
+            data.get("name"),
+            data.get("index"),
+            [ShopProduct.deserialize({"name": k, **v}) for k, v in data.get("items").items()],
+            [ShopCategory.deserialize({"name": k, **v}) for k, v in data.get("categories").items()],
         )
 
 

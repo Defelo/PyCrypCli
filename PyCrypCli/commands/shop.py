@@ -1,5 +1,7 @@
 from typing import List
 
+from PyCrypCli.client import Client
+
 from PyCrypCli.commands.command import command, completer
 from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import (
@@ -10,29 +12,17 @@ from PyCrypCli.exceptions import (
     ItemNotFoundException,
     NotEnoughCoinsException,
 )
-from PyCrypCli.game_objects import ShopProduct, Wallet
-from PyCrypCli.util import strip_float
+from PyCrypCli.game_objects import Wallet, ShopCategory
+from PyCrypCli.util import strip_float, print_tree
 
 
-def label_product_name(hardware: dict, name: str) -> str:
-    for key, prod_type in {
-        "mainboards": "Mainboard",
-        "cpu": "CPU",
-        "processorCooler": "Processor Cooler",
-        "ram": "RAM",
-        "gpu": "GPU",
-        "disk": "Disk",
-        "powerPack": "Power Pack",
-        "case": "Case",
-    }.items():
-        if (
-            isinstance(hardware[key], dict)
-            and name in hardware[key]
-            or isinstance(hardware[key], list)
-            and any(e.get("name") == name for e in hardware[key])
-        ):
-            return f"{name} ({prod_type})"
-    return name
+def list_shop_products(client: Client) -> List[str]:
+    out = []
+    for category in client.shop_list():
+        for subcategory in category.subcategories:
+            out += [item.name for item in subcategory.items]
+        out += [item.name for item in category.items]
+    return out
 
 
 @command(["shop"], [DeviceContext], "Buy new hardware and more in the shop")
@@ -42,13 +32,33 @@ def handle_shop(context: DeviceContext, args: List[str]):
         return
 
     if args[0] == "list":
-        products: List[ShopProduct] = context.get_client().shop_list()
-        hardware: dict = context.get_client().get_hardware_config()
-        product_titles: List[str] = [label_product_name(hardware, product.name) for product in products]
-        maxlength: int = max(map(len, product_titles))
+        categories: List[ShopCategory] = context.get_client().shop_list()
+        maxlength = max(
+            [len(item.name) + 4 for category in categories for item in category.items]
+            + [
+                len(item.name)
+                for category in categories
+                for subcategory in category.subcategories
+                for item in subcategory.items
+            ],
+        )
+        tree = []
+        for category in categories:
+            category_tree = []
+            for subcategory in category.subcategories:
+                subcategory_tree = [
+                    (item.name.ljust(maxlength) + strip_float(item.price / 1000, 3) + " MC", [])
+                    for item in subcategory.items
+                ]
+                category_tree.append((subcategory.name, subcategory_tree))
 
-        for product, product_title in zip(products, product_titles):
-            print(f" - {product_title.ljust(maxlength)}  {strip_float(product.price / 1000, 3)} MC")
+            for item in category.items:
+                category_tree.append((item.name.ljust(maxlength + 4) + strip_float(item.price / 1000, 3) + " MC", []))
+
+            tree.append((category.name, category_tree))
+
+        print("Shop")
+        print_tree(tree)
     elif args[0] == "buy":
         if len(args) not in (3, 4):
             print("usage: shop buy <product> <wallet>")
@@ -71,9 +81,9 @@ def handle_shop(context: DeviceContext, args: List[str]):
             print("Invalid wallet file. Key is incorrect.")
             return
 
-        for product in context.get_client().shop_list():
-            if product.name.replace(" ", "") == product_name:
-                product_name = product.name
+        for product in list_shop_products(context.get_client()):
+            if product.replace(" ", "") == product_name:
+                product_name = product
                 break
         else:
             print("This product does not exist in the shop.")
@@ -95,7 +105,7 @@ def shop_completer(context: DeviceContext, args: List[str]) -> List[str]:
         return ["list", "buy"]
     elif len(args) == 2:
         if args[0] == "buy":
-            return [product.name.replace(" ", "") for product in context.get_client().shop_list()]
+            return [product.replace(" ", "") for product in list_shop_products(context.get_client())]
     elif len(args) == 3:
         if args[0] == "buy":
             return context.file_path_completer(args[2])

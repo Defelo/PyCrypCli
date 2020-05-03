@@ -20,6 +20,7 @@ from PyCrypCli.game_objects import (
     NetworkMembership,
     NetworkInvitation,
     Transaction,
+    ShopCategory,
 )
 from PyCrypCli.timer import Timer
 
@@ -404,11 +405,13 @@ class Client:
             for element in self.microservice("inventory", ["inventory", "list"], {})["elements"]
         ]
 
-    def shop_list(self) -> List[ShopProduct]:
-        return [
-            ShopProduct.deserialize(product)
-            for product in self.microservice("inventory", ["shop", "list"], {})["products"]
+    def shop_list(self) -> List[ShopCategory]:
+        out = [
+            ShopCategory.deserialize({"name": k, **v})
+            for k, v in self.microservice("inventory", ["shop", "list"], {})["categories"].items()
         ]
+        out.sort(key=lambda c: c.index)
+        return out
 
     def shop_info(self, product: str) -> ShopProduct:
         return ShopProduct.deserialize(self.microservice("inventory", ["shop", "info"], {"product": product}))

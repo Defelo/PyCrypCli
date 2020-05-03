@@ -1,11 +1,11 @@
 from collections import Counter
-from typing import List, Tuple
+from typing import List, Dict
 
 from PyCrypCli.commands.command import command, completer
-from PyCrypCli.commands.shop import label_product_name
 from PyCrypCli.context import MainContext, DeviceContext
 from PyCrypCli.exceptions import CannotTradeWithYourselfException, UserUUIDDoesNotExistException
-from PyCrypCli.game_objects import InventoryElement
+from PyCrypCli.game_objects import InventoryElement, ShopCategory
+from PyCrypCli.util import print_tree
 
 
 @command(["inventory"], [MainContext, DeviceContext], "Manage your inventory and trade with other players")
@@ -15,18 +15,31 @@ def handle_inventory(context: MainContext, args: List[str]):
         return
 
     if args[0] == "list":
-        inventory: List[Tuple[str, int]] = Counter(
-            element.element_name for element in context.get_client().inventory_list()
-        ).most_common()
-
+        inventory: Dict[str, int] = Counter(element.element_name for element in context.get_client().inventory_list())
         if not inventory:
             print("Your inventory is empty.")
             return
 
-        hardware: dict = context.get_client().get_hardware_config()
-        print("Your inventory:")
-        for element_name, count in inventory:
-            print(f" - {count}x {label_product_name(hardware, element_name)}")
+        categories: List[ShopCategory] = context.get_client().shop_list()
+        tree = []
+        for category in categories:
+            category_tree = []
+            for subcategory in category.subcategories:
+                subcategory_tree = [
+                    (f"{inventory[item.name]}x {item.name}", []) for item in subcategory.items if inventory[item.name]
+                ]
+                if subcategory_tree:
+                    category_tree.append((subcategory.name, subcategory_tree))
+
+            for item in category.items:
+                if inventory[item.name]:
+                    category_tree.append((f"{inventory[item.name]}x {item.name}", []))
+
+            if category_tree:
+                tree.append((category.name, category_tree))
+
+        print("Inventory")
+        print_tree(tree)
     elif args[0] == "trade":
         if len(args) != 3:
             print("usage: inventory trade <item> <user>")

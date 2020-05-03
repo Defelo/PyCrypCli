@@ -3,7 +3,7 @@ import re
 import string
 import threading
 import time
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 
 hacking_letters = string.ascii_letters + string.digits
 
@@ -21,6 +21,16 @@ def extract_wallet(content: str) -> Optional[Tuple[str, str]]:
 
 def strip_float(num: float, precision):
     return f"{num:.{precision}f}".rstrip("0").rstrip(".")
+
+
+def print_tree(items: List[Tuple[str, Optional[list]]], indent: Optional[List[bool]] = None):
+    if not indent:
+        indent = []
+    for i, (item, children) in enumerate(items):
+        branch = "└├"[i < len(items) - 1]
+        print("".join(" │"[ind] + "   " for ind in indent) + branch + "── " + item)
+        if children is not None:
+            print_tree(children, indent + [i < len(items) - 1])
 
 
 def raw_do_waiting(text: str, status: int):

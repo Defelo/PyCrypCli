@@ -1,6 +1,7 @@
 import getpass
 import os
 import sys
+from os import getenv
 from typing import List, Optional, Tuple
 
 import sentry_sdk
@@ -14,11 +15,12 @@ try:
 except ImportError:
     import pyreadline as readline
 
-sentry_sdk.init(
-    dsn="https://dbfe81c972c84a77a30d915cbfb538c7@o380163.ingest.sentry.io/5226857",
-    attach_stacktrace=True,
-    shutdown_timeout=5,
-)
+if not getenv("DEBUG"):
+    sentry_sdk.init(
+        dsn="https://dbfe81c972c84a77a30d915cbfb538c7@o380163.ingest.sentry.io/5226857",
+        attach_stacktrace=True,
+        shutdown_timeout=5,
+    )
 
 
 class Frontend:

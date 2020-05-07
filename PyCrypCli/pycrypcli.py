@@ -3,6 +3,8 @@ import os
 import sys
 from typing import List, Optional, Tuple
 
+import sentry_sdk
+
 from PyCrypCli.commands.command import make_commands, COMMAND_FUNCTION, command
 from PyCrypCli.context import Context, LoginContext, MainContext, RootContext, DeviceContext, COMPLETER_FUNCTION
 from PyCrypCli.exceptions import *
@@ -11,6 +13,12 @@ try:
     import readline
 except ImportError:
     import pyreadline as readline
+
+sentry_sdk.init(
+    dsn="https://dbfe81c972c84a77a30d915cbfb538c7@o380163.ingest.sentry.io/5226857",
+    attach_stacktrace=True,
+    shutdown_timeout=5,
+)
 
 
 class Frontend:
@@ -177,6 +185,25 @@ class Frontend:
     def handle_main_history(context: MainContext, *_):
         for line in context.history:
             print(line)
+
+    @staticmethod
+    @command(["feedback"], [LoginContext, MainContext, DeviceContext], "Send feedback to the developer")
+    def feedback(context: Context, *_):
+        print("Please type your feedback about PyCrypCli below. When you are done press Ctrl+C")
+        feedback = ["User Feedback"]
+        if hasattr(context, "username"):
+            feedback[0] += " from " + context.username
+        while True:
+            try:
+                feedback.append(input("> "))
+            except (KeyboardInterrupt, EOFError):
+                break
+        print()
+        print("=" * 30)
+        print("\n".join(feedback))
+        print("=" * 30)
+        if context.ask("Do you want to send this feedback to the developer? [yes|no] ", ["yes", "no"]) == "yes":
+            sentry_sdk.capture_message("\n".join(feedback))
 
     def mainloop(self):
         while True:

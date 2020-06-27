@@ -154,7 +154,7 @@ def handle_device(context: MainContext, args: List[str]):
         if device is None:
             return
         elif device.powered_on:
-            print("This device is already running.")
+            print("This device is already powered on.")
             return
 
         context.get_client().device_power(device.uuid)
@@ -167,7 +167,7 @@ def handle_device(context: MainContext, args: List[str]):
         if device is None:
             return
         elif not device.powered_on:
-            print("This device is not running.")
+            print("This device is not powered on.")
             return
 
         context.get_client().device_power(device.uuid)
@@ -178,6 +178,10 @@ def handle_device(context: MainContext, args: List[str]):
 
         device: Optional[Device] = get_device(context, args[1])
         if device is None:
+            return
+
+        if not device.powered_on:
+            print("This device is not powered on.")
             return
 
         context.open(DeviceContext(context.root_context, context.session_token, device))

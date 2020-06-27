@@ -47,8 +47,15 @@ class DeviceContext(MainContext):
             return False
         return True
 
+    def check_powered_on(self) -> bool:
+        if not self.host.powered_on:
+            print("This device is not powered on.")
+            self.close()
+            return False
+        return True
+
     def before_command(self) -> bool:
-        return self.check_device_permission()
+        return self.check_device_permission() and self.check_powered_on()
 
     def enter_context(self):
         Context.enter_context(self)

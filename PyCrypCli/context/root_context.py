@@ -29,7 +29,7 @@ class RootContext:
         self.presence: Presence = Presence(client_id="596676243144048640")
         try:
             self.presence.connect()
-        except (FileNotFoundError, InvalidPipe):
+        except (FileNotFoundError, InvalidPipe, ConnectionRefusedError):
             self.presence = None
 
     def open(self, context: "Context"):

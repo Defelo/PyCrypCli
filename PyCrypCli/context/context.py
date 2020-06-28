@@ -1,14 +1,18 @@
-from typing import Optional, List, Dict, Tuple, Callable
+from typing import Optional, List, Callable, Dict, TYPE_CHECKING
 
 import readline
 from pypresence import PyPresenceException
 
 from PyCrypCli.client import Client
 
+if TYPE_CHECKING:
+    from PyCrypCli.commands.command import Command
+    from PyCrypCli.context import RootContext
+
 
 class Context:
-    def __init__(self, root_context):
-        self.root_context = root_context
+    def __init__(self, root_context: "RootContext"):
+        self.root_context: "RootContext" = root_context
 
         self.override_completions: Optional[List[str]] = None
         self.history: List[str] = []
@@ -23,7 +27,7 @@ class Context:
     def get_client(self) -> Client:
         return self.root_context.client
 
-    def get_commands(self) -> Dict[str, Tuple[str, "COMMAND_FUNCTION", "COMPLETER_FUNCTION"]]:
+    def get_commands(self) -> Dict[str, "Command"]:
         return self.root_context.get_commands()
 
     def ask(self, prompt: str, options: List[str]) -> str:

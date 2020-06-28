@@ -1,14 +1,14 @@
 from collections import Counter
 from typing import List, Dict
 
-from PyCrypCli.commands.command import command, completer
+from PyCrypCli.commands.command import command
 from PyCrypCli.context import MainContext, DeviceContext
 from PyCrypCli.exceptions import CannotTradeWithYourselfException, UserUUIDDoesNotExistException
 from PyCrypCli.game_objects import InventoryElement, ShopCategory
 from PyCrypCli.util import print_tree
 
 
-@command(["inventory"], [MainContext, DeviceContext], "Manage your inventory and trade with other players")
+@command("inventory", [MainContext, DeviceContext], "Manage your inventory and trade with other players")
 def handle_inventory(context: MainContext, args: List[str]):
     if not args:
         print("usage: inventory list|trade")
@@ -65,7 +65,7 @@ def handle_inventory(context: MainContext, args: List[str]):
         print("usage: inventory list|trade")
 
 
-@completer([handle_inventory])
+@handle_inventory.completer()
 def inventory_completer(context: MainContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return ["list", "trade"]

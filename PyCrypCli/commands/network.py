@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from PyCrypCli.commands.device import get_device
 
-from PyCrypCli.commands.command import command, completer
+from PyCrypCli.commands.command import command
 from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import (
     MaximumNetworksReachedException,
@@ -32,7 +32,7 @@ def get_network(context: DeviceContext, name_or_uuid: str) -> Optional[Network]:
         pass
 
 
-@command(["network"], [DeviceContext], "Manage your networks")
+@command("network", [DeviceContext], "Manage your networks")
 def handle_network(context: DeviceContext, args: List[str]):
     subcommands = [
         "list",
@@ -284,7 +284,7 @@ def handle_network(context: DeviceContext, args: List[str]):
         print("usage: network " + "|".join(subcommands))
 
 
-@completer([handle_network])
+@handle_network.completer()
 def network_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return [

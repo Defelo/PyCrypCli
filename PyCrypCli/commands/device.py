@@ -1,6 +1,6 @@
 from typing import List, Dict, Optional
 
-from PyCrypCli.commands.command import command, completer
+from PyCrypCli.commands.command import command
 from PyCrypCli.context import MainContext, DeviceContext
 from PyCrypCli.exceptions import (
     AlreadyOwnADeviceException,
@@ -35,7 +35,7 @@ def get_device(context: MainContext, name_or_uuid: str, devices: Optional[List[D
         return found_devices[0]
 
 
-@command(["device"], [MainContext, DeviceContext], "Manage your devices")
+@command("device", [MainContext, DeviceContext], "Manage your devices")
 def handle_device(context: MainContext, args: List[str]):
     if not args:
         print("usage: device list|create|build|boot|shutdown|connect|delete")
@@ -200,7 +200,7 @@ def handle_device(context: MainContext, args: List[str]):
         print("usage: device list|create|build|boot|shutdown|connect|delete")
 
 
-@completer([handle_device])
+@handle_device.completer()
 def complete_device(context: MainContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return ["list", "create", "build", "boot", "shutdown", "connect", "delete"]
@@ -225,7 +225,7 @@ def complete_device(context: MainContext, args: List[str]) -> List[str]:
             return [name.replace(" ", "") for name in list(hardware["ram"]) + list(hardware["disk"])]
 
 
-@command(["hostname"], [DeviceContext], "Show or modify the name of the device")
+@command("hostname", [DeviceContext], "Show or modify the name of the device")
 def handle_hostname(context: DeviceContext, args: List[str]):
     if args:
         name: str = " ".join(args)
@@ -240,7 +240,7 @@ def handle_hostname(context: DeviceContext, args: List[str]):
         print(context.host.name)
 
 
-@command(["top"], [DeviceContext], "Display the current resource usage of this device")
+@command("top", [DeviceContext], "Display the current resource usage of this device")
 def handle_top(context: DeviceContext, *_):
     print(f"Resource usage of '{context.host.name}':")
     print()

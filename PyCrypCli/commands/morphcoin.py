@@ -3,7 +3,7 @@ import time
 from typing import List
 
 from PyCrypCli import util
-from PyCrypCli.commands.command import command, completer
+from PyCrypCli.commands.command import command
 from PyCrypCli.commands.files import create_file
 from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import *
@@ -11,7 +11,7 @@ from PyCrypCli.game_objects import Wallet, Transaction
 from PyCrypCli.util import is_uuid, DoWaitingHackingThread, extract_wallet, strip_float
 
 
-@command(["morphcoin"], [DeviceContext], "Manage your Morphcoin wallet")
+@command("morphcoin", [DeviceContext], "Manage your Morphcoin wallet")
 def handle_morphcoin(context: DeviceContext, args: List[str]):
     if not (
         (len(args) == 2 and args[0] in ("create", "look", "transactions", "reset", "watch"))
@@ -188,7 +188,7 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
             print()
 
 
-@completer([handle_morphcoin])
+@handle_morphcoin.completer()
 def morphcoin_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return ["create", "list", "look", "transactions", "reset", "watch"]
@@ -199,7 +199,7 @@ def morphcoin_completer(context: DeviceContext, args: List[str]) -> List[str]:
             return context.file_path_completer(args[1], dirs_only=True)
 
 
-@command(["pay"], [DeviceContext], "Send Morphcoins to another wallet")
+@command("pay", [DeviceContext], "Send Morphcoins to another wallet")
 def handle_pay(context: DeviceContext, args: List[str]):
     if len(args) < 3:
         print("usage: pay <filename> <receiver> <amount> [usage]")
@@ -249,7 +249,7 @@ def handle_pay(context: DeviceContext, args: List[str]):
         print("Destination wallet does not exist.")
 
 
-@completer([handle_pay])
+@handle_pay.completer()
 def pay_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return context.file_path_completer(args[0])

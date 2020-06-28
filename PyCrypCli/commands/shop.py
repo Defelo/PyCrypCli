@@ -2,7 +2,7 @@ from typing import List
 
 from PyCrypCli.client import Client
 
-from PyCrypCli.commands.command import command, completer
+from PyCrypCli.commands.command import command
 from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import (
     FileNotFoundException,
@@ -25,7 +25,7 @@ def list_shop_products(client: Client) -> List[str]:
     return out
 
 
-@command(["shop"], [DeviceContext], "Buy new hardware and more in the shop")
+@command("shop", [DeviceContext], "Buy new hardware and more in the shop")
 def handle_shop(context: DeviceContext, args: List[str]):
     if not args:
         print("usage: shop list|buy")
@@ -99,7 +99,7 @@ def handle_shop(context: DeviceContext, args: List[str]):
         print("usage: shop list|buy")
 
 
-@completer([handle_shop])
+@handle_shop.completer()
 def shop_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return ["list", "buy"]

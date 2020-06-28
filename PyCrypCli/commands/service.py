@@ -2,7 +2,7 @@ import os
 import time
 from typing import List, Tuple
 
-from PyCrypCli.commands.command import command, completer
+from PyCrypCli.commands.command import command
 from PyCrypCli.context import DeviceContext, MainContext
 from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import Device, Service
@@ -139,7 +139,7 @@ def handle_portscan(context: DeviceContext, args: List[str]):
         print(f" - {service.name} on port {service.running_port} (UUID: {service.uuid})")
 
 
-@command(["service"], [DeviceContext], "Create or use a service")
+@command("service", [DeviceContext], "Create or use a service")
 def handle_service(context: DeviceContext, args: List[str]):
     if len(args) < 1 or args[0] not in ("create", "list", "delete", "start", "stop", "bruteforce", "portscan"):
         print("usage: service create|list|delete|start|stop|bruteforce|portscan")
@@ -245,7 +245,7 @@ def handle_service(context: DeviceContext, args: List[str]):
         handle_portscan(context, args[1:])
 
 
-@completer([handle_service])
+@handle_service.completer()
 def service_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return ["create", "list", "delete", "start", "stop", "bruteforce", "portscan"]
@@ -259,7 +259,7 @@ def service_completer(context: DeviceContext, args: List[str]) -> List[str]:
             return context.file_path_completer(args[2])
 
 
-@command(["spot"], [DeviceContext], "Find a random device in the network")
+@command("spot", [DeviceContext], "Find a random device in the network")
 def handle_spot(context: DeviceContext, args: List[str]):
     if len(args) == 1:
         hacking_thread: DoWaitingHackingThread = DoWaitingHackingThread("Searching device")
@@ -294,7 +294,7 @@ def handle_spot(context: DeviceContext, args: List[str]):
     handle_portscan(context, [device.uuid])
 
 
-@command(["remote"], [MainContext, DeviceContext], "Manage and connect to the devices you hacked before")
+@command("remote", [MainContext, DeviceContext], "Manage and connect to the devices you hacked before")
 def handle_remote(context: MainContext, args: List[str]):
     if not args:
         print("usage: remote list|connect")
@@ -344,7 +344,7 @@ def handle_remote(context: MainContext, args: List[str]):
         print("usage: remote list|connect")
 
 
-@completer([handle_remote])
+@handle_remote.completer()
 def remote_completer(context: MainContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return ["list", "connect"]

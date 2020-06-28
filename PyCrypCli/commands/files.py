@@ -1,12 +1,12 @@
 from typing import List, Optional, Tuple
 
-from PyCrypCli.commands.command import command, completer
+from PyCrypCli.commands.command import command
 from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import File, Wallet
 
 
-@command(["ls", "l", "dir"], [DeviceContext], "List all files")
+@command("ls", [DeviceContext], "List all files", aliases=["l", "dir"])
 def handle_ls(context: DeviceContext, args: List[str]):
     if not args:
         directory: File = context.pwd
@@ -26,12 +26,12 @@ def handle_ls(context: DeviceContext, args: List[str]):
         print(["[FILE] ", "[DIR]  "][file.is_directory] + file.filename)
 
 
-@command(["pwd"], [DeviceContext], "Print the current working directory")
+@command("pwd", [DeviceContext], "Print the current working directory")
 def handle_pwd(context: DeviceContext, *_):
     print(context.file_to_path(context.pwd))
 
 
-@command(["mkdir"], [DeviceContext], "Create a new directory")
+@command("mkdir", [DeviceContext], "Create a new directory")
 def handle_mkdir(context: DeviceContext, args: List[str]):
     if not args:
         print("usage: mkdir <dirname>")
@@ -52,7 +52,7 @@ def handle_mkdir(context: DeviceContext, args: List[str]):
         print("There already exists a file with this name.")
 
 
-@command(["cd"], [DeviceContext], "Change the current working directory")
+@command("cd", [DeviceContext], "Change the current working directory")
 def handle_cd(context: DeviceContext, args: List[str]):
     if not args:
         context.pwd = context.get_root_dir()
@@ -91,7 +91,7 @@ def create_file(context: DeviceContext, filepath: str, content: str) -> bool:
     return True
 
 
-@command(["touch"], [DeviceContext], "Create a new file with given content")
+@command("touch", [DeviceContext], "Create a new file with given content")
 def handle_touch(context: DeviceContext, args: List[str]):
     if not args:
         print("usage: touch <filepath> [content]")
@@ -101,7 +101,7 @@ def handle_touch(context: DeviceContext, args: List[str]):
     create_file(context, filepath, " ".join(content))
 
 
-@command(["cat"], [DeviceContext], "Print the content of a file")
+@command("cat", [DeviceContext], "Print the content of a file")
 def handle_cat(context: DeviceContext, args: List[str]):
     if not args:
         print("usage: cat <filepath>")
@@ -119,7 +119,7 @@ def handle_cat(context: DeviceContext, args: List[str]):
     print(file.content)
 
 
-@command(["rm"], [DeviceContext], "Remove a file")
+@command("rm", [DeviceContext], "Remove a file")
 def handle_rm(context: DeviceContext, args: List[str]):
     if not args:
         print("usage: rm <filepath>")
@@ -258,7 +258,7 @@ def check_file_movable(
     return file, dest_name, dest_dir
 
 
-@command(["cp"], [DeviceContext], "Create a copy of a file")
+@command("cp", [DeviceContext], "Create a copy of a file")
 def handle_cp(context: DeviceContext, args: List[str]):
     if len(args) != 2:
         print("usage: cp <source> <destination>")
@@ -280,7 +280,7 @@ def handle_cp(context: DeviceContext, args: List[str]):
                 queue.append((child, child.filename, new_file.uuid))
 
 
-@command(["mv"], [DeviceContext], "Rename a file")
+@command("mv", [DeviceContext], "Rename a file")
 def handle_mv(context: DeviceContext, args: List[str]):
     if len(args) != 2:
         print("usage: mv <source> <destination>")
@@ -294,19 +294,24 @@ def handle_mv(context: DeviceContext, args: List[str]):
     context.get_client().file_move(file.device, file.uuid, dest_name, dest_dir)
 
 
-@completer([handle_ls, handle_cat, handle_touch, handle_rm])
+@handle_ls.completer()
+@handle_cat.completer()
+@handle_touch.completer()
+@handle_rm.completer()
 def simple_file_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return context.file_path_completer(args[0])
 
 
-@completer([handle_cd, handle_mkdir])
+@handle_cd.completer()
+@handle_mkdir.completer()
 def simple_directory_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return context.file_path_completer(args[0], dirs_only=True)
 
 
-@completer([handle_mv, handle_cp])
+@handle_mv.completer()
+@handle_cp.completer()
 def copy_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if 1 <= len(args) <= 2:
         return context.file_path_completer(args[-1])

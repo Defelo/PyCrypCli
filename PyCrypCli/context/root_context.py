@@ -1,20 +1,21 @@
 import json
 import os
 import re
-from typing import List, Dict, Type, Tuple, Optional
+from typing import List, Dict, Type, Optional, TYPE_CHECKING
 
 from pypresence import Presence, InvalidPipe
 
 from PyCrypCli.client import Client
-from PyCrypCli.context.context import Context, COMMAND_FUNCTION, COMPLETER_FUNCTION
+
+from PyCrypCli.context.context import Context
+
+if TYPE_CHECKING:
+    from PyCrypCli.commands.command import Command
 
 
 class RootContext:
     def __init__(
-        self,
-        server: str,
-        config_file: List[str],
-        commands: Dict[Type[Context], Dict[str, Tuple[str, COMMAND_FUNCTION, COMPLETER_FUNCTION]]],
+        self, server: str, config_file: List[str], commands: Dict[Type[Context], Dict[str, "Command"]],
     ):
         self.client: Client = Client(server)
         self.host: str = re.match(r"^wss?://(.+)$", server).group(1).split("/")[0]
@@ -23,7 +24,7 @@ class RootContext:
 
         self.context_stack: List[Context] = []
 
-        self.commands: Dict[Type[Context], Dict[str, Tuple[str, COMMAND_FUNCTION, COMPLETER_FUNCTION]]] = commands
+        self.commands: Dict[Type[Context], Dict[str, Command]] = commands
 
         self.presence: Presence = Presence(client_id="596676243144048640")
         try:
@@ -45,7 +46,7 @@ class RootContext:
     def get_override_completions(self) -> Optional[List[str]]:
         return self.get_context().override_completions
 
-    def get_commands(self) -> Dict[str, Tuple[str, "COMMAND_FUNCTION", "COMPLETER_FUNCTION"]]:
+    def get_commands(self) -> Dict[str, "Command"]:
         return self.commands[type(self.get_context())]
 
     def read_config_file(self) -> dict:

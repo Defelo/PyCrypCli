@@ -1,13 +1,13 @@
 from typing import List
 
-from PyCrypCli.commands.command import command, completer
+from PyCrypCli.commands.command import command
 from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import Service, Miner
 from PyCrypCli.util import is_uuid
 
 
-@command(["miner"], [DeviceContext], "Manager your Morphcoin miners")
+@command("miner", [DeviceContext], "Manager your Morphcoin miners")
 def handle_miner(context: DeviceContext, args: List[str]):
     if len(args) not in (1, 2) or args[0] not in ("look", "power", "wallet"):
         print("usage: miner look|power|wallet")
@@ -58,7 +58,7 @@ def handle_miner(context: DeviceContext, args: List[str]):
             print("Wallet does not exist.")
 
 
-@completer([handle_miner])
+@handle_miner.completer()
 def miner_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return ["look", "power", "wallet"]

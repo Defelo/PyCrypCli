@@ -2,12 +2,12 @@ import getpass
 import os
 import sys
 from os import getenv
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 
 import sentry_sdk
 
-from PyCrypCli.commands.command import make_commands, COMMAND_FUNCTION, command
-from PyCrypCli.context import Context, LoginContext, MainContext, RootContext, DeviceContext, COMPLETER_FUNCTION
+from PyCrypCli.commands.command import make_commands, command, Command
+from PyCrypCli.context import Context, LoginContext, MainContext, RootContext, DeviceContext
 from PyCrypCli.exceptions import *
 
 try:
@@ -45,9 +45,9 @@ class Frontend:
         if not args:
             return [cmd for cmd in self.root_context.get_commands()]
         else:
-            completer: Optional[COMPLETER_FUNCTION] = self.root_context.get_commands().get(cmd, (None, None, None))[2]
-            if completer is not None:
-                return completer(self.get_context(), args) or []
+            comp: Optional[Command] = self.root_context.get_commands().get(cmd, None)
+            if comp is not None and comp.completer is not None:
+                return comp.completer_func(self.get_context(), args) or []
             else:
                 return []
 
@@ -64,7 +64,7 @@ class Frontend:
         return self.root_context.get_context()
 
     @staticmethod
-    @command(["register", "signup"], [LoginContext], "Create a new account")
+    @command("register", [LoginContext], "Create a new account", aliases=["signup"])
     def register(context: LoginContext, *_):
         try:
             username: str = context.input_no_history("Username: ")
@@ -92,7 +92,7 @@ class Frontend:
             return
 
     @staticmethod
-    @command(["login"], [LoginContext], "Login with an existing account")
+    @command("login", [LoginContext], "Login with an existing account")
     def login(context: LoginContext, *_):
         try:
             username: str = context.input_no_history("Username: ")
@@ -109,28 +109,28 @@ class Frontend:
             return
 
     @staticmethod
-    @command(["exit", "quit"], [LoginContext], "Exit PyCrypCli")
+    @command("exit", [LoginContext], "Exit PyCrypCli", aliases=["quit"])
     def handle_main_exit(*_):
         exit()
 
     @staticmethod
-    @command(["exit", "quit"], [MainContext], "Exit PyCrypCli (session will be saved)")
+    @command("exit", [MainContext], "Exit PyCrypCli (session will be saved)", aliases=["quit"])
     def handle_main_exit(context: MainContext, *_):
         context.get_client().close()
         exit()
 
     @staticmethod
-    @command(["exit", "quit", "logout"], [DeviceContext], "Disconnect from this device")
+    @command("exit", [DeviceContext], "Disconnect from this device", aliases=["quit", "logout"])
     def handle_main_exit(context: DeviceContext, *_):
         context.close()
 
     @staticmethod
-    @command(["logout"], [MainContext], "Delete the current session and exit PyCrypCli")
+    @command("logout", [MainContext], "Delete the current session and exit PyCrypCli")
     def handle_main_logout(context: MainContext, *_):
         context.close()
 
     @staticmethod
-    @command(["passwd"], [MainContext], "Change your password")
+    @command("passwd", [MainContext], "Change your password")
     def handle_passwd(context: MainContext, *_):
         old_password: str = getpass.getpass("Current password: ")
         new_password: str = getpass.getpass("New password: ")
@@ -149,7 +149,7 @@ class Frontend:
         context.get_client().session(context.session_token)
 
     @staticmethod
-    @command(["_delete_user"], [MainContext], "Delete this account")
+    @command("_delete_user", [MainContext], "Delete this account")
     def handle_delete_user(context: MainContext, *_):
         if context.ask("Are you sure you want to delete your account? [yes|no] ", ["yes", "no"]) == "no":
             print("Your account has NOT been deleted.")
@@ -168,9 +168,12 @@ class Frontend:
             print("\nYour account has NOT been deleted.")
 
     @staticmethod
-    @command(["help"], [LoginContext, MainContext, DeviceContext], "Show a list of available commands")
+    @command("help", [LoginContext, MainContext, DeviceContext], "Show a list of available commands")
     def handle_main_help(context: Context, *_):
-        commands: List[Tuple[str, str]] = ([(c, d) for c, (d, *_) in context.get_commands().items()])
+        cmds: Dict[str, Command] = {c.name: c for c in context.get_commands().values()}
+        commands: List[Tuple[str, str]] = [
+            ("|".join([name] + cmd.aliases), cmd.description) for name, cmd in cmds.items()
+        ]
         print("Available commands:")
         max_length: int = max(len(cmd[0]) for cmd in commands)
         for com, desc in commands:
@@ -178,18 +181,18 @@ class Frontend:
             print(f" - {com}    {desc}")
 
     @staticmethod
-    @command(["clear"], [LoginContext, MainContext, DeviceContext], "Clear the console")
+    @command("clear", [LoginContext, MainContext, DeviceContext], "Clear the console")
     def handle_main_clear(*_):
         print(end="\033c")
 
     @staticmethod
-    @command(["history"], [MainContext, DeviceContext], "Show the history of commands entered in this session")
+    @command("history", [MainContext, DeviceContext], "Show the history of commands entered in this session")
     def handle_main_history(context: MainContext, *_):
         for line in context.history:
             print(line)
 
     @staticmethod
-    @command(["feedback"], [LoginContext, MainContext, DeviceContext], "Send feedback to the developer")
+    @command("feedback", [LoginContext, MainContext, DeviceContext], "Send feedback to the developer")
     def feedback(context: Context, *_):
         print("Please type your feedback about PyCrypCli below. When you are done press Ctrl+C")
         feedback = ["User Feedback"]
@@ -230,8 +233,7 @@ class Frontend:
             context.add_to_history(cmd + " " + " ".join(args))
 
             if cmd in context.get_commands():
-                func: COMMAND_FUNCTION = context.get_commands()[cmd][1]
-                func(context, args)
+                context.get_commands()[cmd].func(context, args)
             else:
                 print("Command could not be found.")
                 print("Type `help` for a list of commands.")

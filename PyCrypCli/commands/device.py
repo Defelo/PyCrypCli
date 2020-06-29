@@ -1,6 +1,7 @@
 from typing import List, Dict, Optional
 
 from PyCrypCli.commands.command import command
+from PyCrypCli.commands.help import print_help
 from PyCrypCli.context import MainContext, DeviceContext
 from PyCrypCli.exceptions import (
     AlreadyOwnADeviceException,
@@ -36,12 +37,15 @@ def get_device(context: MainContext, name_or_uuid: str, devices: Optional[List[D
 
 
 @command("device", [MainContext, DeviceContext])
-def handle_device(*_):
+def handle_device(context: MainContext, args: List[str]):
     """
     Manage your devices
     """
 
-    print("usage: device list|create|build|boot|shutdown|connect|delete")
+    if args:
+        print("Unknown subcommand.")
+    else:
+        print_help(context, handle_device)
 
 
 @handle_device.subcommand("list")

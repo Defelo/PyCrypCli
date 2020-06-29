@@ -16,6 +16,9 @@ class Command:
         self.subcommands: List[Command] = []
         self.prepared_subcommands: Dict[Type[Context], Dict[str, Command]] = {}
 
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
+
     def parse_command(self, context: Context, args: List[str]) -> Tuple["Command", List[str]]:
         prepared_subcommands = self.prepared_subcommands.get(type(context), {})
         if args:

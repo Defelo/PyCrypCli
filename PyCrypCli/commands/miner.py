@@ -7,8 +7,12 @@ from PyCrypCli.game_objects import Service, Miner
 from PyCrypCli.util import is_uuid
 
 
-@command("miner", [DeviceContext], "Manager your Morphcoin miners")
+@command("miner", [DeviceContext])
 def handle_miner(context: DeviceContext, args: List[str]):
+    """
+    Manager your Morphcoin miners
+    """
+
     if len(args) not in (1, 2) or args[0] not in ("look", "power", "wallet"):
         print("usage: miner look|power|wallet")
         return

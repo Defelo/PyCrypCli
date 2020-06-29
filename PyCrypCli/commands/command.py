@@ -46,12 +46,14 @@ class Command:
         return decorator
 
     def subcommand(
-        self, name: str, desc: str, *, contexts: List[Type[Context]] = None, aliases: List[str] = None
+        self, name: str, *, contexts: List[Type[Context]] = None, aliases: List[str] = None
     ) -> Callable[[COMMAND_FUNCTION], "Command"]:
         if contexts is None:
             contexts = self.contexts
 
         def decorator(func: COMMAND_FUNCTION) -> Command:
+            desc: str = func.__doc__
+            desc = "\n".join(map(str.strip, desc.splitlines())).strip()
             cmd = Command(name, func, desc, contexts, aliases or [])
             self.subcommands.append(cmd)
             return cmd
@@ -71,9 +73,11 @@ commands: List[Command] = []
 
 
 def command(
-    name: str, contexts: List[Type[Context]], desc: str, aliases: List[str] = None
+    name: str, contexts: List[Type[Context]], aliases: List[str] = None
 ) -> Callable[[COMMAND_FUNCTION], Command]:
     def decorator(func: COMMAND_FUNCTION) -> Command:
+        desc: str = func.__doc__
+        desc = "\n".join(map(str.strip, desc.splitlines())).strip()
         cmd = Command(name, func, desc, contexts, aliases or [])
         commands.append(cmd)
         return cmd

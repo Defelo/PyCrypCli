@@ -8,8 +8,12 @@ from PyCrypCli.game_objects import InventoryElement, ShopCategory
 from PyCrypCli.util import print_tree
 
 
-@command("inventory", [MainContext, DeviceContext], "Manage your inventory and trade with other players")
+@command("inventory", [MainContext, DeviceContext])
 def handle_inventory(context: MainContext, args: List[str]):
+    """
+    Manage your inventory and trade with other players
+    """
+
     if not args:
         print("usage: inventory list|trade")
         return

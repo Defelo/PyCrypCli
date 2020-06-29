@@ -11,8 +11,12 @@ from PyCrypCli.game_objects import Wallet, Transaction
 from PyCrypCli.util import is_uuid, DoWaitingHackingThread, extract_wallet, strip_float
 
 
-@command("morphcoin", [DeviceContext], "Manage your Morphcoin wallet")
+@command("morphcoin", [DeviceContext])
 def handle_morphcoin(context: DeviceContext, args: List[str]):
+    """
+    Manage your Morphcoin wallet
+    """
+
     if not (
         (len(args) == 2 and args[0] in ("create", "look", "transactions", "reset", "watch"))
         or (args in (["list"], ["search"]))
@@ -199,8 +203,12 @@ def morphcoin_completer(context: DeviceContext, args: List[str]) -> List[str]:
             return context.file_path_completer(args[1], dirs_only=True)
 
 
-@command("pay", [DeviceContext], "Send Morphcoins to another wallet")
+@command("pay", [DeviceContext])
 def handle_pay(context: DeviceContext, args: List[str]):
+    """
+    Send Morphcoins to another wallet
+    """
+
     if len(args) < 3:
         print("usage: pay <filename> <receiver> <amount> [usage]")
         print("   or: pay <uuid> <key> <receiver> <amount> [usage]")

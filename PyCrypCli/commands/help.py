@@ -8,23 +8,31 @@ def print_help(context: Context, cmd: Optional[Command]):
     if cmd is None:
         cmds: Dict[str, Command] = {c.name: c for c in context.get_commands().values()}
     else:
+        print(cmd.description)
         cmds: Dict[str, Command] = {c.name: c for c in cmd.prepared_subcommands.get(type(context), {}).values()}
     command_list: List[Tuple[str, str]] = [
         ("|".join([name] + cmd.aliases), cmd.description) for name, cmd in cmds.items()
     ]
     if not command_list:
-        print("No commands found.")
+        if cmd is None:
+            print("No commands found.")
         return
+    elif cmd is not None:
+        print()
 
-    print("Available commands:")
+    print(f"Available {'sub' * (cmd is not None)}commands:")
     max_length: int = max(len(cmd[0]) for cmd in command_list)
     for com, desc in command_list:
         com: str = com.ljust(max_length)
         print(f" - {com}    {desc}")
 
 
-@command("help", [LoginContext, MainContext, DeviceContext], "Show a list of available commands")
+@command("help", [LoginContext, MainContext, DeviceContext])
 def handle_main_help(context: Context, args: List[str]):
+    """
+    Show a list of available commands
+    """
+
     if args:
         if args[0] in context.get_commands():
             cmd, args = context.get_commands()[args[0]].parse_command(context, args[1:])

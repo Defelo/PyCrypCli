@@ -6,8 +6,12 @@ from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import File, Wallet
 
 
-@command("ls", [DeviceContext], "List all files", aliases=["l", "dir"])
+@command("ls", [DeviceContext], aliases=["l", "dir"])
 def handle_ls(context: DeviceContext, args: List[str]):
+    """
+    List all files
+    """
+
     if not args:
         directory: File = context.pwd
     else:
@@ -26,13 +30,21 @@ def handle_ls(context: DeviceContext, args: List[str]):
         print(["[FILE] ", "[DIR]  "][file.is_directory] + file.filename)
 
 
-@command("pwd", [DeviceContext], "Print the current working directory")
+@command("pwd", [DeviceContext])
 def handle_pwd(context: DeviceContext, *_):
+    """
+    Print the current working directory
+    """
+
     print(context.file_to_path(context.pwd))
 
 
-@command("mkdir", [DeviceContext], "Create a new directory")
+@command("mkdir", [DeviceContext])
 def handle_mkdir(context: DeviceContext, args: List[str]):
+    """
+    Create a new directory
+    """
+
     if not args:
         print("usage: mkdir <dirname>")
         return
@@ -52,8 +64,12 @@ def handle_mkdir(context: DeviceContext, args: List[str]):
         print("There already exists a file with this name.")
 
 
-@command("cd", [DeviceContext], "Change the current working directory")
+@command("cd", [DeviceContext])
 def handle_cd(context: DeviceContext, args: List[str]):
+    """
+    Change the current working directory
+    """
+
     if not args:
         context.pwd = context.get_root_dir()
     else:
@@ -91,8 +107,12 @@ def create_file(context: DeviceContext, filepath: str, content: str) -> bool:
     return True
 
 
-@command("touch", [DeviceContext], "Create a new file with given content")
+@command("touch", [DeviceContext])
 def handle_touch(context: DeviceContext, args: List[str]):
+    """
+    Create a new file with given content
+    """
+
     if not args:
         print("usage: touch <filepath> [content]")
         return
@@ -101,8 +121,12 @@ def handle_touch(context: DeviceContext, args: List[str]):
     create_file(context, filepath, " ".join(content))
 
 
-@command("cat", [DeviceContext], "Print the content of a file")
+@command("cat", [DeviceContext])
 def handle_cat(context: DeviceContext, args: List[str]):
+    """
+    Print the content of a file
+    """
+
     if not args:
         print("usage: cat <filepath>")
         return
@@ -119,8 +143,12 @@ def handle_cat(context: DeviceContext, args: List[str]):
     print(file.content)
 
 
-@command("rm", [DeviceContext], "Remove a file")
+@command("rm", [DeviceContext])
 def handle_rm(context: DeviceContext, args: List[str]):
+    """
+    Remove a file
+    """
+
     if not args:
         print("usage: rm <filepath>")
         return
@@ -258,8 +286,12 @@ def check_file_movable(
     return file, dest_name, dest_dir
 
 
-@command("cp", [DeviceContext], "Create a copy of a file")
+@command("cp", [DeviceContext])
 def handle_cp(context: DeviceContext, args: List[str]):
+    """
+    Create a copy of a file
+    """
+
     if len(args) != 2:
         print("usage: cp <source> <destination>")
         return
@@ -280,8 +312,12 @@ def handle_cp(context: DeviceContext, args: List[str]):
                 queue.append((child, child.filename, new_file.uuid))
 
 
-@command("mv", [DeviceContext], "Rename a file")
+@command("mv", [DeviceContext])
 def handle_mv(context: DeviceContext, args: List[str]):
+    """
+    Rename a file
+    """
+
     if len(args) != 2:
         print("usage: mv <source> <destination>")
         return

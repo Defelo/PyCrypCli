@@ -11,8 +11,12 @@ from PyCrypCli.exceptions import (
 )
 
 
-@command("register", [LoginContext], "Create a new account", aliases=["signup"])
+@command("register", [LoginContext], aliases=["signup"])
 def register(context: LoginContext, *_):
+    """
+    Create a new account
+    """
+
     try:
         username: str = context.input_no_history("Username: ")
         mail: str = context.input_no_history("Email Address: ")
@@ -39,8 +43,12 @@ def register(context: LoginContext, *_):
         return
 
 
-@command("login", [LoginContext], "Login with an existing account")
+@command("login", [LoginContext])
 def login(context: LoginContext, *_):
+    """
+    Login with an existing account
+    """
+
     try:
         username: str = context.input_no_history("Username: ")
         password: str = getpass.getpass("Password: ")
@@ -56,29 +64,49 @@ def login(context: LoginContext, *_):
         return
 
 
-@command("exit", [LoginContext], "Exit PyCrypCli", aliases=["quit"])
+@command("exit", [LoginContext], aliases=["quit"])
 def handle_main_exit(*_):
+    """
+    Exit PyCrypCli
+    """
+
     exit()
 
 
-@command("exit", [MainContext], "Exit PyCrypCli (session will be saved)", aliases=["quit"])
+@command("exit", [MainContext], aliases=["quit"])
 def handle_main_exit(context: MainContext, *_):
+    """
+    Exit PyCrypCli (session will be saved)
+    """
+
     context.get_client().close()
     exit()
 
 
-@command("exit", [DeviceContext], "Disconnect from this device", aliases=["quit", "logout"])
+@command("exit", [DeviceContext], aliases=["quit", "logout"])
 def handle_main_exit(context: DeviceContext, *_):
+    """
+    Disconnect from this device
+    """
+
     context.close()
 
 
-@command("logout", [MainContext], "Delete the current session and exit PyCrypCli")
+@command("logout", [MainContext])
 def handle_main_logout(context: MainContext, *_):
+    """
+    Delete the current session and exit PyCrypCli
+    """
+
     context.close()
 
 
-@command("passwd", [MainContext], "Change your password")
+@command("passwd", [MainContext])
 def handle_passwd(context: MainContext, *_):
+    """
+    Change your password
+    """
+
     old_password: str = getpass.getpass("Current password: ")
     new_password: str = getpass.getpass("New password: ")
     confirm_password: str = getpass.getpass("Confirm password: ")
@@ -96,8 +124,12 @@ def handle_passwd(context: MainContext, *_):
     context.get_client().session(context.session_token)
 
 
-@command("_delete_user", [MainContext], "Delete this account")
+@command("_delete_user", [MainContext])
 def handle_delete_user(context: MainContext, *_):
+    """
+    Delete this account
+    """
+
     if context.ask("Are you sure you want to delete your account? [yes|no] ", ["yes", "no"]) == "no":
         print("Your account has NOT been deleted.")
         return

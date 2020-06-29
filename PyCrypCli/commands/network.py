@@ -32,8 +32,12 @@ def get_network(context: DeviceContext, name_or_uuid: str) -> Optional[Network]:
         pass
 
 
-@command("network", [DeviceContext], "Manage your networks")
+@command("network", [DeviceContext])
 def handle_network(context: DeviceContext, args: List[str]):
+    """
+    Manage your networks
+    """
+
     subcommands = [
         "list",
         "public",

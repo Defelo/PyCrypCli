@@ -35,13 +35,21 @@ def get_device(context: MainContext, name_or_uuid: str, devices: Optional[List[D
         return found_devices[0]
 
 
-@command("device", [MainContext, DeviceContext], "Manage your devices")
+@command("device", [MainContext, DeviceContext])
 def handle_device(*_):
+    """
+    Manage your devices
+    """
+
     print("usage: device list|create|build|boot|shutdown|connect|delete")
 
 
-@handle_device.subcommand("list", "List your devices")
+@handle_device.subcommand("list")
 def handle_device_list(context: MainContext, args: List[str]):
+    """
+    List your devices
+    """
+
     if len(args) != 0:
         print("usage: device list")
         return
@@ -55,8 +63,12 @@ def handle_device_list(context: MainContext, args: List[str]):
         print(f" - [{['off', 'on'][device.powered_on]}] {device.name} (UUID: {device.uuid})")
 
 
-@handle_device.subcommand("create", "Create your starter device")
+@handle_device.subcommand("create")
 def handle_device_create(context: MainContext, args: List[str]):
+    """
+    Create your starter device
+    """
+
     if len(args) != 0:
         print("usage: device create")
         return
@@ -71,8 +83,12 @@ def handle_device_create(context: MainContext, args: List[str]):
     print(f"Hostname: {device.name} (UUID: {device.uuid})")
 
 
-@handle_device.subcommand("build", "Build a new device")
+@handle_device.subcommand("build")
 def handle_device_build(context: MainContext, args: List[str]):
+    """
+    Build a new device
+    """
+
     if len(args) < 5:
         print("usage: device build <mainboard> <cpu> <gpu> <ram> [<ram>...] <disk> [<disk>...]")
         return
@@ -153,8 +169,12 @@ def handle_device_build(context: MainContext, args: List[str]):
         print(f"Hostname: {device.name} (UUID: {device.uuid})")
 
 
-@handle_device.subcommand("boot", "Boot a device")
+@handle_device.subcommand("boot")
 def handle_device_boot(context: MainContext, args: List[str]):
+    """
+    Boot a device
+    """
+
     if len(args) != 1:
         print("usage: device boot <name|uuid>")
         return
@@ -169,8 +189,12 @@ def handle_device_boot(context: MainContext, args: List[str]):
     context.get_client().device_power(device.uuid)
 
 
-@handle_device.subcommand("shutdown", "Shut down a device")
+@handle_device.subcommand("shutdown")
 def handle_device_shutdown(context: MainContext, args: List[str]):
+    """
+    Shut down a device
+    """
+
     if len(args) != 1:
         print("usage: device shutdown <name|uuid>")
         return
@@ -185,8 +209,12 @@ def handle_device_shutdown(context: MainContext, args: List[str]):
     context.get_client().device_power(device.uuid)
 
 
-@handle_device.subcommand("connect", "Connect to one of your devices")
+@handle_device.subcommand("connect")
 def handle_device_connect(context: MainContext, args: List[str]):
+    """
+    Connect to one of your devices
+    """
+
     if len(args) != 1:
         print("usage: device connect <name|uuid>")
         return
@@ -202,8 +230,12 @@ def handle_device_connect(context: MainContext, args: List[str]):
     context.open(DeviceContext(context.root_context, context.session_token, device))
 
 
-@handle_device.subcommand("delete", "Delete a device")
+@handle_device.subcommand("delete")
 def handle_device_delete(context: MainContext, args: List[str]):
+    """
+    Delete a device
+    """
+
     if len(args) != 1:
         print("usage: device delete <name|uuid>")
         return
@@ -241,8 +273,12 @@ def complete_build(context: MainContext, args: List[str]) -> List[str]:
         return [name.replace(" ", "") for name in list(hardware["ram"]) + list(hardware["disk"])]
 
 
-@command("hostname", [DeviceContext], "Show or modify the name of the device")
+@command("hostname", [DeviceContext])
 def handle_hostname(context: DeviceContext, args: List[str]):
+    """
+    Show or modify the name of the device
+    """
+
     if args:
         name: str = " ".join(args)
         if not name:
@@ -256,8 +292,12 @@ def handle_hostname(context: DeviceContext, args: List[str]):
         print(context.host.name)
 
 
-@command("top", [DeviceContext], "Display the current resource usage of this device")
+@command("top", [DeviceContext])
 def handle_top(context: DeviceContext, *_):
+    """
+    Display the current resource usage of this device
+    """
+
     print(f"Resource usage of '{context.host.name}':")
     print()
     resource_usage: ResourceUsage = context.get_client().hardware_resources(context.host.uuid)

@@ -139,8 +139,12 @@ def handle_portscan(context: DeviceContext, args: List[str]):
         print(f" - {service.name} on port {service.running_port} (UUID: {service.uuid})")
 
 
-@command("service", [DeviceContext], "Create or use a service")
+@command("service", [DeviceContext])
 def handle_service(context: DeviceContext, args: List[str]):
+    """
+    Create or use a service
+    """
+
     if len(args) < 1 or args[0] not in ("create", "list", "delete", "start", "stop", "bruteforce", "portscan"):
         print("usage: service create|list|delete|start|stop|bruteforce|portscan")
         return
@@ -259,8 +263,12 @@ def service_completer(context: DeviceContext, args: List[str]) -> List[str]:
             return context.file_path_completer(args[2])
 
 
-@command("spot", [DeviceContext], "Find a random device in the network")
+@command("spot", [DeviceContext])
 def handle_spot(context: DeviceContext, args: List[str]):
+    """
+    Find a random device in the network
+    """
+
     if len(args) == 1:
         hacking_thread: DoWaitingHackingThread = DoWaitingHackingThread("Searching device")
         hacking_thread.start()
@@ -294,8 +302,12 @@ def handle_spot(context: DeviceContext, args: List[str]):
     handle_portscan(context, [device.uuid])
 
 
-@command("remote", [MainContext, DeviceContext], "Manage and connect to the devices you hacked before")
+@command("remote", [MainContext, DeviceContext])
 def handle_remote(context: MainContext, args: List[str]):
+    """
+    Manage and connect to the devices you hacked before
+    """
+
     if not args:
         print("usage: remote list|connect")
         return

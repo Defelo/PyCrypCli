@@ -25,8 +25,12 @@ def list_shop_products(client: Client) -> List[str]:
     return out
 
 
-@command("shop", [DeviceContext], "Buy new hardware and more in the shop")
+@command("shop", [DeviceContext])
 def handle_shop(context: DeviceContext, args: List[str]):
+    """
+    Buy new hardware and more in the shop
+    """
+
     if not args:
         print("usage: shop list|buy")
         return

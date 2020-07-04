@@ -84,6 +84,15 @@ def handle_cd(context: DeviceContext, args: List[str]):
         context.pwd = directory
 
 
+@command("..", [DeviceContext])
+def handle_dot_dot(context: DeviceContext, _):
+    """
+    Go to parent directory
+    """
+
+    handle_cd(context, [".."])
+
+
 def create_file(context: DeviceContext, filepath: str, content: str) -> bool:
     *path, filename = filepath.split("/")
     parent: Optional[File] = context.path_to_file("/".join(path))

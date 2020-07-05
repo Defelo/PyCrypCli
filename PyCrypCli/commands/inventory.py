@@ -1,7 +1,7 @@
 from collections import Counter
 from typing import List, Dict
 
-from PyCrypCli.commands.command import command
+from PyCrypCli.commands import CommandError, command
 from PyCrypCli.commands.help import print_help
 from PyCrypCli.context import MainContext, DeviceContext
 from PyCrypCli.exceptions import CannotTradeWithYourselfException, UserUUIDDoesNotExistException
@@ -16,9 +16,8 @@ def handle_inventory(context: MainContext, args: List[str]):
     """
 
     if args:
-        print("Unknown subcommand.")
-    else:
-        print_help(context, handle_inventory)
+        raise CommandError("Unknown subcommand.")
+    print_help(context, handle_inventory)
 
 
 @handle_inventory.subcommand("list")
@@ -29,8 +28,7 @@ def handle_inventory_list(context: MainContext, _):
 
     inventory: Dict[str, int] = Counter(element.element_name for element in context.get_client().inventory_list())
     if not inventory:
-        print("Your inventory is empty.")
-        return
+        raise CommandError("Your inventory is empty.")
 
     categories: List[ShopCategory] = context.get_client().shop_list()
     tree = []
@@ -61,8 +59,7 @@ def handle_inventory_trade(context: MainContext, args: List[str]):
     """
 
     if len(args) != 2:
-        print("usage: inventory trade <item> <user>")
-        return
+        raise CommandError("usage: inventory trade <item> <user>")
 
     item_name, target_user = args
 
@@ -71,15 +68,14 @@ def handle_inventory_trade(context: MainContext, args: List[str]):
             element: InventoryElement = item
             break
     else:
-        print("You do not own this item.")
-        return
+        raise CommandError("You do not own this item.")
 
     try:
         context.get_client().inventory_trade(element.element_uuid, target_user)
     except CannotTradeWithYourselfException:
-        print("You cannot trade with yourself.")
+        raise CommandError("You cannot trade with yourself.")
     except UserUUIDDoesNotExistException:
-        print("This user does not exist.")
+        raise CommandError("This user does not exist.")
 
 
 @handle_inventory_trade.completer()

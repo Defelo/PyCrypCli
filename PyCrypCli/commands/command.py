@@ -3,6 +3,11 @@ from typing import Callable, List, Dict, Type, Optional, Tuple
 from PyCrypCli.context import Context, COMMAND_FUNCTION, COMPLETER_FUNCTION
 
 
+class CommandError(Exception):
+    def __init__(self, msg: str):
+        self.msg: str = msg
+
+
 class Command:
     def __init__(
         self, name: str, func: COMMAND_FUNCTION, description: str, contexts: List[Type[Context]], aliases: List[str]
@@ -30,7 +35,10 @@ class Command:
 
     def handle(self, context: Context, args: List[str]):
         cmd, args = self.parse_command(context, args)
-        cmd.func(context, args)
+        try:
+            cmd.func(context, args)
+        except CommandError as error:
+            print(error.msg)
 
     def handle_completer(self, context: Context, args: List[str]) -> List[str]:
         cmd, args = self.parse_command(context, args)

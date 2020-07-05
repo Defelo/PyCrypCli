@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict, Tuple
 
-from PyCrypCli.commands import command, Command
+from PyCrypCli.commands import command, Command, CommandError
 from PyCrypCli.context import LoginContext, MainContext, DeviceContext, Context
 
 
@@ -40,8 +40,7 @@ def handle_main_help(context: Context, args: List[str]):
                 print_help(context, cmd)
                 return
 
-        print("Command not found.")
-        return
+        raise CommandError("Command not found.")
 
     print_help(context, None)
 

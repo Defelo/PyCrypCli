@@ -1,8 +1,7 @@
 from typing import List, Optional
 
+from PyCrypCli.commands import command, CommandError
 from PyCrypCli.commands.device import get_device
-
-from PyCrypCli.commands.command import command
 from PyCrypCli.commands.help import print_help
 from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import (
@@ -20,7 +19,7 @@ from PyCrypCli.game_objects import Network, NetworkMembership, Device, NetworkIn
 from PyCrypCli.util import is_uuid
 
 
-def get_network(context: DeviceContext, name_or_uuid: str) -> Optional[Network]:
+def get_network(context: DeviceContext, name_or_uuid: str) -> Network:
     if is_uuid(name_or_uuid):
         try:
             return context.get_client().get_network_by_uuid(name_or_uuid)
@@ -30,26 +29,21 @@ def get_network(context: DeviceContext, name_or_uuid: str) -> Optional[Network]:
     try:
         return context.get_client().get_network_by_name(name_or_uuid)
     except NetworkNotFoundException:
-        pass
+        raise CommandError("This network does not exist.")
 
 
 def handle_membership_request(context: DeviceContext, args: List[str], accept: bool):
     if len(args) not in (1, 2):
-        print(f"usage: network {['deny', 'accept'][accept]} <network> [<device>]")
-        return
+        raise CommandError(f"usage: network {['deny', 'accept'][accept]} <network> [<device>]")
 
-    network: Optional[Network] = get_network(context, args[0])
-    if network is None:
-        print("This network does not exist.")
-        return
+    network: Network = get_network(context, args[0])
 
     if len(args) == 1:
         for invitation in context.get_client().get_network_invitations(context.host.uuid):
             if invitation.network == network.uuid:
                 break
         else:
-            print("Invitation not found.")
-            return
+            raise CommandError("Invitation not found.")
     else:
         devices: List[Device] = []
         for request in context.get_client().get_network_membership_requests(network.uuid):
@@ -57,21 +51,15 @@ def handle_membership_request(context: DeviceContext, args: List[str], accept: b
             if device is not None:
                 devices.append(device)
 
-        device: Optional[Device] = get_device(context, args[1], devices)
-        if device is None:
-            print("Device not found.")
-            return
-
+        device: Device = get_device(context, args[1], devices)
         try:
             for invitation in context.get_client().get_network_membership_requests(network.uuid):
                 if invitation.network == network.uuid and invitation.device == device.uuid:
                     break
             else:
-                print("Join request not found.")
-                return
+                raise CommandError("Join request not found.")
         except NoPermissionsException:
-            print("Permission denied.")
-            return
+            raise CommandError("Permission denied.")
 
     if accept:
         context.get_client().accept_network_membership_request(invitation.uuid)
@@ -86,9 +74,8 @@ def handle_network(context: DeviceContext, args: List[str]):
     """
 
     if args:
-        print("Unknown subcommand.")
-    else:
-        print_help(context, handle_network)
+        raise CommandError("Unknown subcommand.")
+    print_help(context, handle_network)
 
 
 @handle_network.subcommand("list")
@@ -132,17 +119,16 @@ def handle_network_create(context: DeviceContext, args: List[str]):
     """
 
     if len(args) != 2 or args[1] not in ("public", "private"):
-        print("usage: network create <name> public|private")
-        return
+        raise CommandError("usage: network create <name> public|private")
 
     try:
         context.get_client().create_network(context.host.uuid, args[0], args[1] == "private")
     except MaximumNetworksReachedException:
-        print("You already own two networks.")
+        raise CommandError("You already own two networks.")
     except InvalidNameException:
-        print("Invalid name.")
+        raise CommandError("Invalid name.")
     except NameAlreadyInUseException:
-        print("This name is already in use.")
+        raise CommandError("This name is already in use.")
 
 
 @handle_network.subcommand("members")
@@ -152,19 +138,14 @@ def handle_network_members(context: DeviceContext, args: List[str]):
     """
 
     if len(args) != 1:
-        print("usage: network members <network>")
-        return
+        raise CommandError("usage: network members <network>")
 
-    network: Optional[Network] = get_network(context, args[0])
-    if network is None:
-        print("This network does not exist.")
-        return
+    network: Network = get_network(context, args[0])
 
     try:
         members: List[NetworkMembership] = context.get_client().get_members_of_network(network.uuid)
     except NetworkNotFoundException:
-        print("Permission denied.")
-        return
+        raise CommandError("Permission denied.")
 
     if not members:
         print("This network has no members.")
@@ -182,20 +163,16 @@ def handle_network_request(context: DeviceContext, args: List[str]):
     """
 
     if len(args) != 1:
-        print("usage: network request <network>")
-        return
+        raise CommandError("usage: network request <network>")
 
-    network: Optional[Network] = get_network(context, args[0])
-    if network is None:
-        print("This network does not exist.")
-        return
+    network: Network = get_network(context, args[0])
 
     try:
         context.get_client().request_network_membership(network.uuid, context.host.uuid)
     except AlreadyMemberOfNetworkException:
-        print("This device is already a member of the network.")
+        raise CommandError("This device is already a member of the network.")
     except InvitationAlreadyExistsException:
-        print("You already requested to join this network.")
+        raise CommandError("You already requested to join this network.")
 
 
 @handle_network.subcommand("requests")
@@ -205,19 +182,14 @@ def handle_network_requests(context: DeviceContext, args: List[str]):
     """
 
     if len(args) != 1:
-        print("usage: network requests <network>")
-        return
+        raise CommandError("usage: network requests <network>")
 
-    network: Optional[Network] = get_network(context, args[0])
-    if network is None:
-        print("This network does not exist.")
-        return
+    network: Network = get_network(context, args[0])
 
     try:
         requests: List[NetworkInvitation] = context.get_client().get_network_membership_requests(network.uuid)
     except NoPermissionsException:
-        print("Permission denied.")
-        return
+        raise CommandError("Permission denied.")
 
     if not requests:
         print("There are no pending requests for this network.")
@@ -253,27 +225,19 @@ def handle_network_invite(context: DeviceContext, args: List[str]):
     """
 
     if len(args) != 2:
-        print(f"usage: network invite <network> <device>")
-        return
+        raise CommandError(f"usage: network invite <network> <device>")
 
-    network: Optional[Network] = get_network(context, args[0])
-    if network is None:
-        print("This network does not exist.")
-        return
+    network: Network = get_network(context, args[0])
 
-    device: Optional[Device] = get_device(context, args[1])
-    if device is None:
-        print("Device not found.")
-        return
-
+    device: Device = get_device(context, args[1])
     try:
         context.get_client().invite_to_network(device.uuid, network.uuid)
     except NetworkNotFoundException:
-        print("Permission denied.")
+        raise CommandError("Permission denied.")
     except AlreadyMemberOfNetworkException:
-        print("Device is already a member of this network.")
+        raise CommandError("Device is already a member of this network.")
     except InvitationAlreadyExistsException:
-        print("An invitation for this device already exists.")
+        raise CommandError("An invitation for this device already exists.")
 
 
 @handle_network.subcommand("invitations")
@@ -300,18 +264,14 @@ def handle_network_leave(context: DeviceContext, args: List[str]):
     """
 
     if len(args) != 1:
-        print("usage: network leave <network>")
-        return
+        raise CommandError("usage: network leave <network>")
 
-    network: Optional[Network] = get_network(context, args[0])
-    if network is None:
-        print("This network does not exist.")
-        return
+    network: Network = get_network(context, args[0])
 
     try:
         context.get_client().leave_network(context.host.uuid, network.uuid)
     except CannotLeaveOwnNetworkException:
-        print("You cannot leave your own network.")
+        raise CommandError("You cannot leave your own network.")
 
 
 @handle_network.subcommand("kick")
@@ -321,31 +281,23 @@ def handle_network_kick(context: DeviceContext, args: List[str]):
     """
 
     if len(args) != 2:
-        print(f"usage: network kick <network> <device>")
-        return
+        raise CommandError(f"usage: network kick <network> <device>")
 
-    network: Optional[Network] = get_network(context, args[0])
-    if network is None:
-        print("This network does not exist.")
-        return
+    network: Network = get_network(context, args[0])
 
     devices: List[Device] = []
     for member in context.get_client().get_members_of_network(network.uuid):
         devices.append(context.get_client().device_info(member.device))
 
-    device: Optional[Device] = get_device(context, args[1], devices)
-    if device is None:
-        print("Device not found.")
-        return
-
+    device: Device = get_device(context, args[1], devices)
     try:
         context.get_client().kick_from_network(device.uuid, network.uuid)
     except NetworkNotFoundException:
-        print("Permission denied.")
+        raise CommandError("Permission denied.")
     except NoPermissionsException:
-        print("Permission denied.")
+        raise CommandError("Permission denied.")
     except CannotKickOwnerException:
-        print("You cannot kick the owner of the network.")
+        raise CommandError("You cannot kick the owner of the network.")
 
 
 @handle_network.subcommand("delete")
@@ -355,18 +307,14 @@ def handle_network_delete(context: DeviceContext, args: List[str]):
     """
 
     if len(args) != 1:
-        print("usage: network delete <network>")
-        return
+        raise CommandError("usage: network delete <network>")
 
-    network: Optional[Network] = get_network(context, args[0])
-    if network is None:
-        print("This network does not exist.")
-        return
+    network: Network = get_network(context, args[0])
 
     try:
         context.get_client().delete_network(network.uuid)
     except NetworkNotFoundException:
-        print("Permission denied.")
+        raise CommandError("Permission denied.")
 
 
 @handle_network_members.completer()
@@ -407,8 +355,9 @@ def network_accept_deny_completer(context: DeviceContext, args: List[str]) -> Li
             }
         )
     elif len(args) == 2:
-        network: Optional[Network] = get_network(context, args[0])
-        if network is None:
+        try:
+            network: Network = get_network(context, args[0])
+        except CommandError:
             return []
         device_names: List[str] = []
         for request in context.get_client().get_network_membership_requests(network.uuid):
@@ -432,8 +381,9 @@ def network_kick_completer(context: DeviceContext, args: List[str]):
     if len(args) == 1:
         return list({network.name for network in context.get_client().get_networks(context.host.uuid)})
     elif len(args) == 2:
-        network: Optional[Network] = get_network(context, args[0])
-        if network is None:
+        try:
+            network: Network = get_network(context, args[0])
+        except CommandError:
             return []
         device_names: List[str] = []
         for member in context.get_client().get_members_of_network(network.uuid):

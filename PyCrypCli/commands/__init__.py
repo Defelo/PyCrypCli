@@ -1,1 +1,1 @@
-from PyCrypCli.commands.command import command, make_commands, commands, Command
+from PyCrypCli.commands.command import command, make_commands, commands, Command, CommandError

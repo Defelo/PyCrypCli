@@ -1,6 +1,6 @@
 from typing import List, Dict, Optional
 
-from PyCrypCli.commands.command import command
+from PyCrypCli.commands import command, CommandError
 from PyCrypCli.commands.help import print_help
 from PyCrypCli.context import MainContext, DeviceContext
 from PyCrypCli.exceptions import (
@@ -15,24 +15,23 @@ from PyCrypCli.game_objects import Device, ResourceUsage, DeviceHardware
 from PyCrypCli.util import is_uuid
 
 
-def get_device(context: MainContext, name_or_uuid: str, devices: Optional[List[Device]] = None) -> Optional[Device]:
+def get_device(context: MainContext, name_or_uuid: str, devices: Optional[List[Device]] = None) -> Device:
     if is_uuid(name_or_uuid):
         try:
             return context.get_client().device_info(name_or_uuid)
         except DeviceNotFoundException:
-            print(f"There is no device with the uuid '{name_or_uuid}'.")
-            return None
+            raise CommandError(f"There is no device with the uuid '{name_or_uuid}'.")
     else:
         found_devices: List[Device] = []
         for device in devices or context.get_client().get_devices():
             if device.name == name_or_uuid:
                 found_devices.append(device)
         if not found_devices:
-            print(f"There is no device with the name '{name_or_uuid}'.")
-            return None
+            raise CommandError(f"There is no device with the name '{name_or_uuid}'.")
         elif len(found_devices) > 1:
-            print(f"There is more than one device with the name '{name_or_uuid}'. You need to specify its UUID.")
-            return None
+            raise CommandError(
+                f"There is more than one device with the name '{name_or_uuid}'. You need to specify its UUID."
+            )
         return found_devices[0]
 
 
@@ -43,9 +42,8 @@ def handle_device(context: MainContext, args: List[str]):
     """
 
     if args:
-        print("Unknown subcommand.")
-    else:
-        print_help(context, handle_device)
+        raise CommandError("Unknown subcommand.")
+    print_help(context, handle_device)
 
 
 @handle_device.subcommand("list")
@@ -55,8 +53,7 @@ def handle_device_list(context: MainContext, args: List[str]):
     """
 
     if len(args) != 0:
-        print("usage: device list")
-        return
+        raise CommandError("usage: device list")
 
     devices: List[Device] = context.get_client().get_devices()
     if not devices:
@@ -74,14 +71,12 @@ def handle_device_create(context: MainContext, args: List[str]):
     """
 
     if len(args) != 0:
-        print("usage: device create")
-        return
+        raise CommandError("usage: device create")
 
     try:
         device: Device = context.get_client().create_starter_device()
     except AlreadyOwnADeviceException:
-        print("You already own a device.")
-        return
+        raise CommandError("You already own a device.")
 
     print("Your device has been created!")
     print(f"Hostname: {device.name} (UUID: {device.uuid})")
@@ -94,8 +89,7 @@ def handle_device_build(context: MainContext, args: List[str]):
     """
 
     if len(args) < 5:
-        print("usage: device build <mainboard> <cpu> <gpu> <ram> [<ram>...] <disk> [<disk>...]")
-        return
+        raise CommandError("usage: device build <mainboard> <cpu> <gpu> <ram> [<ram>...] <disk> [<disk>...]")
 
     hardware: dict = context.get_client().get_hardware_config()
     mainboard, cpu, gpu, *ram_and_disk = args
@@ -141,11 +135,9 @@ def handle_device_build(context: MainContext, args: List[str]):
                 return
 
     if not ram:
-        print("You have to chose at least one ram.")
-        return
+        raise CommandError("You have to chose at least one ram.")
     elif not disk:
-        print("You have to chose at least one hard drive.")
-        return
+        raise CommandError("You have to chose at least one hard drive.")
 
     inventory: List[str] = [e.element_name for e in context.get_client().inventory_list()]
     inventory_complete: bool = True
@@ -161,13 +153,13 @@ def handle_device_build(context: MainContext, args: List[str]):
     try:
         device: Device = context.get_client().build_device(mainboard, cpu, gpu, ram, disk)
     except IncompatibleCPUSocket:
-        print("The mainboard socket is not compatible with the cpu.")
+        raise CommandError("The mainboard socket is not compatible with the cpu.")
     except NotEnoughRAMSlots:
-        print("The mainboard has not enough ram slots.")
+        raise CommandError("The mainboard has not enough ram slots.")
     except IncompatibleRAMTypes:
-        print("A ram type is incompatible with the mainboard.")
+        raise CommandError("A ram type is incompatible with the mainboard.")
     except IncompatibleDriverInterface:
-        print("The drive interface is not compatible with the mainboard.")
+        raise CommandError("The drive interface is not compatible with the mainboard.")
     else:
         print("Your device has been created!")
         print(f"Hostname: {device.name} (UUID: {device.uuid})")
@@ -180,15 +172,11 @@ def handle_device_boot(context: MainContext, args: List[str]):
     """
 
     if len(args) != 1:
-        print("usage: device boot <name|uuid>")
-        return
+        raise CommandError("usage: device boot <name|uuid>")
 
-    device: Optional[Device] = get_device(context, args[0])
-    if device is None:
-        return
-    elif device.powered_on:
-        print("This device is already powered on.")
-        return
+    device: Device = get_device(context, args[0])
+    if device.powered_on:
+        raise CommandError("This device is already powered on.")
 
     context.get_client().device_power(device.uuid)
 
@@ -200,15 +188,11 @@ def handle_device_shutdown(context: MainContext, args: List[str]):
     """
 
     if len(args) != 1:
-        print("usage: device shutdown <name|uuid>")
-        return
+        raise CommandError("usage: device shutdown <name|uuid>")
 
-    device: Optional[Device] = get_device(context, args[0])
-    if device is None:
-        return
-    elif not device.powered_on:
-        print("This device is not powered on.")
-        return
+    device: Device = get_device(context, args[0])
+    if not device.powered_on:
+        raise CommandError("This device is not powered on.")
 
     context.get_client().device_power(device.uuid)
 
@@ -220,16 +204,11 @@ def handle_device_connect(context: MainContext, args: List[str]):
     """
 
     if len(args) != 1:
-        print("usage: device connect <name|uuid>")
-        return
+        raise CommandError("usage: device connect <name|uuid>")
 
-    device: Optional[Device] = get_device(context, args[0])
-    if device is None:
-        return
-
+    device: Device = get_device(context, args[0])
     if not device.powered_on:
-        print("This device is not powered on.")
-        return
+        raise CommandError("This device is not powered on.")
 
     context.open(DeviceContext(context.root_context, context.session_token, device))
 
@@ -241,12 +220,9 @@ def handle_device_delete(context: MainContext, args: List[str]):
     """
 
     if len(args) != 1:
-        print("usage: device delete <name|uuid>")
-        return
+        raise CommandError("usage: device delete <name|uuid>")
 
-    device: Optional[Device] = get_device(context, args[0])
-    if device is None:
-        return
+    device: Device = get_device(context, args[0])
 
     context.get_client().delete_device(device.uuid)
     print("Device has been deleted.")
@@ -286,11 +262,9 @@ def handle_hostname(context: DeviceContext, args: List[str]):
     if args:
         name: str = " ".join(args)
         if not name:
-            print("The name must not be empty.")
-            return
+            raise CommandError("The name must not be empty.")
         if len(name) > 15:
-            print("The name cannot be longer than 15 characters.")
-            return
+            raise CommandError("The name cannot be longer than 15 characters.")
         context.get_client().change_device_name(context.host.uuid, name)
     else:
         print(context.host.name)

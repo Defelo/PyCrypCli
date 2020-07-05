@@ -5,8 +5,9 @@ import readline
 from PyCrypCli.context.context import Context
 from PyCrypCli.context.main_context import MainContext
 from PyCrypCli.context.root_context import RootContext
-from PyCrypCli.exceptions import FileNotFoundException
-from PyCrypCli.game_objects import Device, File, Service, Wallet
+from PyCrypCli.exceptions import FileNotFoundException, InvalidWalletFile
+from PyCrypCli.game_objects import Device, File, Service
+from PyCrypCli.util import extract_wallet
 
 
 class DeviceContext(MainContext):
@@ -88,12 +89,16 @@ class DeviceContext(MainContext):
     def get_filenames(self, directory: str) -> List[str]:
         return [file.filename for file in self.get_files(directory)]
 
-    def get_wallet_from_file(self, filepath: str) -> Wallet:
+    def get_wallet_credentials_from_file(self, filepath: str) -> Tuple[str, str]:
         file: File = self.path_to_file(filepath)
         if file is None:
             raise FileNotFoundException
 
-        return self.extract_wallet(file.content)
+        wallet: Optional[Tuple[str, str]] = extract_wallet(file.content)
+        if wallet is None:
+            raise InvalidWalletFile
+
+        return wallet
 
     def get_last_portscan(self) -> Tuple[str, List[Service]]:
         return self.last_portscan

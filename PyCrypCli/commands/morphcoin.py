@@ -2,13 +2,31 @@ import re
 import time
 from typing import List
 
-from PyCrypCli.commands.command import command
+from PyCrypCli.commands import command, CommandError
 from PyCrypCli.commands.files import create_file
 from PyCrypCli.commands.help import print_help
 from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import Wallet, Transaction
 from PyCrypCli.util import is_uuid, extract_wallet, strip_float
+
+
+def get_wallet_from_file(context: DeviceContext, path: str) -> Wallet:
+    try:
+        return get_wallet(context, *context.get_wallet_credentials_from_file(path))
+    except FileNotFoundException:
+        raise CommandError("File does not exist.")
+    except InvalidWalletFile:
+        raise CommandError("File is no wallet file.")
+
+
+def get_wallet(context: DeviceContext, uuid: str, key: str) -> Wallet:
+    try:
+        return context.get_client().get_wallet(uuid, key)
+    except UnknownSourceOrDestinationException:
+        raise CommandError("Invalid wallet file. Wallet does not exist.")
+    except PermissionDeniedException:
+        raise CommandError("Invalid wallet file. Key is incorrect.")
 
 
 @command("morphcoin", [DeviceContext])
@@ -18,9 +36,8 @@ def handle_morphcoin(context: DeviceContext, args: List[str]):
     """
 
     if args:
-        print("Unknown subcommand.")
-    else:
-        print_help(context, handle_morphcoin)
+        raise CommandError("Unknown subcommand.")
+    print_help(context, handle_morphcoin)
 
 
 @handle_morphcoin.subcommand("create")
@@ -30,20 +47,18 @@ def handle_morphcoin_create(context: DeviceContext, args: List[str]):
     """
 
     if len(args) != 1:
-        print("usage: morphcoin create <filepath>")
-        return
+        raise CommandError("usage: morphcoin create <filepath>")
 
     filepath: str = args[0]
     if context.path_to_file(filepath) is not None:
-        print(f"A file with the name '{filepath}' already exists.")
-        return
+        raise CommandError(f"A file with the name '{filepath}' already exists.")
 
     try:
         wallet: Wallet = context.get_client().create_wallet()
         if not create_file(context, filepath, wallet.uuid + " " + wallet.key):
             context.get_client().delete_wallet(wallet)
     except AlreadyOwnAWalletException:
-        print("You already own a wallet")
+        raise CommandError("You already own a wallet")
 
 
 @handle_morphcoin.subcommand("list")
@@ -68,24 +83,9 @@ def handle_morphcoin_look(context: DeviceContext, args: List[str]):
     """
 
     if len(args) != 1:
-        print("usage: morphcoin look <filepath>")
-        return
+        raise CommandError("usage: morphcoin look <filepath>")
 
-    try:
-        wallet: Wallet = context.get_wallet_from_file(args[0])
-    except FileNotFoundException:
-        print("File does not exist.")
-        return
-    except InvalidWalletFile:
-        print("File is no wallet file.")
-        return
-    except UnknownSourceOrDestinationException:
-        print("Invalid wallet file. Wallet does not exist.")
-        return
-    except PermissionDeniedException:
-        print("Invalid wallet file. Key is incorrect.")
-        return
-
+    wallet: Wallet = get_wallet_from_file(context, args[0])
     print(f"UUID: {wallet.uuid}")
     print(f"Balance: {strip_float(wallet.amount / 1000, 3)} morphcoin")
 
@@ -97,24 +97,9 @@ def handle_morphcoin_transactions(context: DeviceContext, args: List[str]):
     """
 
     if len(args) != 1:
-        print("usage: morphcoin transactions <filepath>")
-        return
+        raise CommandError("usage: morphcoin transactions <filepath>")
 
-    try:
-        wallet: Wallet = context.get_wallet_from_file(args[0])
-    except FileNotFoundException:
-        print("File does not exist.")
-        return
-    except InvalidWalletFile:
-        print("File is no wallet file.")
-        return
-    except UnknownSourceOrDestinationException:
-        print("Invalid wallet file. Wallet does not exist.")
-        return
-    except PermissionDeniedException:
-        print("Invalid wallet file. Key is incorrect.")
-        return
-
+    wallet: Wallet = get_wallet_from_file(context, args[0])
     transactions: List[Transaction] = context.get_client().get_transactions(wallet, wallet.transactions, 0)
 
     if not transactions:
@@ -143,20 +128,18 @@ def handle_morphcoin_reset(context: DeviceContext, args: List[str]):
     """
 
     if len(args) != 1:
-        print("usage: morphcoin reset <uuid>")
-        return
+        raise CommandError("usage: morphcoin reset <uuid>")
 
     wallet_uuid = args[0]
     if not is_uuid(wallet_uuid):
-        print("Invalid wallet uuid.")
-        return
+        raise CommandError("Invalid wallet uuid.")
 
     try:
         context.get_client().reset_wallet(wallet_uuid)
     except UnknownSourceOrDestinationException:
-        print("Wallet does not exist.")
+        raise CommandError("Wallet does not exist.")
     except PermissionDeniedException:
-        print("Permission denied.")
+        raise CommandError("Permission denied.")
 
 
 @handle_morphcoin.subcommand("watch")
@@ -166,24 +149,9 @@ def handle_morphcoin_watch(context: DeviceContext, args: List[str]):
     """
 
     if len(args) != 1:
-        print("usage: morphcoin watch <filepath>")
-        return
+        raise CommandError("usage: morphcoin watch <filepath>")
 
-    try:
-        wallet: Wallet = context.get_wallet_from_file(args[0])
-    except FileNotFoundException:
-        print("File does not exist.")
-        return
-    except InvalidWalletFile:
-        print("File is no wallet file.")
-        return
-    except UnknownSourceOrDestinationException:
-        print("Invalid wallet file. Wallet does not exist.")
-        return
-    except PermissionDeniedException:
-        print("Invalid wallet file. Key is incorrect.")
-        return
-
+    wallet: Wallet = get_wallet_from_file(context, args[0])
     current_mining_rate: float = 0
     last_update: float = 0
 
@@ -193,15 +161,7 @@ def handle_morphcoin_watch(context: DeviceContext, args: List[str]):
             now = time.time()
 
             if now - last_update > 20:
-                try:
-                    wallet: Wallet = context.get_client().get_wallet(wallet.uuid, wallet.key)
-                except UnknownSourceOrDestinationException:
-                    print("Invalid wallet file. Wallet does not exist.")
-                    return
-                except PermissionDeniedException:
-                    print("Invalid wallet file. Key is incorrect.")
-                    return
-
+                wallet: Wallet = get_wallet(context, wallet.uuid, wallet.key)
                 current_mining_rate: float = 0
                 for _, service in context.get_client().get_miners(wallet.uuid):
                     if service.running:
@@ -241,51 +201,34 @@ def handle_pay(context: DeviceContext, args: List[str]):
     """
 
     if len(args) < 3:
-        print("usage: pay <filename> <receiver> <amount> [usage]")
-        print("   or: pay <uuid> <key> <receiver> <amount> [usage]")
-        return
+        raise CommandError(
+            "usage: pay <filename> <receiver> <amount> [usage]\n" "   or: pay <uuid> <key> <receiver> <amount> [usage]"
+        )
 
-    try:
-        if extract_wallet(f"{args[0]} {args[1]}") is not None:
-            wallet: Wallet = context.get_client().get_wallet(args[0], args[1])
-            args.pop(0)
-        else:
-            wallet: Wallet = context.get_wallet_from_file(args[0])
-    except FileNotFoundException:
-        print("File does not exist.")
-        return
-    except InvalidWalletFile:
-        print("File is no wallet file.")
-        return
-    except UnknownSourceOrDestinationException:
-        print("Invalid wallet file. Wallet does not exist.")
-        return
-    except PermissionDeniedException:
-        print("Invalid wallet file. Key is incorrect.")
-        return
+    if extract_wallet(f"{args[0]} {args[1]}") is not None:
+        wallet: Wallet = get_wallet(context, args[0], args[1])
+        args.pop(0)
+    else:
+        wallet: Wallet = get_wallet_from_file(context, args[0])
 
     receiver: str = args[1]
     if not is_uuid(receiver):
-        print("Invalid receiver.")
-        return
+        raise CommandError("Invalid receiver.")
 
     if not re.match(r"^\d+(\.\d+)?$", args[2]) or round(float(args[2]) * 1000) <= 0:
-        print("amount is not a valid number.")
-        return
+        raise CommandError("amount is not a valid number.")
 
     amount: int = round(float(args[2]) * 1000)
     if amount < 1:
-        print("amount is not a positive number.")
-        return
-    elif amount > wallet.amount:
-        print("Not enough coins. Transaction cancelled.")
-        return
+        raise CommandError("amount is not a positive number.")
+    if amount > wallet.amount:
+        raise CommandError("Not enough coins. Transaction cancelled.")
 
     try:
         context.get_client().send(wallet, receiver, amount, " ".join(args[3:]))
         print(f"Sent {strip_float(amount / 1000, 3)} morphcoin to {receiver}.")
     except UnknownSourceOrDestinationException:
-        print("Destination wallet does not exist.")
+        raise CommandError("Destination wallet does not exist.")
 
 
 @handle_pay.completer()

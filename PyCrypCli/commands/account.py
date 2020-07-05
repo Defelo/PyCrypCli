@@ -1,6 +1,6 @@
 import getpass
 
-from PyCrypCli.commands import command
+from PyCrypCli.commands import command, CommandError
 from PyCrypCli.context import LoginContext, MainContext, DeviceContext
 from PyCrypCli.exceptions import (
     WeakPasswordException,
@@ -23,24 +23,19 @@ def register(context: LoginContext, *_):
         password: str = getpass.getpass("Password: ")
         confirm_password: str = getpass.getpass("Confirm Password: ")
     except (KeyboardInterrupt, EOFError):
-        print("\nAborted.")
-        return
+        raise CommandError("\nAborted.")
 
     if password != confirm_password:
-        print("Passwords don't match.")
-        return
+        raise CommandError("Passwords don't match.")
     try:
         session_token: str = context.get_client().register(username, mail, password)
         context.open(MainContext(context.root_context, session_token))
     except WeakPasswordException:
-        print("Password is too weak.")
-        return
+        raise CommandError("Password is too weak.")
     except UsernameAlreadyExistsException:
-        print("Username already exists.")
-        return
+        raise CommandError("Username already exists.")
     except InvalidEmailException:
-        print("Invalid email")
-        return
+        raise CommandError("Invalid email")
 
 
 @command("login", [LoginContext])
@@ -53,15 +48,13 @@ def login(context: LoginContext, *_):
         username: str = context.input_no_history("Username: ")
         password: str = getpass.getpass("Password: ")
     except (KeyboardInterrupt, EOFError):
-        print("\nAborted.")
-        return
+        raise CommandError("\nAborted.")
 
     try:
         session_token: str = context.get_client().login(username, password)
         context.open(MainContext(context.root_context, session_token))
     except InvalidLoginException:
-        print("Invalid Login Credentials.")
-        return
+        raise CommandError("Invalid Login Credentials.")
 
 
 @command("exit", [LoginContext], aliases=["quit"])
@@ -112,16 +105,16 @@ def handle_passwd(context: MainContext, *_):
     confirm_password: str = getpass.getpass("Confirm password: ")
 
     if new_password != confirm_password:
-        print("Passwords don't match.")
-        return
+        raise CommandError("Passwords don't match.")
 
     context.get_client().close()
     try:
         context.get_client().change_password(context.username, old_password, new_password)
         print("Password updated successfully.")
     except PermissionsDeniedException:
-        print("Incorrect password or the new password does not meet the requirements.")
-    context.get_client().session(context.session_token)
+        raise CommandError("Incorrect password or the new password does not meet the requirements.")
+    finally:
+        context.get_client().session(context.session_token)
 
 
 @command("_delete_user", [MainContext])
@@ -131,8 +124,7 @@ def handle_delete_user(context: MainContext, *_):
     """
 
     if context.ask("Are you sure you want to delete your account? [yes|no] ", ["yes", "no"]) == "no":
-        print("Your account has NOT been deleted.")
-        return
+        raise CommandError("Your account has NOT been deleted.")
 
     print("Warning! This action cannot be undone!")
     print("Are you absolutely sure you want to delete this account?")
@@ -142,6 +134,6 @@ def handle_delete_user(context: MainContext, *_):
             print(f"The account '{context.username}' has been deleted successfully.")
             context.close()
         else:
-            print("Your account has NOT been deleted.")
+            raise CommandError("Your account has NOT been deleted.")
     except (KeyboardInterrupt, EOFError):
-        print("\nYour account has NOT been deleted.")
+        raise CommandError("\nYour account has NOT been deleted.")

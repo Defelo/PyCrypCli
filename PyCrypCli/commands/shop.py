@@ -1,18 +1,11 @@
 from typing import List
 
 from PyCrypCli.client import Client
-
-from PyCrypCli.commands.command import command
+from PyCrypCli.commands import command, CommandError
 from PyCrypCli.commands.help import print_help
+from PyCrypCli.commands.morphcoin import get_wallet_from_file
 from PyCrypCli.context import DeviceContext
-from PyCrypCli.exceptions import (
-    FileNotFoundException,
-    InvalidWalletFile,
-    UnknownSourceOrDestinationException,
-    PermissionDeniedException,
-    ItemNotFoundException,
-    NotEnoughCoinsException,
-)
+from PyCrypCli.exceptions import ItemNotFoundException, NotEnoughCoinsException
 from PyCrypCli.game_objects import Wallet, ShopCategory
 from PyCrypCli.util import strip_float, print_tree
 
@@ -33,9 +26,8 @@ def handle_shop(context: DeviceContext, args: List[str]):
     """
 
     if args:
-        print("Unknown subcommand.")
-    else:
-        print_help(context, handle_shop)
+        raise CommandError("Unknown subcommand.")
+    print_help(context, handle_shop)
 
 
 @handle_shop.subcommand("list")
@@ -80,40 +72,25 @@ def handle_shop_buy(context: DeviceContext, args: List[str]):
     """
 
     if len(args) != 2:
-        print("usage: shop buy <product> <wallet>")
-        return
+        raise CommandError("usage: shop buy <product> <wallet>")
 
     product_name, wallet_filepath = args
 
-    try:
-        wallet: Wallet = context.get_wallet_from_file(wallet_filepath)
-    except FileNotFoundException:
-        print("File does not exist.")
-        return
-    except InvalidWalletFile:
-        print("File is no wallet file.")
-        return
-    except UnknownSourceOrDestinationException:
-        print("Invalid wallet file. Wallet does not exist.")
-        return
-    except PermissionDeniedException:
-        print("Invalid wallet file. Key is incorrect.")
-        return
+    wallet: Wallet = get_wallet_from_file(context, wallet_filepath)
 
     for product in list_shop_products(context.get_client()):
         if product.replace(" ", "") == product_name:
             product_name = product
             break
     else:
-        print("This product does not exist in the shop.")
-        return
+        raise CommandError("This product does not exist in the shop.")
 
     try:
         context.get_client().shop_buy({product_name: 1}, wallet.uuid, wallet.key)
     except ItemNotFoundException:
-        print("This product does not exist in the shop.")
+        raise CommandError("This product does not exist in the shop.")
     except NotEnoughCoinsException:
-        print("You don't have enough coins on your wallet to buy this product.")
+        raise CommandError("You don't have enough coins on your wallet to buy this product.")
 
 
 @handle_shop_buy.completer()

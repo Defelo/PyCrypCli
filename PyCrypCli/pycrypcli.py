@@ -66,9 +66,8 @@ class Frontend:
             self.get_context().loop_tick()
             context: Context = self.get_context()
 
-            prompt: str = context.get_prompt()
             try:
-                cmd, *args = input(prompt).strip().split(" ")
+                cmd, *args = input(context.prompt).strip().split(" ")
                 if not cmd:
                     continue
             except EOFError:  # Ctrl-D

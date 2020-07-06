@@ -5,7 +5,7 @@ from PyCrypCli.context.context import Context
 from PyCrypCli.context.login_context import LoginContext
 from PyCrypCli.context.root_context import RootContext
 from PyCrypCli.exceptions import InvalidWalletFile
-from PyCrypCli.game_objects import Wallet, Device
+from PyCrypCli.game_objects import Wallet, Device, Service
 from PyCrypCli.util import extract_wallet
 
 
@@ -17,7 +17,8 @@ class MainContext(LoginContext):
         self.user_uuid: Optional[str] = None
         self.session_token: Optional[str] = session_token
 
-    def get_prompt(self) -> str:
+    @property
+    def prompt(self) -> str:
         return f"\033[38;2;53;160;171m[{self.username}]$\033[0m "
 
     def update_user_info(self):
@@ -39,8 +40,8 @@ class MainContext(LoginContext):
         print(f"Logged in as {self.username}.")
 
     def leave_context(self):
-        if self.get_client().logged_in:
-            self.get_client().logout()
+        if self.client.logged_in:
+            self.client.logout()
         self.delete_session()
         print("Logged out.")
 
@@ -71,7 +72,9 @@ class MainContext(LoginContext):
         wallet: Optional[Tuple[str, str]] = extract_wallet(content)
         if wallet is None:
             raise InvalidWalletFile
-        return self.get_client().get_wallet(*wallet)
+        return Wallet.get_wallet(self.client, *wallet)
 
     def get_hacked_devices(self) -> List[Device]:
-        return list({self.get_client().device_info(service.device) for service in self.get_client().list_part_owner()})
+        return list(
+            {Device.get_device(self.client, service.device) for service in Service.list_part_owner(self.client)}
+        )

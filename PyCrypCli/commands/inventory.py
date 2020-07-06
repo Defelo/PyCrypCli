@@ -26,7 +26,7 @@ def handle_inventory_list(context: MainContext, _):
     List your inventory
     """
 
-    inventory: Dict[str, int] = Counter(element.element_name for element in context.get_client().inventory_list())
+    inventory: Dict[str, int] = Counter(element.element_name for element in context.get_client().list_inventory())
     if not inventory:
         raise CommandError("Your inventory is empty.")
 
@@ -63,7 +63,7 @@ def handle_inventory_trade(context: MainContext, args: List[str]):
 
     item_name, target_user = args
 
-    for item in context.get_client().inventory_list():
+    for item in context.get_client().list_inventory():
         if item.element_name.replace(" ", "") == item_name:
             element: InventoryElement = item
             break
@@ -81,4 +81,4 @@ def handle_inventory_trade(context: MainContext, args: List[str]):
 @handle_inventory_trade.completer()
 def inventory_completer(context: MainContext, args: List[str]) -> List[str]:
     if len(args) == 1:
-        return [element.element_name.replace(" ", "") for element in context.get_client().inventory_list()]
+        return [element.element_name.replace(" ", "") for element in context.get_client().list_inventory()]

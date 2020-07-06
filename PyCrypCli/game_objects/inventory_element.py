@@ -22,7 +22,7 @@ class InventoryElement(GameObject):
         return self._data.get("owner")
 
     @staticmethod
-    def inventory_list(client: Client) -> List["InventoryElement"]:
+    def list_inventory(client: Client) -> List["InventoryElement"]:
         return [
             InventoryElement(client, element) for element in client.ms("inventory", ["inventory", "list"])["elements"]
         ]

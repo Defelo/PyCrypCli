@@ -21,10 +21,12 @@ class Context:
         if self.history[-1:] != [command]:
             self.history.append(command)
 
-    def get_prompt(self) -> str:
+    @property
+    def prompt(self) -> str:
         return "$ "
 
-    def get_client(self) -> Client:
+    @property
+    def client(self) -> Client:
         return self.root_context.client
 
     def get_commands(self) -> Dict[str, "Command"]:

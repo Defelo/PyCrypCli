@@ -1,6 +1,9 @@
 import re
 import string
+from datetime import datetime
 from typing import Optional, Tuple, List
+
+from dateutil.tz import tz
 
 hacking_letters = string.ascii_letters + string.digits
 
@@ -14,6 +17,11 @@ def extract_wallet(content: str) -> Optional[Tuple[str, str]]:
         uuid, key = content.split()
         return uuid, key
     return None
+
+
+def convert_timestamp(timestamp: str) -> datetime:
+    time_stamp: datetime = datetime.fromisoformat(timestamp)
+    return time_stamp.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal())
 
 
 def strip_float(num: float, precision):

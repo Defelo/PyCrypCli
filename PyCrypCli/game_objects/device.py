@@ -6,7 +6,7 @@ from PyCrypCli.game_objects.file import File
 from PyCrypCli.game_objects.game_object import GameObject
 from PyCrypCli.game_objects.network import Network, NetworkInvitation
 from PyCrypCli.game_objects.resource_usage import ResourceUsage
-from PyCrypCli.game_objects.service import PublicService, Service
+from PyCrypCli.game_objects.service import PublicService, Service, Miner
 
 
 class Device(GameObject):
@@ -94,6 +94,9 @@ class Device(GameObject):
 
     def get_service(self, service_uuid: str) -> Service:
         return Service.get_service(self._client, self.uuid, service_uuid)
+
+    def get_miner(self) -> Miner:
+        return Miner.get_miner(self._client, self.uuid)
 
     def create_service(self, name: str, **extra) -> Service:
         return Service(self._client, self._ms("service", ["create"], name=name, device_uuid=self.uuid, **extra))

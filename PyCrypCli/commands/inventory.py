@@ -26,11 +26,11 @@ def handle_inventory_list(context: MainContext, _):
     List your inventory
     """
 
-    inventory: Dict[str, int] = Counter(element.element_name for element in context.get_client().list_inventory())
+    inventory: Dict[str, int] = Counter(element.name for element in InventoryElement.list_inventory(context.client))
     if not inventory:
         raise CommandError("Your inventory is empty.")
 
-    categories: List[ShopCategory] = context.get_client().shop_list()
+    categories: List[ShopCategory] = ShopCategory.shop_list(context.client)
     tree = []
     for category in categories:
         category_tree = []
@@ -63,15 +63,14 @@ def handle_inventory_trade(context: MainContext, args: List[str]):
 
     item_name, target_user = args
 
-    for item in context.get_client().list_inventory():
-        if item.element_name.replace(" ", "") == item_name:
-            element: InventoryElement = item
+    for item in InventoryElement.list_inventory(context.client):
+        if item.name.replace(" ", "") == item_name:
             break
     else:
         raise CommandError("You do not own this item.")
 
     try:
-        context.get_client().inventory_trade(element.element_uuid, target_user)
+        item.trade(target_user)
     except CannotTradeWithYourselfException:
         raise CommandError("You cannot trade with yourself.")
     except UserUUIDDoesNotExistException:
@@ -81,4 +80,4 @@ def handle_inventory_trade(context: MainContext, args: List[str]):
 @handle_inventory_trade.completer()
 def inventory_completer(context: MainContext, args: List[str]) -> List[str]:
     if len(args) == 1:
-        return [element.element_name.replace(" ", "") for element in context.get_client().list_inventory()]
+        return [element.name.replace(" ", "") for element in InventoryElement.list_inventory(context.client)]

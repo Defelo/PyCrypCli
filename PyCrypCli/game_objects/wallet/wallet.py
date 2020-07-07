@@ -3,6 +3,7 @@ from typing import List
 from PyCrypCli.client import Client
 from PyCrypCli.game_objects.transaction import Transaction
 from PyCrypCli.game_objects.wallet.public_wallet import PublicWallet
+from PyCrypCli.game_objects.service import Miner
 
 
 class Wallet(PublicWallet):
@@ -12,7 +13,7 @@ class Wallet(PublicWallet):
 
     @property
     def user(self) -> str:
-        return self._data.get("user")
+        return self._data.get("user_uuid")
 
     @property
     def amount(self) -> int:
@@ -40,6 +41,9 @@ class Wallet(PublicWallet):
                 "currency", ["transactions"], source_uuid=self.uuid, key=self.key, count=count, offset=offset,
             )["transactions"]
         ]
+
+    def get_miners(self) -> List[Miner]:
+        return Miner.get_miners(self._client, self.uuid)
 
     def send(self, destination: PublicWallet, amount: int, usage: str):
         self._ms(

@@ -38,7 +38,7 @@ class Network(GameObject):
     def get_network_by_name(client: Client, name: str) -> "Network":
         return Network(client, client.ms("network", ["name"], name=name))
 
-    def get_members_of_network(self) -> List[NetworkMembership]:
+    def get_members(self) -> List[NetworkMembership]:
         return [
             NetworkMembership(self._client, member)
             for member in self._ms("network", ["members"], uuid=self.uuid)["members"]

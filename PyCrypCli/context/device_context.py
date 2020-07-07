@@ -78,7 +78,7 @@ class DeviceContext(MainContext):
             return self.get_root_dir()
 
     def get_root_dir(self) -> File:
-        return File(self.client, {"device": self.host.uuid})
+        return File(self.client, {"device": self.host.uuid, "is_directory": True})
 
     def get_file(self, filename: str, directory: str) -> Optional[File]:
         files: List[File] = self.get_files(directory)

@@ -55,7 +55,7 @@ def handle_mkdir(context: DeviceContext, args: List[str]):
         raise CommandError("That is no directory.")
 
     try:
-        context.get_client().create_file(context.host.uuid, dirname, "", True, parent.uuid)
+        context.host.create_file(dirname, "", True, parent.uuid)
     except FileAlreadyExistsException:
         raise CommandError("There already exists a file with this name.")
 
@@ -101,9 +101,9 @@ def create_file(context: DeviceContext, filepath: str, content: str):
         if file.is_directory:
             raise CommandError("A directory with this name already exists.")
         else:
-            context.get_client().file_update(file.device, file.uuid, content)
+            file.edit(content)
     else:
-        context.get_client().create_file(context.host.uuid, filename, content, False, parent.uuid)
+        context.host.create_file(filename, content, False, parent.uuid)
 
 
 @command("touch", [DeviceContext])
@@ -176,7 +176,7 @@ def handle_rm(context: DeviceContext, args: List[str]):
             ["yes", "no"],
         )
         if choice == "yes":
-            context.get_client().delete_wallet(wallet)
+            wallet.delete()
             print("The wallet has been deleted.")
         else:
             print("The following key might now be the only way to access your wallet.")
@@ -185,7 +185,7 @@ def handle_rm(context: DeviceContext, args: List[str]):
         pass
 
     try:
-        context.get_client().remove_file(file.device, file.uuid)
+        file.delete()
     except FileNotChangeableException:
         raise CommandError("Some files could not be deleted.")
 
@@ -215,7 +215,7 @@ def check_file_movable(
                 if sub_file.is_directory:
                     if context.get_files(sub_file.uuid):
                         raise CommandError("Directory is not empty.")
-                    context.get_client().remove_file(sub_file.device, sub_file.uuid)
+                    sub_file.delete()
                 else:
                     raise CommandError("Directory cannot replace a file.")
             dest_name: str = file.filename
@@ -234,18 +234,18 @@ def check_file_movable(
             if sub_file is not None:
                 if sub_file.is_directory:
                     raise CommandError("File cannot replace a directory.")
-                context.get_client().remove_file(sub_file.device, sub_file.uuid)
+                sub_file.delete()
             dest_name: str = file.filename
             dest_dir: str = dest_file.uuid
         else:
-            context.get_client().remove_file(dest_file.device, dest_file.uuid)
+            dest_file.delete()
             dest_dir: str = dest_parent.uuid
 
     if dest_dir == file.parent_dir_uuid and dest_name == file.filename:
         return
 
     if dest_dir is not None:
-        dir_to_check: File = context.get_client().get_file(file.device, dest_dir)
+        dir_to_check: File = File.get_file(context.client, file.device, dest_dir)
         while True:
             if dir_to_check.uuid == file.uuid:
                 raise CommandError(f"You cannot {['copy', 'move'][move]} a directory into itself.")
@@ -278,9 +278,7 @@ def handle_cp(context: DeviceContext, args: List[str]):
     queue: List[Tuple[File, str, str]] = [(file, dest_name, dest_dir)]
     while queue:
         file, dest_name, dest_dir = queue.pop(0)
-        new_file: File = context.get_client().create_file(
-            file.device, dest_name, file.content, file.is_directory, dest_dir
-        )
+        new_file: File = context.host.create_file(dest_name, file.content, file.is_directory, dest_dir)
         if file.is_directory:
             for child in context.get_files(file.uuid):
                 queue.append((child, child.filename, new_file.uuid))
@@ -300,7 +298,7 @@ def handle_mv(context: DeviceContext, args: List[str]):
         return
 
     file, dest_name, dest_dir = result
-    context.get_client().file_move(file.device, file.uuid, dest_name, dest_dir)
+    file.move(dest_name, dest_dir)
 
 
 @handle_ls.completer()

@@ -95,6 +95,9 @@ class Device(GameObject):
     def get_service(self, service_uuid: str) -> Service:
         return Service.get_service(self._client, self.uuid, service_uuid)
 
+    def get_service_by_name(self, service: str) -> Service:
+        return Service.get_service_by_name(self._client, self.uuid, service)
+
     def get_miner(self) -> Miner:
         return Miner.get_miner(self._client, self.uuid)
 

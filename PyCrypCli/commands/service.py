@@ -1,27 +1,31 @@
 import os
 import time
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 
+from PyCrypCli import BruteforceService, PublicService
 from PyCrypCli.commands import command, CommandError
 from PyCrypCli.commands.help import print_help
 from PyCrypCli.commands.morphcoin import get_wallet_from_file
 from PyCrypCli.context import DeviceContext, MainContext
 from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import Device, Service
+from PyCrypCli.game_objects.service.portscan_service import PortscanService
 from PyCrypCli.util import is_uuid
 
 
 def get_service(context: DeviceContext, name: str) -> Service:
-    service: Optional[Service] = context.get_service(name)
-    if service is None:
+    try:
+        return context.host.get_service_by_name(name)
+    except ServiceNotFoundException:
         raise CommandError(f"The service '{name}' could not be found on this device")
-    return service
 
 
-def stop_bruteforce(context: DeviceContext, service: Service):
-    result: dict = context.get_client().bruteforce_stop(service.device, service.uuid)
-    target_device: str = result["target_device"]
-    if result["access"]:
+def stop_bruteforce(context: DeviceContext, service: BruteforceService):
+    try:
+        access, _, target_device = service.stop()
+    except AttackNotRunningException:
+        raise CommandError("Bruteforce attack is not running.")
+    if access:
         if context.ask("Access granted. Do you want to connect to the device? [yes|no] ", ["yes", "no"]) == "yes":
             handle_remote_connect(context, [target_device])
         else:
@@ -66,7 +70,7 @@ def handle_service_create(context: DeviceContext, args: List[str]):
         extra["wallet_uuid"] = wallet_uuid
 
     try:
-        context.get_client().create_service(context.host.uuid, args[0], extra)
+        context.host.create_service(args[0], **extra)
         print("Service has been created")
     except AlreadyOwnThisServiceException:
         raise CommandError("You already created this service")
@@ -80,7 +84,7 @@ def handle_service_list(context: DeviceContext, _):
     List all services installed on this device
     """
 
-    services: List[Service] = context.get_client().get_services(context.host.uuid)
+    services: List[Service] = context.host.get_services()
     if not services:
         print("There are no services on this device.")
     else:
@@ -104,7 +108,7 @@ def handle_service_delete(context: DeviceContext, args: List[str]):
     service: Service = get_service(context, args[0])
 
     try:
-        context.get_client().delete_service(service.device, service.uuid)
+        service.delete()
     except CannotDeleteEnforcedServiceException:
         raise CommandError("The service could not be deleted.")
 
@@ -123,7 +127,7 @@ def handle_service_start(context: DeviceContext, args: List[str]):
         raise CommandError("This service is already running.")
 
     try:
-        context.get_client().toggle_service(service.device, service.uuid)
+        service.toggle()
     except (CannotToggleDirectlyException, CouldNotStartService):
         raise CommandError("The service could not be started.")
 
@@ -142,7 +146,7 @@ def handle_service_stop(context: DeviceContext, args: List[str]):
         raise CommandError("This service is not running.")
 
     try:
-        context.get_client().toggle_service(service.device, service.uuid)
+        service.toggle()
     except CannotToggleDirectlyException:
         raise CommandError("The service could not be stopped.")
 
@@ -161,12 +165,11 @@ def handle_portscan(context: DeviceContext, args: List[str]):
         raise CommandError("Invalid target")
 
     try:
-        service: Service = get_service(context, "portscan")
-    except CommandError:
+        service: PortscanService = PortscanService.get_portscan_service(context.client, context.host.uuid)
+    except ServiceNotFoundException:
         raise CommandError("You have to create a portscan service before you can use it.")
 
-    result: dict = context.get_client().use_service(service.device, service.uuid, target_device=target)
-    services: List[Service] = [Service.deserialize(s) for s in result["services"]]
+    services: List[PublicService] = service.use(target)
     context.update_last_portscan((target, services))
     if not services:
         print("That device doesn't have any running services")
@@ -182,7 +185,7 @@ def handle_bruteforce(context: DeviceContext, args: List[str]):
 
     duration: int = 20
     if len(args) in (1, 2) and args[0] in ("ssh", "telnet"):
-        last_portscan: Tuple[str, List[Service]] = context.get_last_portscan()
+        last_portscan: Tuple[str, List[PublicService]] = context.get_last_portscan()
         if last_portscan is None:
             raise CommandError("You have to portscan your target first to find open ports.")
         target_device, services = last_portscan
@@ -216,21 +219,20 @@ def handle_bruteforce(context: DeviceContext, args: List[str]):
         else:
             raise CommandError("Duration has to be a positive integer")
 
-    service: Service = context.get_service("bruteforce")
-    if service is None:
+    try:
+        service: BruteforceService = BruteforceService.get_bruteforce_service(context.client, context.host.uuid)
+    except ServiceNotFoundException:
         raise CommandError("You have to create a bruteforce service before you can use it.")
 
-    result: dict = context.get_client().bruteforce_status(service.device, service.uuid)
-    if result["running"]:
+    if service.running:
         print(f"You are already attacking a device.")
-        print(f"Target device: {result['target_device']}")
-        print(f"Attack started {result['pen_time']:.0f} seconds ago")
+        print(f"Target device: {service.target_device}")
         if context.ask("Do you want to stop this attack? [yes|no] ", ["yes", "no"]) == "yes":
             stop_bruteforce(context, service)
         return
 
     try:
-        context.get_client().bruteforce_attack(service.device, service.uuid, target_device, target_service)
+        service.attack(target_device, target_service)
     except ServiceNotFoundException:
         raise CommandError("The target service does not exist.")
     except ServiceNotRunningException:
@@ -241,6 +243,7 @@ def handle_bruteforce(context: DeviceContext, args: List[str]):
     steps: int = 17
     d: int = duration * steps
     i: int = 0
+    last_check = 0
     try:
         context.update_presence(
             state=f"Logged in: {context.username}@{context.root_context.host}",
@@ -250,6 +253,13 @@ def handle_bruteforce(context: DeviceContext, args: List[str]):
             large_text="Cryptic",
         )
         for i in range(d):
+            if time.time() - last_check > 1:
+                last_check = time.time()
+                service.update()
+                if not service.running:
+                    print("\rBruteforce attack has been aborted.")
+                    return
+
             progress: int = int(i / d * width)
             j = i // steps
             text: str = f"\rBruteforcing {j // 60:02d}:{j % 60:02d} " + "[" + "=" * progress + ">" + " " * (
@@ -293,8 +303,8 @@ def handle_spot(context: DeviceContext, _):
     Find a random device in the network
     """
 
-    device: Device = context.get_client().spot()
-    print(f"Name: '{device.name}'" + " [hacked]" * context.get_client().part_owner(device.uuid))
+    device: Device = Device.spot(context.client)
+    print(f"Name: '{device.name}'" + " [hacked]" * device.part_owner())
     print(f"UUID: {device.uuid}")
     handle_portscan(context, [device.uuid])
 
@@ -338,7 +348,7 @@ def handle_remote_connect(context: MainContext, args: List[str]):
 
     name: str = args[0]
     if is_uuid(name):
-        device: Device = context.get_client().device_info(name)
+        device: Device = Device.get_device(context.client, name)
         if device is None:
             raise CommandError("This device does not exist or you have no permission to access it.")
     else:
@@ -355,7 +365,7 @@ def handle_remote_connect(context: MainContext, args: List[str]):
         device: Device = found_devices[0]
 
     print(f"Connecting to {device.name} (UUID: {device.uuid})")
-    if context.get_client().part_owner(device.uuid):
+    if device.part_owner():
         context.open(DeviceContext(context.root_context, context.session_token, device))
     else:
         raise CommandError("This device does not exist or you have no permission to access it.")

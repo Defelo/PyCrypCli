@@ -19,9 +19,8 @@ def extract_wallet(content: str) -> Optional[Tuple[str, str]]:
     return None
 
 
-def convert_timestamp(timestamp: str) -> datetime:
-    time_stamp: datetime = datetime.fromisoformat(timestamp)
-    return time_stamp.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal())
+def convert_timestamp(timestamp: datetime) -> datetime:
+    return timestamp.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal()).replace(tzinfo=None)
 
 
 def strip_float(num: float, precision):

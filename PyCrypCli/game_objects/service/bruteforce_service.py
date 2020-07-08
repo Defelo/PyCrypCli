@@ -2,9 +2,8 @@ from datetime import datetime
 from typing import Optional, Tuple
 
 from PyCrypCli.client import Client
-from PyCrypCli.exceptions import ServiceNotFoundException, AttackNotRunningException
+from PyCrypCli.exceptions import AttackNotRunningException
 from PyCrypCli.game_objects.service.service import Service
-from PyCrypCli.util import convert_timestamp
 
 
 class BruteforceService(Service):
@@ -18,9 +17,9 @@ class BruteforceService(Service):
 
     @property
     def started(self) -> Optional[datetime]:
-        timestamp: Optional[str] = self._data.get("started")
+        timestamp: Optional[int] = self._data.get("started")
         if timestamp is not None:
-            return convert_timestamp(timestamp)
+            return datetime.fromtimestamp(timestamp)
 
     @property
     def progress(self) -> Optional[float]:
@@ -28,12 +27,10 @@ class BruteforceService(Service):
 
     @staticmethod
     def get_bruteforce_service(client: Client, device_uuid: str) -> "BruteforceService":
-        for service in Service.get_services(client, device_uuid):
-            if service.name == "bruteforce":
-                bruteforce_service = BruteforceService(client, service._data)
-                bruteforce_service._update({**service._data, **bruteforce_service.get_bruteforce_details()})
-                return bruteforce_service
-        raise ServiceNotFoundException
+        service: Service = Service.get_service_by_name(client, device_uuid, "bruteforce")
+        bruteforce_service = BruteforceService(client, service._data)
+        bruteforce_service._update({**service._data, **bruteforce_service.get_bruteforce_details()})
+        return bruteforce_service
 
     def get_bruteforce_details(self) -> dict:
         try:

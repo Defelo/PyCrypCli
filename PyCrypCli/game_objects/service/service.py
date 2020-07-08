@@ -1,6 +1,6 @@
 from typing import List
 
-from PyCrypCli.client import Client
+from PyCrypCli.client import Client, ServiceNotFoundException
 from PyCrypCli.game_objects.service.public_service import PublicService
 
 
@@ -32,6 +32,13 @@ class Service(PublicService):
         return Service(
             client, client.ms("service", ["private_info"], device_uuid=device_uuid, service_uuid=service_uuid)
         )
+
+    @staticmethod
+    def get_service_by_name(client: Client, device_uuid: str, name: str) -> "Service":
+        for service in Service.get_services(client, device_uuid):
+            if service.name == name:
+                return service
+        raise ServiceNotFoundException
 
     @staticmethod
     def list_part_owner(client: Client) -> List["Service"]:

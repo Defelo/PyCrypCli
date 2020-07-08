@@ -7,7 +7,7 @@ from PyCrypCli.util import convert_timestamp
 class Transaction(GameObject):
     @property
     def timestamp(self) -> datetime:
-        return convert_timestamp(self._data.get("time_stamp"))
+        return convert_timestamp(datetime.fromisoformat(self._data.get("time_stamp")))
 
     @property
     def source_uuid(self) -> str:

@@ -2,6 +2,7 @@ from typing import Optional, Tuple, List
 
 import readline
 
+from PyCrypCli import PublicService
 from PyCrypCli.context.context import Context
 from PyCrypCli.context.main_context import MainContext
 from PyCrypCli.context.root_context import RootContext
@@ -101,17 +102,11 @@ class DeviceContext(MainContext):
 
         return wallet
 
-    def get_last_portscan(self) -> Tuple[str, List[Service]]:
+    def get_last_portscan(self) -> Tuple[str, List[PublicService]]:
         return self.last_portscan
 
-    def update_last_portscan(self, scan: Tuple[str, List[Service]]):
-        self.last_portscan: Tuple[str, List[Service]] = scan
-
-    def get_service(self, name: str) -> Optional[Service]:
-        for service in self.host.get_services():
-            if service.name == name:
-                return service
-        return None
+    def update_last_portscan(self, scan: Tuple[str, List[PublicService]]):
+        self.last_portscan: Tuple[str, List[PublicService]] = scan
 
     def file_path_completer(self, path: str, dirs_only: bool = False) -> List[str]:
         base_path: str = "/".join(path.split("/")[:-1])

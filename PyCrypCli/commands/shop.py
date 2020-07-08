@@ -1,5 +1,6 @@
-from typing import List
+from typing import List, Dict
 
+from PyCrypCli import ShopProduct
 from PyCrypCli.client import Client
 from PyCrypCli.commands import command, CommandError
 from PyCrypCli.commands.help import print_help
@@ -10,12 +11,14 @@ from PyCrypCli.game_objects import Wallet, ShopCategory
 from PyCrypCli.util import strip_float, print_tree
 
 
-def list_shop_products(client: Client) -> List[str]:
-    out = []
-    for category in client.shop_list():
+def list_shop_products(client: Client) -> Dict[str, ShopProduct]:
+    out = {}
+    for category in ShopCategory.shop_list(client):
         for subcategory in category.subcategories:
-            out += [item.name for item in subcategory.items]
-        out += [item.name for item in category.items]
+            for item in subcategory.items:
+                out[item.name.replace(" ", "")] = item
+        for item in category.items:
+            out[item.name.replace(" ", "")] = item
     return out
 
 
@@ -36,7 +39,7 @@ def handle_shop_list(context: DeviceContext, _):
     List shop prodcuts
     """
 
-    categories: List[ShopCategory] = context.get_client().shop_list()
+    categories: List[ShopCategory] = ShopCategory.shop_list(context.client)
     maxlength = max(
         [len(item.name) + 4 for category in categories for item in category.items]
         + [
@@ -78,15 +81,13 @@ def handle_shop_buy(context: DeviceContext, args: List[str]):
 
     wallet: Wallet = get_wallet_from_file(context, wallet_filepath)
 
-    for product in list_shop_products(context.get_client()):
-        if product.replace(" ", "") == product_name:
-            product_name = product
-            break
-    else:
+    shop_products: Dict[str, ShopProduct] = list_shop_products(context.client)
+    if product_name not in shop_products:
         raise CommandError("This product does not exist in the shop.")
+    product: ShopProduct = shop_products[product_name]
 
     try:
-        context.get_client().shop_buy({product_name: 1}, wallet.uuid, wallet.key)
+        product.buy(wallet)
     except ItemNotFoundException:
         raise CommandError("This product does not exist in the shop.")
     except NotEnoughCoinsException:
@@ -96,6 +97,6 @@ def handle_shop_buy(context: DeviceContext, args: List[str]):
 @handle_shop_buy.completer()
 def shop_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
-        return [product.replace(" ", "") for product in list_shop_products(context.get_client())]
+        return list(list_shop_products(context.client))
     elif len(args) == 2:
         return context.file_path_completer(args[1])

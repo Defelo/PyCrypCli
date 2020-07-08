@@ -2,14 +2,21 @@ import os
 import time
 from typing import List, Tuple
 
-from PyCrypCli import BruteforceService, PublicService
 from PyCrypCli.commands import command, CommandError
 from PyCrypCli.commands.help import print_help
 from PyCrypCli.commands.morphcoin import get_wallet_from_file
 from PyCrypCli.context import DeviceContext, MainContext
-from PyCrypCli.exceptions import *
-from PyCrypCli.game_objects import Device, Service
-from PyCrypCli.game_objects.service.portscan_service import PortscanService
+from PyCrypCli.exceptions import (
+    ServiceNotFoundException,
+    AttackNotRunningException,
+    AlreadyOwnThisServiceException,
+    WalletNotFoundException,
+    CannotDeleteEnforcedServiceException,
+    CannotToggleDirectlyException,
+    CouldNotStartService,
+    ServiceNotRunningException,
+)
+from PyCrypCli.game_objects import Device, Service, PortscanService, BruteforceService, PublicService
 from PyCrypCli.util import is_uuid
 
 
@@ -225,7 +232,7 @@ def handle_bruteforce(context: DeviceContext, args: List[str]):
         raise CommandError("You have to create a bruteforce service before you can use it.")
 
     if service.running:
-        print(f"You are already attacking a device.")
+        print("You are already attacking a device.")
         print(f"Target device: {service.target_device}")
         if context.ask("Do you want to stop this attack? [yes|no] ", ["yes", "no"]) == "yes":
             stop_bruteforce(context, service)

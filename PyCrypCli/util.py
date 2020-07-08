@@ -1,11 +1,8 @@
 import re
-import string
 from datetime import datetime
 from typing import Optional, Tuple, List
 
 from dateutil.tz import tz
-
-hacking_letters = string.ascii_letters + string.digits
 
 
 def is_uuid(x: str) -> bool:

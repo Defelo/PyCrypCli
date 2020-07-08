@@ -58,7 +58,7 @@ def login(context: LoginContext, *_):
 
 
 @command("exit", [LoginContext], aliases=["quit"])
-def handle_main_exit(*_):
+def handle_login_exit(*_):
     """
     Exit PyCrypCli
     """
@@ -77,7 +77,7 @@ def handle_main_exit(context: MainContext, *_):
 
 
 @command("exit", [DeviceContext], aliases=["quit", "logout"])
-def handle_main_exit(context: DeviceContext, *_):
+def handle_device_exit(context: DeviceContext, *_):
     """
     Disconnect from this device
     """

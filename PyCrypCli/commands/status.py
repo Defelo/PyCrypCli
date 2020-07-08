@@ -1,4 +1,4 @@
-from PyCrypCli.commands.command import command
+from PyCrypCli.commands import command
 from PyCrypCli.context import MainContext, DeviceContext, LoginContext, Context
 
 

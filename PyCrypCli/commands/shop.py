@@ -1,13 +1,12 @@
 from typing import List, Dict
 
-from PyCrypCli import ShopProduct
 from PyCrypCli.client import Client
 from PyCrypCli.commands import command, CommandError
 from PyCrypCli.commands.help import print_help
 from PyCrypCli.commands.morphcoin import get_wallet_from_file
 from PyCrypCli.context import DeviceContext
 from PyCrypCli.exceptions import ItemNotFoundException, NotEnoughCoinsException
-from PyCrypCli.game_objects import Wallet, ShopCategory
+from PyCrypCli.game_objects import Wallet, ShopCategory, ShopProduct
 from PyCrypCli.util import strip_float, print_tree
 
 
@@ -41,13 +40,13 @@ def handle_shop_list(context: DeviceContext, _):
 
     categories: List[ShopCategory] = ShopCategory.shop_list(context.client)
     maxlength = max(
-        [len(item.name) + 4 for category in categories for item in category.items]
-        + [
+        max(len(item.name) + 4 for category in categories for item in category.items),
+        max(
             len(item.name)
             for category in categories
             for subcategory in category.subcategories
             for item in subcategory.items
-        ],
+        ),
     )
     tree = []
     for category in categories:

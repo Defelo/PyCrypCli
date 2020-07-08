@@ -1,3 +1,4 @@
+import json
 import ssl
 import time
 from typing import List, Optional
@@ -5,7 +6,17 @@ from uuid import uuid4
 
 from websocket import WebSocket, create_connection
 
-from PyCrypCli.exceptions import *
+from PyCrypCli.exceptions import (
+    UnknownMicroserviceException,
+    InvalidServerResponseException,
+    MicroserviceException,
+    WeakPasswordException,
+    UsernameAlreadyExistsException,
+    InvalidEmailException,
+    InvalidLoginException,
+    InvalidSessionTokenException,
+    PermissionsDeniedException,
+)
 from PyCrypCli.timer import Timer
 
 

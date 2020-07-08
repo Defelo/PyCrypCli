@@ -1,9 +1,10 @@
 from typing import List
 
+from PyCrypCli.exceptions import ServiceNotFoundException, WalletNotFoundException
+
 from PyCrypCli.commands import CommandError, command
 from PyCrypCli.commands.help import print_help
 from PyCrypCli.context import DeviceContext
-from PyCrypCli.exceptions import *
 from PyCrypCli.game_objects import Miner
 from PyCrypCli.util import is_uuid
 

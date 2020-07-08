@@ -3,3 +3,13 @@ from PyCrypCli.context.root_context import RootContext
 from PyCrypCli.context.login_context import LoginContext
 from PyCrypCli.context.main_context import MainContext
 from PyCrypCli.context.device_context import DeviceContext
+
+__all__ = [
+    "Context",
+    "COMMAND_FUNCTION",
+    "COMPLETER_FUNCTION",
+    "RootContext",
+    "LoginContext",
+    "MainContext",
+    "DeviceContext",
+]

@@ -2,12 +2,11 @@ from typing import Optional, Tuple, List
 
 import readline
 
-from PyCrypCli import PublicService
 from PyCrypCli.context.context import Context
 from PyCrypCli.context.main_context import MainContext
 from PyCrypCli.context.root_context import RootContext
 from PyCrypCli.exceptions import FileNotFoundException, InvalidWalletFile
-from PyCrypCli.game_objects import Device, File, Service
+from PyCrypCli.game_objects import Device, File, Service, PublicService
 from PyCrypCli.util import extract_wallet
 
 

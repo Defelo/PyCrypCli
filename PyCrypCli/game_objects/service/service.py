@@ -1,6 +1,8 @@
 from typing import List
 
-from PyCrypCli.client import Client, ServiceNotFoundException
+from PyCrypCli.exceptions import ServiceNotFoundException
+
+from PyCrypCli.client import Client
 from PyCrypCli.game_objects.service.public_service import PublicService
 
 

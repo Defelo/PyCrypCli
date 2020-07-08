@@ -6,7 +6,7 @@ from pypresence import PyPresenceException
 from PyCrypCli.client import Client
 
 if TYPE_CHECKING:
-    from PyCrypCli.commands.command import Command
+    from PyCrypCli.commands import Command
     from PyCrypCli.context import RootContext
 
 

@@ -301,5 +301,5 @@ def handle_top(context: DeviceContext, *_):
     print(f"    => Usage: {resource_usage.disk * 100:.1f}%")
     print()
 
-    print(f"  Network:")
+    print("  Network:")
     print(f"    => Usage: {resource_usage.network * 100:.1f}%")

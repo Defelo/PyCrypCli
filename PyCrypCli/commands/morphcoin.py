@@ -2,13 +2,18 @@ import re
 import time
 from typing import List
 
-from PyCrypCli import PublicWallet
 from PyCrypCli.commands import command, CommandError
 from PyCrypCli.commands.files import create_file
 from PyCrypCli.commands.help import print_help
 from PyCrypCli.context import DeviceContext
-from PyCrypCli.exceptions import *
-from PyCrypCli.game_objects import Wallet, Transaction
+from PyCrypCli.exceptions import (
+    FileNotFoundException,
+    InvalidWalletFile,
+    UnknownSourceOrDestinationException,
+    PermissionDeniedException,
+    AlreadyOwnAWalletException,
+)
+from PyCrypCli.game_objects import Wallet, Transaction, PublicWallet
 from PyCrypCli.util import is_uuid, extract_wallet, strip_float
 
 
@@ -194,7 +199,7 @@ def morphcoin_completer(context: DeviceContext, args: List[str]) -> List[str]:
 
 
 @handle_morphcoin_create.completer()
-def morphcoin_completer(context: DeviceContext, args: List[str]) -> List[str]:
+def morphcoin_create_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return context.file_path_completer(args[0], dirs_only=True)
 

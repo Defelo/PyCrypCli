@@ -227,7 +227,7 @@ def handle_network_invite(context: DeviceContext, args: List[str]):
     """
 
     if len(args) != 2:
-        raise CommandError(f"usage: network invite <network> <device>")
+        raise CommandError("usage: network invite <network> <device>")
 
     network: Network = get_network(context, args[0])
 
@@ -283,7 +283,7 @@ def handle_network_kick(context: DeviceContext, args: List[str]):
     """
 
     if len(args) != 2:
-        raise CommandError(f"usage: network kick <network> <device>")
+        raise CommandError("usage: network kick <network> <device>")
 
     network: Network = get_network(context, args[0])
 
@@ -319,6 +319,21 @@ def handle_network_delete(context: DeviceContext, args: List[str]):
         raise CommandError("Permission denied.")
 
 
+def device_network_names(context: DeviceContext) -> List[str]:
+    return [network.name for network in context.host.get_networks()]
+
+
+def public_network_names(context: DeviceContext) -> List[str]:
+    return [network.name for network in Network.get_public_networks(context.client)]
+
+
+def invitation_network_names(context: DeviceContext) -> List[str]:
+    return [
+        Network.get_by_uuid(context.client, invitation.network).name
+        for invitation in context.host.get_network_invitations()
+    ]
+
+
 @handle_network_members.completer()
 @handle_network_request.completer()
 @handle_network_requests.completer()
@@ -326,17 +341,7 @@ def handle_network_delete(context: DeviceContext, args: List[str]):
 @handle_network_delete.completer()
 def network_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
-        return list(
-            # networks of this device
-            {network.name for network in context.host.get_networks()}
-            # public networks
-            | {network.name for network in Network.get_public_networks(context.client)}
-            # networks from incoming invitations
-            | {
-                Network.get_by_uuid(context.client, invitation.network).name
-                for invitation in context.host.get_network_invitations()
-            }
-        )
+        return [*{*device_network_names(context), *public_network_names(context), *invitation_network_names(context)}]
 
 
 @handle_network_create.completer()
@@ -349,13 +354,7 @@ def network_create_completer(_, args: List[str]) -> List[str]:
 @handle_network_deny.completer()
 def network_accept_deny_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
-        return list(
-            {network.name for network in context.host.get_networks()}
-            | {
-                Network.get_by_uuid(context.client, invitation.network).name
-                for invitation in context.host.get_network_invitations()
-            }
-        )
+        return [*{*device_network_names(context), *invitation_network_names(context)}]
     elif len(args) == 2:
         try:
             network: Network = get_network(context, args[0])
@@ -373,7 +372,7 @@ def network_accept_deny_completer(context: DeviceContext, args: List[str]) -> Li
 @handle_network_invite.completer()
 def network_invite_completer(context: DeviceContext, args: List[str]):
     if len(args) == 1:
-        return list({network.name for network in context.host.get_networks()})
+        return [*{*device_network_names(context)}]
     elif len(args) == 2:
         device_names: List[str] = [device.name for device in Device.list_devices(context.client)]
         return [name for name in device_names if device_names.count(name) == 1]
@@ -382,7 +381,7 @@ def network_invite_completer(context: DeviceContext, args: List[str]):
 @handle_network_kick.completer()
 def network_kick_completer(context: DeviceContext, args: List[str]):
     if len(args) == 1:
-        return list({network.name for network in context.host.get_networks()})
+        return [*{*device_network_names(context)}]
     elif len(args) == 2:
         try:
             network: Network = get_network(context, args[0])

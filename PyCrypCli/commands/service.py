@@ -288,12 +288,14 @@ def service_create_completer(context: DeviceContext, args: List[str]) -> List[st
         return ["bruteforce", "portscan", "ssh", "telnet", "miner"]
     elif len(args) == 2 and args[0] == "miner":
         return context.file_path_completer(args[1])
+    return []
 
 
 @handle_service_delete.completer()
 def service_delete_completer(_, args: List[str]) -> List[str]:
     if len(args) == 1:
         return ["bruteforce", "portscan", "telnet", "miner"]
+    return []
 
 
 @handle_service_start.completer()
@@ -302,6 +304,7 @@ def service_delete_completer(_, args: List[str]) -> List[str]:
 def service_completer(_, args: List[str]) -> List[str]:
     if len(args) == 1:
         return ["ssh", "telnet"]
+    return []
 
 
 @command("spot", [DeviceContext])
@@ -383,3 +386,4 @@ def remote_completer(context: MainContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         device_names: List[str] = [device.name for device in context.get_hacked_devices()]
         return [name for name in device_names if device_names.count(name) == 1]
+    return []

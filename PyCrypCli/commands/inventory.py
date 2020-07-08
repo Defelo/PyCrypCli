@@ -81,3 +81,4 @@ def handle_inventory_trade(context: MainContext, args: List[str]):
 def inventory_completer(context: MainContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return [element.name.replace(" ", "") for element in InventoryElement.list_inventory(context.client)]
+    return []

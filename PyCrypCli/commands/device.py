@@ -236,6 +236,7 @@ def complete_device(context: MainContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         device_names: List[str] = [device.name for device in Device.list_devices(context.client)]
         return [name for name in device_names if device_names.count(name) == 1]
+    return []
 
 
 @handle_device_build.completer()
@@ -251,6 +252,7 @@ def complete_build(context: MainContext, args: List[str]) -> List[str]:
     elif len(args) >= 5:
         hardware: dict = context.client.get_hardware_config()
         return [name.replace(" ", "") for name in list(hardware["ram"]) + list(hardware["disk"])]
+    return []
 
 
 @command("hostname", [DeviceContext])

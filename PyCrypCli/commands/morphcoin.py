@@ -196,12 +196,14 @@ def handle_morphcoin_watch(context: DeviceContext, args: List[str]):
 def morphcoin_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return context.file_path_completer(args[0])
+    return []
 
 
 @handle_morphcoin_create.completer()
 def morphcoin_create_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return context.file_path_completer(args[0], dirs_only=True)
+    return []
 
 
 @command("pay", [DeviceContext])
@@ -245,3 +247,4 @@ def handle_pay(context: DeviceContext, args: List[str]):
 def pay_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return context.file_path_completer(args[0])
+    return []

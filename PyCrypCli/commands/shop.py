@@ -99,3 +99,4 @@ def shop_completer(context: DeviceContext, args: List[str]) -> List[str]:
         return list(list_shop_products(context.client))
     elif len(args) == 2:
         return context.file_path_completer(args[1])
+    return []

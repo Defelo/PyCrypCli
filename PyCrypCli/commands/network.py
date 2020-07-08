@@ -342,12 +342,14 @@ def invitation_network_names(context: DeviceContext) -> List[str]:
 def network_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return [*{*device_network_names(context), *public_network_names(context), *invitation_network_names(context)}]
+    return []
 
 
 @handle_network_create.completer()
 def network_create_completer(_, args: List[str]) -> List[str]:
     if len(args) == 2:
         return ["public", "private"]
+    return []
 
 
 @handle_network_accept.completer()
@@ -367,6 +369,7 @@ def network_accept_deny_completer(context: DeviceContext, args: List[str]) -> Li
             except DeviceNotFoundException:
                 pass
         return [name for name in device_names if device_names.count(name) == 1]
+    return []
 
 
 @handle_network_invite.completer()
@@ -376,6 +379,7 @@ def network_invite_completer(context: DeviceContext, args: List[str]):
     elif len(args) == 2:
         device_names: List[str] = [device.name for device in Device.list_devices(context.client)]
         return [name for name in device_names if device_names.count(name) == 1]
+    return []
 
 
 @handle_network_kick.completer()
@@ -391,3 +395,4 @@ def network_kick_completer(context: DeviceContext, args: List[str]):
         for member in network.get_members():
             device_names.append(Device.get_device(context.client, member.device).name)
         return [name for name in device_names if device_names.count(name) == 1]
+    return []

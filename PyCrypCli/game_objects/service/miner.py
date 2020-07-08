@@ -13,8 +13,10 @@ class Miner(Service):
     @property
     def started(self) -> Optional[datetime]:
         timestamp: Optional[int] = self._data.get("started")
-        if timestamp is not None:
-            return datetime.fromtimestamp(timestamp / 1000)
+        if timestamp is None:
+            return None
+
+        return datetime.fromtimestamp(timestamp / 1000)
 
     @property
     def power(self) -> Optional[float]:

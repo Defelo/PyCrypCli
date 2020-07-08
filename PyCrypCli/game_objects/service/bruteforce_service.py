@@ -18,8 +18,10 @@ class BruteforceService(Service):
     @property
     def started(self) -> Optional[datetime]:
         timestamp: Optional[int] = self._data.get("started")
-        if timestamp is not None:
-            return datetime.fromtimestamp(timestamp)
+        if timestamp is None:
+            return None
+
+        return datetime.fromtimestamp(timestamp)
 
     @property
     def progress(self) -> Optional[float]:

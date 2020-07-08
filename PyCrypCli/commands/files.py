@@ -249,7 +249,7 @@ def check_file_movable(
             dest_dir: str = dest_parent.uuid
 
     if dest_dir == file.parent_dir_uuid and dest_name == file.filename:
-        return
+        return None
 
     if dest_dir is not None:
         dir_to_check: File = File.get_file(context.client, file.device, dest_dir)
@@ -315,6 +315,7 @@ def handle_mv(context: DeviceContext, args: List[str]):
 def simple_file_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return context.file_path_completer(args[0])
+    return []
 
 
 @handle_cd.completer()
@@ -322,6 +323,7 @@ def simple_file_completer(context: DeviceContext, args: List[str]) -> List[str]:
 def simple_directory_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return context.file_path_completer(args[0], dirs_only=True)
+    return []
 
 
 @handle_mv.completer()
@@ -329,3 +331,4 @@ def simple_directory_completer(context: DeviceContext, args: List[str]) -> List[
 def copy_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if 1 <= len(args) <= 2:
         return context.file_path_completer(args[-1])
+    return []

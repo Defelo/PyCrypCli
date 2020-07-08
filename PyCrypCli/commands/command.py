@@ -6,6 +6,7 @@ from PyCrypCli.context import Context, COMMAND_FUNCTION, COMPLETER_FUNCTION
 
 class CommandError(Exception):
     def __init__(self, msg: str):
+        super().__init__()
         self.msg: str = msg
 
 

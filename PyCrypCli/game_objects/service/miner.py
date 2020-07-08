@@ -24,9 +24,8 @@ class Miner(Service):
 
     @staticmethod
     def get_miner(client: Client, device_uuid: str) -> "Miner":
-        service: Service = Service.get_service_by_name(client, device_uuid, "miner")
-        miner = Miner(client, service._data)
-        miner._update({**service._data, **miner.get_miner_details()})
+        miner: Miner = Service.get_service_by_name(client, device_uuid, "miner").clone(Miner)
+        miner._update(miner.get_miner_details())
         return miner
 
     @staticmethod

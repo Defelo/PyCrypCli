@@ -29,10 +29,9 @@ class BruteforceService(Service):
 
     @staticmethod
     def get_bruteforce_service(client: Client, device_uuid: str) -> "BruteforceService":
-        service: Service = Service.get_service_by_name(client, device_uuid, "bruteforce")
-        bruteforce_service = BruteforceService(client, service._data)
-        bruteforce_service._update({**service._data, **bruteforce_service.get_bruteforce_details()})
-        return bruteforce_service
+        service = Service.get_service_by_name(client, device_uuid, "bruteforce").clone(BruteforceService)
+        service._update(service.get_bruteforce_details())
+        return service
 
     def get_bruteforce_details(self) -> dict:
         try:

@@ -1,6 +1,8 @@
-from typing import List, Union
+from typing import List, Union, Type, TypeVar
 
 from PyCrypCli.client import Client
+
+T = TypeVar("T")
 
 
 class GameObject:
@@ -29,3 +31,6 @@ class GameObject:
 
     def update(self):
         pass
+
+    def clone(self, cls: Type[T]) -> T:
+        return cls(self._client, self._data)

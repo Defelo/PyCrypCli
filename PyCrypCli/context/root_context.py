@@ -23,7 +23,7 @@ class RootContext:
 
         self.context_stack: List[Context] = []
 
-        self.commands: Dict[Type[Context], Dict[str, Command]] = commands
+        self.commands: Dict[Type[Context], Dict[str, "Command"]] = commands
 
         self.presence: Presence = Presence(client_id="596676243144048640")
         try:

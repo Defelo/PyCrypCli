@@ -176,7 +176,7 @@ def handle_portscan(context: DeviceContext, args: List[str]):
     except ServiceNotFoundException:
         raise CommandError("You have to create a portscan service before you can use it.")
 
-    services: List[PublicService] = service.use(target)
+    services: List[PublicService] = service.scan(target)
     context.update_last_portscan((target, services))
     if not services:
         print("That device doesn't have any running services")

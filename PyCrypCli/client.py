@@ -173,7 +173,6 @@ class Client:
     def logout(self):
         if not self.logged_in:
             raise LoggedOutException
-        assert self.logged_in
 
         self.request({"action": "logout"})
         self.close()

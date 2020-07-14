@@ -2,6 +2,7 @@ from importlib import import_module
 from typing import Callable, List, Dict, Type, Optional, Tuple
 
 from PyCrypCli.context import Context, COMMAND_FUNCTION, COMPLETER_FUNCTION
+from PyCrypCli.exceptions import CommandRegistrationException, NoDocStringException
 
 
 class CommandError(Exception):
@@ -65,6 +66,8 @@ class Command:
             contexts = self.contexts
 
         def decorator(func: COMMAND_FUNCTION) -> Command:
+            if func.__doc__ is None:
+                raise NoDocStringException(name, subcommand=True)
             desc: str = func.__doc__
             desc = "\n".join(map(str.strip, desc.splitlines())).strip()
             cmd = Command(name, func, desc, contexts, aliases or [])
@@ -77,7 +80,8 @@ class Command:
         for cmd in self.subcommands:
             for context in cmd.contexts:
                 for name in [cmd.name] + cmd.aliases:
-                    assert name not in self.prepared_subcommands.setdefault(context, {})
+                    if name in self.prepared_subcommands.setdefault(context, {}):
+                        raise CommandRegistrationException(name, subcommand=True)
                     self.prepared_subcommands[context][name] = cmd
             cmd.make_subcommands()
 
@@ -89,6 +93,8 @@ def command(
     name: str, contexts: List[Type[Context]], aliases: List[str] = None
 ) -> Callable[[COMMAND_FUNCTION], Command]:
     def decorator(func: COMMAND_FUNCTION) -> Command:
+        if func.__doc__ is None:
+            raise NoDocStringException(name)
         desc: str = func.__doc__
         desc = "\n".join(map(str.strip, desc.splitlines())).strip()
         cmd = Command(name, func, desc, contexts, aliases or [])
@@ -119,7 +125,8 @@ def make_commands() -> Dict[Type[Context], Dict[str, Command]]:
     for cmd in commands:
         for context in cmd.contexts:
             for name in [cmd.name] + cmd.aliases:
-                assert name not in result.setdefault(context, {})
+                if name in result.setdefault(context, {}):
+                    raise CommandRegistrationException(name)
                 result[context][name] = cmd
         cmd.make_subcommands()
     return result

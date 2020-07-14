@@ -1,6 +1,26 @@
 import json
 
 
+class CommandRegistrationException(Exception):
+    def __init__(self, name: str, subcommand: bool = False):
+        super().__init__(f"The {'sub' * subcommand}command {name} has already been registered.")
+
+
+class NoDocStringException(Exception):
+    def __init__(self, name: str, subcommand: bool = False):
+        super().__init__(f"The {'sub' * subcommand}command {name} is missing a docstring.")
+
+
+class LoggedInException(Exception):
+    def __init__(self):
+        super().__init__("Endpoint cannot be used while client is logged in.")
+
+
+class LoggedOutException(Exception):
+    def __init__(self):
+        super().__init__("Endpoint can only be used while client is logged in.")
+
+
 class InvalidServerResponseException(Exception):
     def __init__(self, response: dict):
         super().__init__("Invalid Server Response: " + json.dumps(response))

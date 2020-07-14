@@ -16,6 +16,8 @@ from PyCrypCli.exceptions import (
     InvalidLoginException,
     InvalidSessionTokenException,
     PermissionsDeniedException,
+    LoggedInException,
+    LoggedOutException,
 )
 from PyCrypCli.timer import Timer
 
@@ -50,7 +52,9 @@ class Client:
         self.logged_in: bool = False
 
     def request(self, data: dict, no_response: bool = False) -> dict:
-        assert self.websocket
+        if self.websocket is None:
+            raise ConnectionError
+
         while self.waiting_for_response:
             time.sleep(0.01)
         self.waiting_for_response: bool = True
@@ -68,7 +72,8 @@ class Client:
         return response
 
     def ms(self, ms: str, endpoint: List[str], **data) -> dict:
-        assert self.logged_in
+        if not self.logged_in:
+            raise LoggedOutException
 
         response: dict = self.request({"ms": ms, "endpoint": endpoint, "data": data, "tag": uuid()})
 
@@ -91,7 +96,8 @@ class Client:
         return data
 
     def register(self, username: str, email: str, password: str) -> str:
-        assert not self.logged_in
+        if self.logged_in:
+            raise LoggedInException
 
         self.init()
         response: dict = self.request({"action": "register", "name": username, "mail": email, "password": password})
@@ -113,7 +119,8 @@ class Client:
         return response["token"]
 
     def login(self, username: str, password: str) -> str:
-        assert not self.logged_in
+        if self.logged_in:
+            raise LoggedInException
 
         self.init()
         response: dict = self.request({"action": "login", "name": username, "password": password})
@@ -131,7 +138,8 @@ class Client:
         return response["token"]
 
     def session(self, token: str):
-        assert not self.logged_in
+        if self.logged_in:
+            raise LoggedInException
 
         self.init()
         response: dict = self.request({"action": "session", "token": token})
@@ -148,7 +156,8 @@ class Client:
         self.timer.start()
 
     def change_password(self, username: str, old_password: str, new_password: str):
-        assert not self.logged_in
+        if self.logged_in:
+            raise LoggedInException
 
         self.init()
         response: dict = self.request(
@@ -162,13 +171,16 @@ class Client:
         self.close()
 
     def logout(self):
+        if not self.logged_in:
+            raise LoggedOutException
         assert self.logged_in
 
         self.request({"action": "logout"})
         self.close()
 
     def status(self) -> dict:
-        assert not self.logged_in
+        if self.logged_in:
+            raise LoggedInException
 
         self.init()
         response: dict = self.request({"action": "status"})
@@ -178,7 +190,8 @@ class Client:
         return response
 
     def info(self) -> dict:
-        assert self.logged_in
+        if not self.logged_in:
+            raise LoggedOutException
 
         response: dict = self.request({"action": "info"})
         if "error" in response:
@@ -186,7 +199,8 @@ class Client:
         return response
 
     def delete_user(self):
-        assert self.logged_in
+        if not self.logged_in:
+            raise LoggedOutException
 
         self.request({"action": "delete"}, no_response=True)
         self.close()

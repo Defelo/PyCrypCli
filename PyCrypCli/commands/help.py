@@ -21,7 +21,7 @@ def print_help(context: Context, cmd: Optional[Command]):
         print()
 
     print(f"Available {'sub' * (cmd is not None)}commands:")
-    max_length: int = max(len(cmd[0]) for cmd in command_list)
+    max_length: int = max([len(cmd[0]) for cmd in command_list])
     for com, desc in command_list:
         com: str = com.ljust(max_length)
         print(f" - {com}    {desc}")

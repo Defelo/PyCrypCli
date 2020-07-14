@@ -40,13 +40,13 @@ def handle_shop_list(context: DeviceContext, _):
 
     categories: List[ShopCategory] = ShopCategory.shop_list(context.client)
     maxlength = max(
-        max(len(item.name) + 4 for category in categories for item in category.items),
-        max(
+        *[len(item.name) + 4 for category in categories for item in category.items],
+        *[
             len(item.name)
             for category in categories
             for subcategory in category.subcategories
             for item in subcategory.items
-        ),
+        ]
     )
     tree = []
     for category in categories:

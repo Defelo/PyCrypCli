@@ -28,7 +28,7 @@ def get_device(context: MainContext, name_or_uuid: str, devices: Optional[List[D
                 found_devices.append(device)
         if not found_devices:
             raise CommandError(f"There is no device with the name '{name_or_uuid}'.")
-        elif len(found_devices) > 1:
+        if len(found_devices) > 1:
             raise CommandError(
                 f"There is more than one device with the name '{name_or_uuid}'. You need to specify its UUID."
             )
@@ -136,7 +136,7 @@ def handle_device_build(context: MainContext, args: List[str]):
 
     if not ram:
         raise CommandError("You have to chose at least one ram.")
-    elif not disk:
+    if not disk:
         raise CommandError("You have to chose at least one hard drive.")
 
     inventory: List[str] = [e.name for e in InventoryElement.list_inventory(context.client)]
@@ -243,13 +243,13 @@ def complete_device(context: MainContext, args: List[str]) -> List[str]:
 def complete_build(context: MainContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return [name.replace(" ", "") for name in list(context.client.get_hardware_config()["mainboards"])]
-    elif len(args) == 2:
+    if len(args) == 2:
         return [name.replace(" ", "") for name in list(context.client.get_hardware_config()["cpu"])]
-    elif len(args) == 3:
+    if len(args) == 3:
         return [name.replace(" ", "") for name in list(context.client.get_hardware_config()["gpu"])]
-    elif len(args) == 4:
+    if len(args) == 4:
         return [name.replace(" ", "") for name in list(context.client.get_hardware_config()["ram"])]
-    elif len(args) >= 5:
+    if len(args) >= 5:
         hardware: dict = context.client.get_hardware_config()
         return [name.replace(" ", "") for name in list(hardware["ram"]) + list(hardware["disk"])]
     return []

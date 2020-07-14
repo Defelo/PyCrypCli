@@ -17,7 +17,7 @@ def handle_status(context: Context, _):
     Indicate how many players are online
     """
 
-    if type(context) == LoginContext:
+    if type(context) is LoginContext:
         online: int = context.client.status()["online"]
     else:
         online: int = context.client.info()["online"]

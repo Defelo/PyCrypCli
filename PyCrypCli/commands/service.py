@@ -286,7 +286,7 @@ def handle_bruteforce(context: DeviceContext, args: List[str]):
 def service_create_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return ["bruteforce", "portscan", "ssh", "telnet", "miner"]
-    elif len(args) == 2 and args[0] == "miner":
+    if len(args) == 2 and args[0] == "miner":
         return context.file_path_completer(args[1])
     return []
 

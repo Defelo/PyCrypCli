@@ -42,12 +42,12 @@ class Frontend:
         cmd, *args = text.split(" ") or [""]
         if not args:
             return [cmd for cmd in self.root_context.get_commands()]
-        else:
-            comp: Optional[Command] = self.root_context.get_commands().get(cmd, None)
-            if comp is not None:
-                return comp.handle_completer(self.get_context(), args) or []
-            else:
-                return []
+
+        comp: Optional[Command] = self.root_context.get_commands().get(cmd, None)
+        if comp is None:
+            return []
+
+        return comp.handle_completer(self.get_context(), args) or []
 
     def completer(self, text: str, state: int) -> Optional[str]:
         readline.set_completer_delims(" ")

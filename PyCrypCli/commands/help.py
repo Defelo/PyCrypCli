@@ -17,7 +17,7 @@ def print_help(context: Context, cmd: Optional[Command]):
         if cmd is None:
             print("No commands found.")
         return
-    elif cmd is not None:
+    if cmd is not None:
         print()
 
     print(f"Available {'sub' * (cmd is not None)}commands:")

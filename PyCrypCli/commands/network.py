@@ -357,7 +357,7 @@ def network_create_completer(_, args: List[str]) -> List[str]:
 def network_accept_deny_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return [*{*device_network_names(context), *invitation_network_names(context)}]
-    elif len(args) == 2:
+    if len(args) == 2:
         try:
             network: Network = get_network(context, args[0])
         except CommandError:
@@ -376,7 +376,7 @@ def network_accept_deny_completer(context: DeviceContext, args: List[str]) -> Li
 def network_invite_completer(context: DeviceContext, args: List[str]):
     if len(args) == 1:
         return [*{*device_network_names(context)}]
-    elif len(args) == 2:
+    if len(args) == 2:
         device_names: List[str] = [device.name for device in Device.list_devices(context.client)]
         return [name for name in device_names if device_names.count(name) == 1]
     return []
@@ -386,7 +386,7 @@ def network_invite_completer(context: DeviceContext, args: List[str]):
 def network_kick_completer(context: DeviceContext, args: List[str]):
     if len(args) == 1:
         return [*{*device_network_names(context)}]
-    elif len(args) == 2:
+    if len(args) == 2:
         try:
             network: Network = get_network(context, args[0])
         except CommandError:

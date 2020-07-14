@@ -97,6 +97,6 @@ def handle_shop_buy(context: DeviceContext, args: List[str]):
 def shop_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return list(list_shop_products(context.client))
-    elif len(args) == 2:
+    if len(args) == 2:
         return context.file_path_completer(args[1])
     return []

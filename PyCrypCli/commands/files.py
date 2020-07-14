@@ -107,8 +107,7 @@ def create_file(context: DeviceContext, filepath: str, content: str):
     if file is not None:
         if file.is_directory:
             raise CommandError("A directory with this name already exists.")
-        else:
-            file.edit(content)
+        file.edit(content)
     else:
         context.host.create_file(filename, content, False, parent.uuid)
 
@@ -262,7 +261,7 @@ def check_file_movable(
 
     if not dest_name:
         raise CommandError("Destination filename cannot be empty.")
-    elif len(dest_name) > 64:
+    if len(dest_name) > 64:
         raise CommandError("Destination filename cannot be longer than 64 characters.")
 
     return file, dest_name, dest_dir

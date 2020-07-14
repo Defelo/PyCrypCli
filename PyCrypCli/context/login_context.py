@@ -9,7 +9,8 @@ class LoginContext(Context):
     def __init__(self, root_context: RootContext):
         super().__init__(root_context)
 
-    def get_prompt(self) -> str:
+    @property
+    def prompt(self) -> str:
         return "$ "
 
     def enter_context(self):
@@ -33,7 +34,7 @@ class LoginContext(Context):
 
         if "token" in config.setdefault("servers", {}).setdefault(self.root_context.host, {}):
             session_token: str = config["servers"][self.root_context.host]["token"]
-            self.get_client().session(session_token)
+            self.client.session(session_token)
             self.open(MainContext(self.root_context, session_token))
 
     def delete_session(self):

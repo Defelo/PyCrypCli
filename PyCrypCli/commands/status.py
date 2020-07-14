@@ -1,4 +1,4 @@
-from PyCrypCli.commands.command import command
+from PyCrypCli.commands import command
 from PyCrypCli.context import MainContext, DeviceContext, LoginContext, Context
 
 
@@ -18,7 +18,7 @@ def handle_status(context: Context, _):
     """
 
     if type(context) == LoginContext:
-        online: int = context.get_client().status()["online"]
+        online: int = context.client.status()["online"]
     else:
-        online: int = context.get_client().info()["online"]
+        online: int = context.client.info()["online"]
     print(f"Online players: {online}")

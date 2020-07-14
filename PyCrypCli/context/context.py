@@ -6,7 +6,7 @@ from pypresence import PyPresenceException
 from PyCrypCli.client import Client
 
 if TYPE_CHECKING:
-    from PyCrypCli.commands.command import Command
+    from PyCrypCli.commands import Command
     from PyCrypCli.context import RootContext
 
 
@@ -21,10 +21,12 @@ class Context:
         if self.history[-1:] != [command]:
             self.history.append(command)
 
-    def get_prompt(self) -> str:
+    @property
+    def prompt(self) -> str:
         return "$ "
 
-    def get_client(self) -> Client:
+    @property
+    def client(self) -> Client:
         return self.root_context.client
 
     def get_commands(self) -> Dict[str, "Command"]:

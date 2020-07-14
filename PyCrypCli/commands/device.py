@@ -11,19 +11,19 @@ from PyCrypCli.exceptions import (
     IncompatibleRAMTypes,
     IncompatibleDriverInterface,
 )
-from PyCrypCli.game_objects import Device, ResourceUsage, DeviceHardware
+from PyCrypCli.game_objects import Device, ResourceUsage, DeviceHardware, InventoryElement
 from PyCrypCli.util import is_uuid
 
 
 def get_device(context: MainContext, name_or_uuid: str, devices: Optional[List[Device]] = None) -> Device:
     if is_uuid(name_or_uuid):
         try:
-            return context.get_client().device_info(name_or_uuid)
+            return Device.get_device(context.client, name_or_uuid)
         except DeviceNotFoundException:
             raise CommandError(f"There is no device with the uuid '{name_or_uuid}'.")
     else:
         found_devices: List[Device] = []
-        for device in devices or context.get_client().get_devices():
+        for device in devices or Device.list_devices(context.client):
             if device.name == name_or_uuid:
                 found_devices.append(device)
         if not found_devices:
@@ -55,7 +55,7 @@ def handle_device_list(context: MainContext, args: List[str]):
     if len(args) != 0:
         raise CommandError("usage: device list")
 
-    devices: List[Device] = context.get_client().get_devices()
+    devices: List[Device] = Device.list_devices(context.client)
     if not devices:
         print("You don't have any devices.")
     else:
@@ -74,7 +74,7 @@ def handle_device_create(context: MainContext, args: List[str]):
         raise CommandError("usage: device create")
 
     try:
-        device: Device = context.get_client().create_starter_device()
+        device: Device = Device.starter_device(context.client)
     except AlreadyOwnADeviceException:
         raise CommandError("You already own a device.")
 
@@ -91,7 +91,7 @@ def handle_device_build(context: MainContext, args: List[str]):
     if len(args) < 5:
         raise CommandError("usage: device build <mainboard> <cpu> <gpu> <ram> [<ram>...] <disk> [<disk>...]")
 
-    hardware: dict = context.get_client().get_hardware_config()
+    hardware: dict = context.client.get_hardware_config()
     mainboard, cpu, gpu, *ram_and_disk = args
     ram: List[str] = []
     disk: List[str] = []
@@ -139,7 +139,7 @@ def handle_device_build(context: MainContext, args: List[str]):
     elif not disk:
         raise CommandError("You have to chose at least one hard drive.")
 
-    inventory: List[str] = [e.element_name for e in context.get_client().inventory_list()]
+    inventory: List[str] = [e.name for e in InventoryElement.list_inventory(context.client)]
     inventory_complete: bool = True
     for element in [mainboard, cpu, gpu] + ram + disk:
         if element in inventory:
@@ -151,7 +151,7 @@ def handle_device_build(context: MainContext, args: List[str]):
         return
 
     try:
-        device: Device = context.get_client().build_device(mainboard, cpu, gpu, ram, disk)
+        device: Device = Device.build(context.client, mainboard, cpu, gpu, ram, disk)
     except IncompatibleCPUSocket:
         raise CommandError("The mainboard socket is not compatible with the cpu.")
     except NotEnoughRAMSlots:
@@ -178,7 +178,7 @@ def handle_device_boot(context: MainContext, args: List[str]):
     if device.powered_on:
         raise CommandError("This device is already powered on.")
 
-    context.get_client().device_power(device.uuid)
+    device.power()
 
 
 @handle_device.subcommand("shutdown")
@@ -194,7 +194,7 @@ def handle_device_shutdown(context: MainContext, args: List[str]):
     if not device.powered_on:
         raise CommandError("This device is not powered on.")
 
-    context.get_client().device_power(device.uuid)
+    device.power()
 
 
 @handle_device.subcommand("connect")
@@ -224,7 +224,7 @@ def handle_device_delete(context: MainContext, args: List[str]):
 
     device: Device = get_device(context, args[0])
 
-    context.get_client().delete_device(device.uuid)
+    device.delete()
     print("Device has been deleted.")
 
 
@@ -234,23 +234,25 @@ def handle_device_delete(context: MainContext, args: List[str]):
 @handle_device_delete.completer()
 def complete_device(context: MainContext, args: List[str]) -> List[str]:
     if len(args) == 1:
-        device_names: List[str] = [device.name for device in context.get_client().get_devices()]
+        device_names: List[str] = [device.name for device in Device.list_devices(context.client)]
         return [name for name in device_names if device_names.count(name) == 1]
+    return []
 
 
 @handle_device_build.completer()
 def complete_build(context: MainContext, args: List[str]) -> List[str]:
     if len(args) == 1:
-        return [name.replace(" ", "") for name in list(context.get_client().get_hardware_config()["mainboards"])]
+        return [name.replace(" ", "") for name in list(context.client.get_hardware_config()["mainboards"])]
     elif len(args) == 2:
-        return [name.replace(" ", "") for name in list(context.get_client().get_hardware_config()["cpu"])]
+        return [name.replace(" ", "") for name in list(context.client.get_hardware_config()["cpu"])]
     elif len(args) == 3:
-        return [name.replace(" ", "") for name in list(context.get_client().get_hardware_config()["gpu"])]
+        return [name.replace(" ", "") for name in list(context.client.get_hardware_config()["gpu"])]
     elif len(args) == 4:
-        return [name.replace(" ", "") for name in list(context.get_client().get_hardware_config()["ram"])]
+        return [name.replace(" ", "") for name in list(context.client.get_hardware_config()["ram"])]
     elif len(args) >= 5:
-        hardware: dict = context.get_client().get_hardware_config()
+        hardware: dict = context.client.get_hardware_config()
         return [name.replace(" ", "") for name in list(hardware["ram"]) + list(hardware["disk"])]
+    return []
 
 
 @command("hostname", [DeviceContext])
@@ -265,7 +267,7 @@ def handle_hostname(context: DeviceContext, args: List[str]):
             raise CommandError("The name must not be empty.")
         if len(name) > 15:
             raise CommandError("The name cannot be longer than 15 characters.")
-        context.get_client().change_device_name(context.host.uuid, name)
+        context.host.change_name(name)
     else:
         print(context.host.name)
 
@@ -278,10 +280,8 @@ def handle_top(context: DeviceContext, *_):
 
     print(f"Resource usage of '{context.host.name}':")
     print()
-    resource_usage: ResourceUsage = context.get_client().hardware_resources(context.host.uuid)
-    hardware: Dict[str, DeviceHardware] = {
-        dh.hardware_type: dh for dh in (context.get_client().get_device_hardware(context.host.uuid))
-    }
+    resource_usage: ResourceUsage = context.host.get_resource_usage()
+    hardware: Dict[str, DeviceHardware] = {dh.hardware_type: dh for dh in context.host.get_hardware()}
 
     print(f"  Mainboard: {hardware['mainboard'].hardware_element}")
     print()
@@ -303,5 +303,5 @@ def handle_top(context: DeviceContext, *_):
     print(f"    => Usage: {resource_usage.disk * 100:.1f}%")
     print()
 
-    print(f"  Network:")
+    print("  Network:")
     print(f"    => Usage: {resource_usage.network * 100:.1f}%")

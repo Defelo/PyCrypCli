@@ -6,8 +6,14 @@ from PyCrypCli.commands import command, CommandError
 from PyCrypCli.commands.files import create_file
 from PyCrypCli.commands.help import print_help
 from PyCrypCli.context import DeviceContext
-from PyCrypCli.exceptions import *
-from PyCrypCli.game_objects import Wallet, Transaction
+from PyCrypCli.exceptions import (
+    FileNotFoundException,
+    InvalidWalletFile,
+    UnknownSourceOrDestinationException,
+    PermissionDeniedException,
+    AlreadyOwnAWalletException,
+)
+from PyCrypCli.game_objects import Wallet, Transaction, PublicWallet
 from PyCrypCli.util import is_uuid, extract_wallet, strip_float
 
 
@@ -22,7 +28,7 @@ def get_wallet_from_file(context: DeviceContext, path: str) -> Wallet:
 
 def get_wallet(context: DeviceContext, uuid: str, key: str) -> Wallet:
     try:
-        return context.get_client().get_wallet(uuid, key)
+        return Wallet.get_wallet(context.client, uuid, key)
     except UnknownSourceOrDestinationException:
         raise CommandError("Invalid wallet file. Wallet does not exist.")
     except PermissionDeniedException:
@@ -54,9 +60,12 @@ def handle_morphcoin_create(context: DeviceContext, args: List[str]):
         raise CommandError(f"A file with the name '{filepath}' already exists.")
 
     try:
-        wallet: Wallet = context.get_client().create_wallet()
-        if not create_file(context, filepath, wallet.uuid + " " + wallet.key):
-            context.get_client().delete_wallet(wallet)
+        wallet: Wallet = Wallet.create_wallet(context.client)
+        try:
+            create_file(context, filepath, wallet.uuid + " " + wallet.key)
+        except CommandError:
+            wallet.delete()
+            raise
     except AlreadyOwnAWalletException:
         raise CommandError("You already own a wallet")
 
@@ -67,13 +76,13 @@ def handle_morphcoin_list(context: DeviceContext, _):
     List your MorphCoin wallets
     """
 
-    wallets = context.get_client().list_wallets()
+    wallets: List[PublicWallet] = PublicWallet.list_wallets(context.client)
     if not wallets:
         print("You don't own any wallet.")
     else:
         print("Your wallets:")
     for wallet in wallets:
-        print(f" - {wallet}")
+        print(f" - {wallet.uuid}")
 
 
 @handle_morphcoin.subcommand("look")
@@ -100,12 +109,13 @@ def handle_morphcoin_transactions(context: DeviceContext, args: List[str]):
         raise CommandError("usage: morphcoin transactions <filepath>")
 
     wallet: Wallet = get_wallet_from_file(context, args[0])
-    transactions: List[Transaction] = context.get_client().get_transactions(wallet, wallet.transactions, 0)
 
-    if not transactions:
+    if not wallet.transactions:
         print("No transactions found for this wallet.")
-    else:
-        print("Transactions for this wallet:")
+        return
+
+    transactions: List[Transaction] = wallet.get_transactions(wallet.transactions, 0)
+    print("Transactions for this wallet:")
     for transaction in transactions:
         source: str = transaction.source_uuid
         if source == wallet.uuid:
@@ -115,7 +125,7 @@ def handle_morphcoin_transactions(context: DeviceContext, args: List[str]):
             destination: str = "self"
         amount: int = transaction.amount
         usage: str = transaction.usage
-        text = f"{transaction.time_stamp.ctime()}| {strip_float(amount / 1000, 3)} MC: {source} -> {destination}"
+        text = f"{transaction.timestamp.ctime()}| {strip_float(amount / 1000, 3)} MC: {source} -> {destination}"
         if usage:
             text += f" (Usage: {usage})"
         print(text)
@@ -135,7 +145,7 @@ def handle_morphcoin_reset(context: DeviceContext, args: List[str]):
         raise CommandError("Invalid wallet uuid.")
 
     try:
-        context.get_client().reset_wallet(wallet_uuid)
+        PublicWallet.get_public_wallet(context.client, wallet_uuid).reset_wallet()
     except UnknownSourceOrDestinationException:
         raise CommandError("Wallet does not exist.")
     except PermissionDeniedException:
@@ -163,9 +173,9 @@ def handle_morphcoin_watch(context: DeviceContext, args: List[str]):
             if now - last_update > 20:
                 wallet: Wallet = get_wallet(context, wallet.uuid, wallet.key)
                 current_mining_rate: float = 0
-                for _, service in context.get_client().get_miners(wallet.uuid):
-                    if service.running:
-                        current_mining_rate += service.speed
+                for miner in wallet.get_miners():
+                    if miner.running:
+                        current_mining_rate += miner.speed
 
                 last_update: float = now
 
@@ -186,12 +196,14 @@ def handle_morphcoin_watch(context: DeviceContext, args: List[str]):
 def morphcoin_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return context.file_path_completer(args[0])
+    return []
 
 
 @handle_morphcoin_create.completer()
-def morphcoin_completer(context: DeviceContext, args: List[str]) -> List[str]:
+def morphcoin_create_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return context.file_path_completer(args[0], dirs_only=True)
+    return []
 
 
 @command("pay", [DeviceContext])
@@ -225,7 +237,7 @@ def handle_pay(context: DeviceContext, args: List[str]):
         raise CommandError("Not enough coins. Transaction cancelled.")
 
     try:
-        context.get_client().send(wallet, receiver, amount, " ".join(args[3:]))
+        wallet.send(PublicWallet.get_public_wallet(context.client, receiver), amount, " ".join(args[3:]))
         print(f"Sent {strip_float(amount / 1000, 3)} morphcoin to {receiver}.")
     except UnknownSourceOrDestinationException:
         raise CommandError("Destination wallet does not exist.")
@@ -235,3 +247,4 @@ def handle_pay(context: DeviceContext, args: List[str]):
 def pay_completer(context: DeviceContext, args: List[str]) -> List[str]:
     if len(args) == 1:
         return context.file_path_completer(args[0])
+    return []

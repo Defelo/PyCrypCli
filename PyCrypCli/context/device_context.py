@@ -6,7 +6,7 @@ from PyCrypCli.context.context import Context
 from PyCrypCli.context.main_context import MainContext
 from PyCrypCli.context.root_context import RootContext
 from PyCrypCli.exceptions import FileNotFoundException, InvalidWalletFile
-from PyCrypCli.game_objects import Device, File, Service
+from PyCrypCli.game_objects import Device, File, Service, PublicService
 from PyCrypCli.util import extract_wallet
 
 
@@ -20,12 +20,13 @@ class DeviceContext(MainContext):
 
     def update_pwd(self):
         if self.pwd.uuid is not None:
-            self.pwd = self.get_client().get_file(self.host.uuid, self.pwd.uuid)
+            self.pwd = self.host.get_file(self.pwd.uuid)
 
     def is_localhost(self):
         return self.user_uuid == self.host.owner
 
-    def get_prompt(self) -> str:
+    @property
+    def prompt(self) -> str:
         self.update_pwd()
         if self.is_localhost():
             color: str = "\033[38;2;100;221;23m"
@@ -36,12 +37,12 @@ class DeviceContext(MainContext):
     def loop_tick(self):
         super().loop_tick()
 
-        self.host: Device = self.root_context.client.device_info(self.host.uuid)
+        self.host.update()
         self.check_device_permission()
 
     def check_device_permission(self) -> bool:
         if self.host.owner != self.user_uuid and all(
-            service.device != self.host.uuid for service in self.get_client().list_part_owner()
+            service.device != self.host.uuid for service in Service.list_part_owner(self.client)
         ):
             print("You don't have access to this device anymore.")
             self.close()
@@ -68,16 +69,16 @@ class DeviceContext(MainContext):
         Context.reenter_context(self)
 
     def get_files(self, directory: str) -> List[File]:
-        return self.get_client().get_files(self.host.uuid, directory)
+        return self.host.get_files(directory)
 
     def get_parent_dir(self, file: File) -> File:
         if file.parent_dir_uuid is not None:
-            return self.get_client().get_file(self.host.uuid, file.parent_dir_uuid)
+            return self.host.get_file(file.parent_dir_uuid)
         else:
             return self.get_root_dir()
 
     def get_root_dir(self) -> File:
-        return File(None, self.host.uuid, None, None, True, None)
+        return File(self.client, {"device": self.host.uuid, "is_directory": True})
 
     def get_file(self, filename: str, directory: str) -> Optional[File]:
         files: List[File] = self.get_files(directory)
@@ -100,18 +101,11 @@ class DeviceContext(MainContext):
 
         return wallet
 
-    def get_last_portscan(self) -> Tuple[str, List[Service]]:
+    def get_last_portscan(self) -> Tuple[str, List[PublicService]]:
         return self.last_portscan
 
-    def update_last_portscan(self, scan: Tuple[str, List[Service]]):
-        self.last_portscan: Tuple[str, List[Service]] = scan
-
-    def get_service(self, name: str) -> Optional[Service]:
-        services: List[Service] = self.get_client().get_services(self.host.uuid)
-        for service in services:
-            if service.name == name:
-                return service
-        return None
+    def update_last_portscan(self, scan: Tuple[str, List[PublicService]]):
+        self.last_portscan: Tuple[str, List[PublicService]] = scan
 
     def file_path_completer(self, path: str, dirs_only: bool = False) -> List[str]:
         base_path: str = "/".join(path.split("/")[:-1])
@@ -146,5 +140,5 @@ class DeviceContext(MainContext):
             return "/"
         path: List[File] = [file]
         while path[-1].parent_dir_uuid is not None:
-            path.append(self.get_client().get_file(self.host.uuid, path[-1].parent_dir_uuid))
+            path.append(self.host.get_file(path[-1].parent_dir_uuid))
         return "/" + "/".join(f.filename for f in path[::-1])

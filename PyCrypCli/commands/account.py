@@ -28,7 +28,7 @@ def register(context: LoginContext, *_):
     if password != confirm_password:
         raise CommandError("Passwords don't match.")
     try:
-        session_token: str = context.get_client().register(username, mail, password)
+        session_token: str = context.client.register(username, mail, password)
         context.open(MainContext(context.root_context, session_token))
     except WeakPasswordException:
         raise CommandError("Password is too weak.")
@@ -51,14 +51,14 @@ def login(context: LoginContext, *_):
         raise CommandError("\nAborted.")
 
     try:
-        session_token: str = context.get_client().login(username, password)
+        session_token: str = context.client.login(username, password)
         context.open(MainContext(context.root_context, session_token))
     except InvalidLoginException:
         raise CommandError("Invalid Login Credentials.")
 
 
 @command("exit", [LoginContext], aliases=["quit"])
-def handle_main_exit(*_):
+def handle_login_exit(*_):
     """
     Exit PyCrypCli
     """
@@ -72,12 +72,12 @@ def handle_main_exit(context: MainContext, *_):
     Exit PyCrypCli (session will be saved)
     """
 
-    context.get_client().close()
+    context.client.close()
     exit()
 
 
 @command("exit", [DeviceContext], aliases=["quit", "logout"])
-def handle_main_exit(context: DeviceContext, *_):
+def handle_device_exit(context: DeviceContext, *_):
     """
     Disconnect from this device
     """
@@ -107,14 +107,14 @@ def handle_passwd(context: MainContext, *_):
     if new_password != confirm_password:
         raise CommandError("Passwords don't match.")
 
-    context.get_client().close()
+    context.client.close()
     try:
-        context.get_client().change_password(context.username, old_password, new_password)
+        context.client.change_password(context.username, old_password, new_password)
         print("Password updated successfully.")
     except PermissionsDeniedException:
         raise CommandError("Incorrect password or the new password does not meet the requirements.")
     finally:
-        context.get_client().session(context.session_token)
+        context.client.session(context.session_token)
 
 
 @command("_delete_user", [MainContext])
@@ -130,7 +130,7 @@ def handle_delete_user(context: MainContext, *_):
     print("Are you absolutely sure you want to delete this account?")
     try:
         if context.input_no_history("Type in the name of this account to confirm: ") == context.username:
-            context.get_client().delete_user()
+            context.client.delete_user()
             print(f"The account '{context.username}' has been deleted successfully.")
             context.close()
         else:

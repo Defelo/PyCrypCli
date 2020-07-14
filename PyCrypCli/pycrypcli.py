@@ -5,7 +5,7 @@ from typing import List, Optional
 
 import sentry_sdk
 
-from PyCrypCli.commands.command import make_commands, Command
+from PyCrypCli.commands import make_commands, Command
 from PyCrypCli.context import Context, LoginContext, RootContext
 
 try:
@@ -66,9 +66,8 @@ class Frontend:
             self.get_context().loop_tick()
             context: Context = self.get_context()
 
-            prompt: str = context.get_prompt()
             try:
-                cmd, *args = input(prompt).strip().split(" ")
+                cmd, *args = input(context.prompt).strip().split(" ")
                 if not cmd:
                     continue
             except EOFError:  # Ctrl-D
@@ -93,15 +92,15 @@ class Frontend:
 def main():
     print(
         "\033[32m\033[1m"
-        + r"""
-       ______                 __  _     
+        r"""
+       ______                 __  _
       / ____/______  ______  / /_(_)____
      / /   / ___/ / / / __ \/ __/ / ___/
-    / /___/ /  / /_/ / /_/ / /_/ / /__  
-    \____/_/   \__, / .___/\__/_/\___/  
-              /____/_/                  
+    / /___/ /  / /_/ / /_/ / /_/ / /__
+    \____/_/   \__, / .___/\__/_/\___/
+              /____/_/
 """
-        + "\033[0m"
+        "\033[0m"
     )
     print("Python Cryptic Game Client (https://github.com/Defelo/PyCrypCli)")
     print("You can always type `help` for a list of available commands.")

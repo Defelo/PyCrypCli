@@ -1,3 +1,4 @@
+from importlib import import_module
 from typing import Callable, List, Dict, Type, Optional, Tuple
 
 from PyCrypCli.context import Context, COMMAND_FUNCTION, COMPLETER_FUNCTION
@@ -5,6 +6,7 @@ from PyCrypCli.context import Context, COMMAND_FUNCTION, COMPLETER_FUNCTION
 
 class CommandError(Exception):
     def __init__(self, msg: str):
+        super().__init__()
         self.msg: str = msg
 
 
@@ -97,21 +99,21 @@ def command(
 
 
 def make_commands() -> Dict[Type[Context], Dict[str, Command]]:
-    # noinspection PyUnresolvedReferences
-    from PyCrypCli.commands import (
-        account,
-        help,
-        shell,
-        status,
-        device,
-        files,
-        morphcoin,
-        service,
-        miner,
-        inventory,
-        shop,
-        network,
-    )
+    for module in [
+        "account",
+        "help",
+        "shell",
+        "status",
+        "device",
+        "files",
+        "morphcoin",
+        "service",
+        "miner",
+        "inventory",
+        "shop",
+        "network",
+    ]:
+        import_module(f"PyCrypCli.commands.{module}")
 
     result: Dict[Type[Context], Dict[str, Command]] = {}
     for cmd in commands:

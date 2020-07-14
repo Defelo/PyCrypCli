@@ -1,8 +1,8 @@
 import re
-import string
+from datetime import datetime
 from typing import Optional, Tuple, List
 
-hacking_letters = string.ascii_letters + string.digits
+from dateutil.tz import tz
 
 
 def is_uuid(x: str) -> bool:
@@ -14,6 +14,10 @@ def extract_wallet(content: str) -> Optional[Tuple[str, str]]:
         uuid, key = content.split()
         return uuid, key
     return None
+
+
+def convert_timestamp(timestamp: datetime) -> datetime:
+    return timestamp.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal()).replace(tzinfo=None)
 
 
 def strip_float(num: float, precision):

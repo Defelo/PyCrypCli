@@ -1,20 +1,19 @@
-from typing import List, Tuple
+from typing import List
+
+from PyCrypCli.exceptions import ServiceNotFoundException, WalletNotFoundException
 
 from PyCrypCli.commands import CommandError, command
 from PyCrypCli.commands.help import print_help
 from PyCrypCli.context import DeviceContext
-from PyCrypCli.exceptions import *
-from PyCrypCli.game_objects import Service, Miner
+from PyCrypCli.game_objects import Miner
 from PyCrypCli.util import is_uuid
 
 
-def get_miner(context: DeviceContext) -> Tuple[Service, Miner]:
-    service: Service = context.get_service("miner")
-    if service is None:
+def get_miner(context: DeviceContext) -> Miner:
+    try:
+        return context.host.get_miner()
+    except ServiceNotFoundException:
         raise CommandError("You have to create the miner service before you can use it.")
-
-    miner: Miner = context.get_client().get_miner(service.uuid)
-    return service, miner
 
 
 @command("miner", [DeviceContext])
@@ -34,12 +33,12 @@ def handle_miner_look(context: DeviceContext, _):
     View miner configuration
     """
 
-    service, miner = get_miner(context)
+    miner: Miner = get_miner(context)
     print("Destination wallet: " + miner.wallet)
-    print("Running: " + ["no", "yes"][service.running])
+    print("Running: " + ["no", "yes"][miner.running])
     print(f"Power: {miner.power * 100}%")
-    if service.running:
-        print(f"Mining speed: {service.speed} MC/s")
+    if miner.running:
+        print(f"Mining speed: {miner.speed} MC/s")
 
 
 @handle_miner.subcommand("power")
@@ -51,7 +50,7 @@ def handle_miner_power(context: DeviceContext, args: List[str]):
     if len(args) != 1:
         raise CommandError("usage: miner power <percentage>")
 
-    service, _ = get_miner(context)
+    miner: Miner = get_miner(context)
 
     try:
         power: float = float(args[0]) / 100
@@ -61,7 +60,7 @@ def handle_miner_power(context: DeviceContext, args: List[str]):
         raise CommandError("percentage has to be an integer between 0 and 100")
 
     try:
-        context.get_client().miner_power(service.uuid, power)
+        miner.set_power(power)
     except WalletNotFoundException:
         raise CommandError("Wallet does not exist.")
 
@@ -75,12 +74,12 @@ def handle_miner_wallet(context: DeviceContext, args: List[str]):
     if len(args) != 1:
         raise CommandError("usage: miner wallet <uuid>")
 
-    service, _ = get_miner(context)
+    miner: Miner = get_miner(context)
 
     if not is_uuid(args[0]):
         raise CommandError("Invalid wallet uuid")
 
     try:
-        context.get_client().miner_wallet(service.uuid, args[0])
+        miner.set_wallet(args[0])
     except WalletNotFoundException:
         raise CommandError("Wallet does not exist.")

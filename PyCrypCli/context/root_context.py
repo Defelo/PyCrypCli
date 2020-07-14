@@ -6,11 +6,10 @@ from typing import List, Dict, Type, Optional, TYPE_CHECKING
 from pypresence import Presence, InvalidPipe
 
 from PyCrypCli.client import Client
-
 from PyCrypCli.context.context import Context
 
 if TYPE_CHECKING:
-    from PyCrypCli.commands.command import Command
+    from PyCrypCli.commands import Command
 
 
 class RootContext:
@@ -24,7 +23,7 @@ class RootContext:
 
         self.context_stack: List[Context] = []
 
-        self.commands: Dict[Type[Context], Dict[str, Command]] = commands
+        self.commands: Dict[Type[Context], Dict[str, "Command"]] = commands
 
         self.presence: Presence = Presence(client_id="596676243144048640")
         try:

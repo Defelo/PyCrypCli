@@ -69,8 +69,10 @@ class UnknownMicroserviceException(Exception):
 class MicroserviceException(Exception):
     error: str = None
 
-    def __init__(self):
-        super().__init__(self.error)
+    def __init__(self, error: str, *args):
+        super().__init__(error)
+        self.error = error
+        self.params = args
 
 
 class InternalErrorException(MicroserviceException):
@@ -95,6 +97,26 @@ class PermissionDeniedException(MicroserviceException):
 
 class DeviceNotFoundException(MicroserviceException):
     error: str = "device_not_found"
+
+
+class DevicePoweredOffException(MicroserviceException):
+    error: str = "device_powered_off"
+
+
+class MaximumDevicesReachedException(MicroserviceException):
+    error: str = "maximum_devices_reached"
+
+
+class ElementPartNotFoundException(MicroserviceException):
+    error: str = "element_(.+)_not_found"
+
+
+class PartNotInInventoryException(MicroserviceException):
+    error: str = "(.+)_not_in_inventory"
+
+
+class MissingPartException(MicroserviceException):
+    error: str = "missing_(.+)"
 
 
 class IncompatibleCPUSocket(MicroserviceException):

@@ -1,7 +1,8 @@
 import json
+import re
 import ssl
 import time
-from typing import List, Optional
+from typing import List, Optional, Type
 from uuid import uuid4
 
 from websocket import WebSocket, create_connection
@@ -89,9 +90,10 @@ class Client:
         data: dict = response["data"]
         if "error" in data:
             error: str = data["error"]
-            for exception in MicroserviceException.__subclasses__():  # type: MicroserviceException
-                if exception.error == error:
-                    raise exception
+            for exception in MicroserviceException.__subclasses__():  # type: Type[MicroserviceException]
+                match = re.fullmatch(exception.error, error)
+                if match:
+                    raise exception(error, *match.groups())
             raise InvalidServerResponseException(response)
         return data
 

@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 
 class CommandRegistrationException(Exception):
@@ -69,8 +70,8 @@ class UnknownMicroserviceException(Exception):
 class MicroserviceException(Exception):
     error: str = None
 
-    def __init__(self, error: str, *args):
-        super().__init__(error)
+    def __init__(self, error: Optional[str] = None, *args):
+        super().__init__(error or "")
         self.error = error
         self.params = args
 

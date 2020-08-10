@@ -93,7 +93,7 @@ class Client:
             for exception in MicroserviceException.__subclasses__():  # type: Type[MicroserviceException]
                 match = re.fullmatch(exception.error, error)
                 if match:
-                    raise exception(error, *match.groups())
+                    raise exception(error, list(match.groups()))
             raise InvalidServerResponseException(response)
         return data
 

@@ -70,7 +70,7 @@ class UnknownMicroserviceException(Exception):
 class MicroserviceException(Exception):
     error: str = None
 
-    def __init__(self, error: Optional[str] = None, *args):
+    def __init__(self, error: Optional[str] = None, args: Optional[list] = None):
         super().__init__(error or "")
         self.error = error
         self.params = args

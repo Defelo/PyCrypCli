@@ -3,6 +3,7 @@ import sys
 from os import getenv
 from typing import List, Optional
 
+import requests
 import sentry_sdk
 
 from PyCrypCli.commands import make_commands, Command
@@ -14,11 +15,9 @@ except ImportError:
     import pyreadline as readline
 
 if not getenv("DEBUG"):
-    sentry_sdk.init(
-        dsn="https://dbfe81c972c84a77a30d915cbfb538c7@o380163.ingest.sentry.io/5226857",
-        attach_stacktrace=True,
-        shutdown_timeout=5,
-    )
+    response = requests.get("https://sentrydsn.defelo.ml/pycrypcli")
+    if response.ok:
+        sentry_sdk.init(dsn=response.text, attach_stacktrace=True, shutdown_timeout=5)
 
 
 class Frontend:

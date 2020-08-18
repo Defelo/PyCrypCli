@@ -40,7 +40,7 @@ class Frontend:
 
         cmd, *args = text.split(" ") or [""]
         if not args:
-            return [cmd for cmd in self.root_context.get_commands()]
+            return list(self.root_context.get_commands())
 
         comp: Optional[Command] = self.root_context.get_commands().get(cmd, None)
         if comp is None:

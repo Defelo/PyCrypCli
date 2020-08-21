@@ -1,4 +1,5 @@
 import getpass
+import sys
 
 from PyCrypCli.commands import command, CommandError
 from PyCrypCli.context import LoginContext, MainContext, DeviceContext
@@ -59,7 +60,7 @@ def handle_login_exit(*_):
     Exit PyCrypCli
     """
 
-    exit()
+    sys.exit()
 
 
 @command("exit", [MainContext], aliases=["quit"])
@@ -69,7 +70,7 @@ def handle_main_exit(context: MainContext, *_):
     """
 
     context.client.close()
-    exit()
+    sys.exit()
 
 
 @command("exit", [DeviceContext], aliases=["quit", "logout"])

@@ -42,11 +42,6 @@ class UsernameAlreadyExistsException(Exception):
         super().__init__("Username already exists")
 
 
-class InvalidEmailException(Exception):
-    def __init__(self):
-        super().__init__("Invalid Email")
-
-
 class InvalidLoginException(Exception):
     def __init__(self):
         super().__init__("Invalid Login Credentials")

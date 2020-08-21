@@ -13,7 +13,6 @@ from PyCrypCli.exceptions import (
     MicroserviceException,
     WeakPasswordException,
     UsernameAlreadyExistsException,
-    InvalidEmailException,
     InvalidLoginException,
     InvalidSessionTokenException,
     PermissionsDeniedException,
@@ -97,12 +96,12 @@ class Client:
             raise InvalidServerResponseException(response)
         return data
 
-    def register(self, username: str, email: str, password: str) -> str:
+    def register(self, username: str, password: str) -> str:
         if self.logged_in:
             raise LoggedInException
 
         self.init()
-        response: dict = self.request({"action": "register", "name": username, "mail": email, "password": password})
+        response: dict = self.request({"action": "register", "name": username, "password": password})
         if "error" in response:
             self.close()
             error: str = response["error"]
@@ -110,8 +109,6 @@ class Client:
                 raise WeakPasswordException()
             if error == "username already exists":
                 raise UsernameAlreadyExistsException()
-            if error == "invalid email":
-                raise InvalidEmailException()
             raise InvalidServerResponseException(response)
         if "token" not in response:
             self.close()

@@ -5,7 +5,6 @@ from PyCrypCli.context import LoginContext, MainContext, DeviceContext
 from PyCrypCli.exceptions import (
     WeakPasswordException,
     UsernameAlreadyExistsException,
-    InvalidEmailException,
     InvalidLoginException,
     PermissionsDeniedException,
 )
@@ -19,7 +18,6 @@ def register(context: LoginContext, *_):
 
     try:
         username: str = context.input_no_history("Username: ")
-        mail: str = context.input_no_history("Email Address: ")
         password: str = getpass.getpass("Password: ")
         confirm_password: str = getpass.getpass("Confirm Password: ")
     except (KeyboardInterrupt, EOFError):
@@ -28,14 +26,12 @@ def register(context: LoginContext, *_):
     if password != confirm_password:
         raise CommandError("Passwords don't match.")
     try:
-        session_token: str = context.client.register(username, mail, password)
+        session_token: str = context.client.register(username, password)
         context.open(MainContext(context.root_context, session_token))
     except WeakPasswordException:
         raise CommandError("Password is too weak.")
     except UsernameAlreadyExistsException:
         raise CommandError("Username already exists.")
-    except InvalidEmailException:
-        raise CommandError("Invalid email")
 
 
 @command("login", [LoginContext])

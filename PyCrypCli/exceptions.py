@@ -94,9 +94,11 @@ class PermissionDeniedException(MicroserviceException):
 class DeviceNotFoundException(MicroserviceException):
     error: str = "device_not_found"
 
-
 class DevicePoweredOffException(MicroserviceException):
     error: str = "device_powered_off"
+                         
+class DeviceNotOnlineException(MicroserviceException):
+    error: str = "device_not_online"
 
 
 class MaximumDevicesReachedException(MicroserviceException):

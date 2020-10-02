@@ -103,6 +103,10 @@ class DeviceNotOnlineException(MicroserviceException):
     error: str = "device_not_online"
 
 
+class DeviceIsStarterDeviceException(MicroserviceException):
+    error: str = "device_is_starter_device"
+
+
 class MaximumDevicesReachedException(MicroserviceException):
     error: str = "maximum_devices_reached"
 

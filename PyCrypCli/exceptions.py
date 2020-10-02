@@ -99,6 +99,10 @@ class DevicePoweredOffException(MicroserviceException):
     error: str = "device_powered_off"
 
 
+class DeviceNotOnlineException(MicroserviceException):
+    error: str = "device_not_online"
+
+
 class MaximumDevicesReachedException(MicroserviceException):
     error: str = "maximum_devices_reached"
 

@@ -38,7 +38,12 @@ class Wallet(PublicWallet):
         return [
             Transaction(self._client, t)
             for t in self._ms(
-                "currency", ["transactions"], source_uuid=self.uuid, key=self.key, count=count, offset=offset,
+                "currency",
+                ["transactions"],
+                source_uuid=self.uuid,
+                key=self.key,
+                count=count,
+                offset=offset,
             )["transactions"]
         ]
 

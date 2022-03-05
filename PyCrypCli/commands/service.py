@@ -269,9 +269,8 @@ def handle_bruteforce(context: DeviceContext, args: List[str]):
 
             progress: int = int(i / d * width)
             j = i // steps
-            text: str = f"\rBruteforcing {j // 60:02d}:{j % 60:02d} " + "[" + "=" * progress + ">" + " " * (
-                width - progress
-            ) + "] " + f"({i / d * 100:.1f}%) "
+            progress_bar = "[" + "=" * progress + ">" + " " * (width - progress) + "]"
+            text: str = f"\rBruteforcing {j // 60:02d}:{j % 60:02d} {progress_bar} ({i / d * 100:.1f}%) "
             print(end=text, flush=True)
             time.sleep(1 / steps)
         i: int = (i + 1) // steps

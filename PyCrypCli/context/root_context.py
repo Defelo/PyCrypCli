@@ -14,7 +14,10 @@ if TYPE_CHECKING:
 
 class RootContext:
     def __init__(
-        self, server: str, config_file: List[str], commands: Dict[Type[Context], Dict[str, "Command"]],
+        self,
+        server: str,
+        config_file: List[str],
+        commands: Dict[Type[Context], Dict[str, "Command"]],
     ):
         self.client: Client = Client(server)
         self.host: str = re.match(r"^wss?://(.+)$", server).group(1).split("/")[0]

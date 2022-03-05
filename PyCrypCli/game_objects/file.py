@@ -48,7 +48,13 @@ class File(GameObject):
 
     def edit(self, new_content: str):
         self._update(
-            self._ms("device", ["file", "update"], device_uuid=self.device, file_uuid=self.uuid, content=new_content,)
+            self._ms(
+                "device",
+                ["file", "update"],
+                device_uuid=self.device,
+                file_uuid=self.uuid,
+                content=new_content,
+            )
         )
 
     def delete(self):

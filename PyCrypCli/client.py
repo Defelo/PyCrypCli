@@ -154,20 +154,21 @@ class Client:
         self.logged_in: bool = True
         self.timer.start()
 
-    def change_password(self, username: str, old_password: str, new_password: str):
-        if self.logged_in:
-            raise LoggedInException
+    def change_password(self, old_password: str, new_password: str) -> str:
+        if not self.logged_in:
+            raise LoggedOutException
 
-        self.init()
         response: dict = self.request(
-            {"action": "password", "name": username, "password": old_password, "new": new_password},
+            {"action": "password", "password": old_password, "new": new_password},
         )
         if "error" in response:
-            self.close()
             error: str = response["error"]
             if error == "permissions denied":
                 raise PermissionsDeniedException()
-        self.close()
+            raise InvalidServerResponseException(response)
+        if "token" not in response:
+            raise InvalidServerResponseException(response)
+        return response["token"]
 
     def logout(self):
         if not self.logged_in:

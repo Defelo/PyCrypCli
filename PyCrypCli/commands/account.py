@@ -104,14 +104,12 @@ def handle_passwd(context: MainContext, *_):
     if new_password != confirm_password:
         raise CommandError("Passwords don't match.")
 
-    context.client.close()
     try:
-        context.client.change_password(context.username, old_password, new_password)
+        context.session_token = context.client.change_password(old_password, new_password)
+        context.save_session()
         print("Password updated successfully.")
     except PermissionsDeniedException:
         raise CommandError("Incorrect password or the new password does not meet the requirements.")
-    finally:
-        context.client.session(context.session_token)
 
 
 @command("_delete_user", [MainContext])

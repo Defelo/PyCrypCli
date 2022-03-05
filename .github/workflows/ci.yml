@@ -266,3 +266,21 @@ jobs:
       - name: Clear
         if: always()
         run: rm -f ${HOME}/.docker/config.json
+
+      - name: Prune old Docker Images
+        env:
+          TOKEN: ${{ secrets.CR_PAT }}
+          USER: "defelo"
+          NAME: "pycrypcli"
+        run: |
+          set -ex
+
+          AUTH="Authorization: Bearer ${TOKEN}"
+          URL="https://api.github.com/${USER}/packages/container/${NAME}/versions"
+
+          for version in $(curl -H "${AUTH}" "${URL}" | jq -c '.[] | select(.metadata.container.tags==[])'); do
+              id=$(echo "${version}" | jq -r .id)
+              name=$(echo "${version}" | jq -r .name)
+              echo pruning $id $name
+              curl -X DELETE -H "${AUTH}" "${URL}/${id}"
+          done

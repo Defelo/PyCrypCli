@@ -190,7 +190,8 @@ def handle_bruteforce(context: DeviceContext, args: List[str]):
     Start a bruteforce attack
     """
 
-    duration: int = 20
+    duration: str = "100%"
+    chance: float | None = None
     if len(args) in (1, 2) and args[0] in ("ssh", "telnet"):
         last_portscan: Tuple[str, List[PublicService]] = context.get_last_portscan()
         if last_portscan is None:
@@ -216,15 +217,22 @@ def handle_bruteforce(context: DeviceContext, args: List[str]):
             duration: str = args[2]
     else:
         raise CommandError(
-            "usage: service bruteforce <target-device> <target-service> [duration]\n"
-            "       service bruteforce ssh|telnet [duration]",
+            "usage: service bruteforce <target-device> <target-service> [duration|success_chance]\n"
+            "       service bruteforce ssh|telnet [duration|success_chance]",
         )
 
-    if isinstance(duration, str):
-        if duration.isnumeric():
-            duration: int = int(duration)
-        else:
+    if duration.endswith("%"):
+        error = "Success chance has to be a positive number between 0 and 100"
+        try:
+            chance = float(duration[:-1]) / 100
+        except ValueError:
+            raise CommandError(error)
+        if chance < 0 or chance > 1:
+            raise CommandError(error)
+    else:
+        if not duration.isnumeric():
             raise CommandError("Duration has to be a positive integer")
+        duration: int = int(duration)
 
     try:
         service: BruteforceService = BruteforceService.get_bruteforce_service(context.client, context.host.uuid)
@@ -240,6 +248,9 @@ def handle_bruteforce(context: DeviceContext, args: List[str]):
 
     try:
         service.attack(target_device, target_service)
+        if chance is not None:
+            service.update()
+            duration: int = round((chance + 0.1) * 20 / service.speed)
     except ServiceNotFoundException:
         raise CommandError("The target service does not exist.")
     except ServiceNotRunningException:

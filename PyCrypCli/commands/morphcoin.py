@@ -181,8 +181,7 @@ def handle_morphcoin_watch(context: DeviceContext, args: List[str]):
 
             current_balance: int = wallet.amount + int(current_mining_rate * 1000 * (now - last_update))
             print(
-                end=f"\rBalance: {strip_float(current_balance / 1000, 3)} morphcoin "
-                f"({current_mining_rate:.2f} MC/s) ",
+                end=f"\rBalance: {current_balance / 1000:.3f} morphcoin " f"({current_mining_rate:.6f} MC/s) ",
                 flush=False,
             )
             time.sleep(0.1)

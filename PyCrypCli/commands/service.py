@@ -217,7 +217,7 @@ def handle_bruteforce(context: DeviceContext, args: List[str]):
     else:
         raise CommandError(
             "usage: service bruteforce <target-device> <target-service> [duration]\n"
-            "       service bruteforce ssh|telnet [duration]"
+            "       service bruteforce ssh|telnet [duration]",
         )
 
     if isinstance(duration, str):

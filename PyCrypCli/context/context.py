@@ -56,7 +56,12 @@ class Context:
             return
         try:
             self.root_context.presence.update(
-                state=state, details=details, start=start, end=end, large_image=large_image, large_text=large_text
+                state=state,
+                details=details,
+                start=start,
+                end=end,
+                large_image=large_image,
+                large_text=large_text,
             )
         except PyPresenceException:
             pass

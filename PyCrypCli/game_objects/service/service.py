@@ -32,7 +32,8 @@ class Service(PublicService):
     @staticmethod
     def get_service(client: Client, device_uuid: str, service_uuid: str) -> "Service":
         return Service(
-            client, client.ms("service", ["private_info"], device_uuid=device_uuid, service_uuid=service_uuid)
+            client,
+            client.ms("service", ["private_info"], device_uuid=device_uuid, service_uuid=service_uuid),
         )
 
     @staticmethod

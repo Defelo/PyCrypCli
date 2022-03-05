@@ -46,7 +46,7 @@ def handle_shop_list(context: DeviceContext, _):
             for category in categories
             for subcategory in category.subcategories
             for item in subcategory.items
-        ]
+        ],
     )
     tree = []
     for category in categories:

@@ -99,7 +99,7 @@ def main():
     \____/_/   \__, / .___/\__/_/\___/
               /____/_/
 """
-        "\033[0m"
+        "\033[0m",
     )
     print("Python Cryptic Game Client (https://github.com/Defelo/PyCrypCli)")
     print("You can always type `help` for a list of available commands.")

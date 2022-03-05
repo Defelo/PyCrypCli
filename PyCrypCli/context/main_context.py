@@ -76,5 +76,5 @@ class MainContext(LoginContext):
 
     def get_hacked_devices(self) -> List[Device]:
         return list(
-            {Device.get_device(self.client, service.device) for service in Service.list_part_owner(self.client)}
+            {Device.get_device(self.client, service.device) for service in Service.list_part_owner(self.client)},
         )

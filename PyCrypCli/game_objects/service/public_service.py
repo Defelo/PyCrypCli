@@ -22,7 +22,8 @@ class PublicService(GameObject):
     @staticmethod
     def get_public_service(client: Client, device_uuid: str, service_uuid: str) -> "PublicService":
         return PublicService(
-            client, client.ms("service", ["public_info"], device_uuid=device_uuid, service_uuid=service_uuid)
+            client,
+            client.ms("service", ["public_info"], device_uuid=device_uuid, service_uuid=service_uuid),
         )
 
     def update(self):

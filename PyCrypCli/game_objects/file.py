@@ -43,7 +43,7 @@ class File(GameObject):
                 file_uuid=self.uuid,
                 new_filename=new_filename,
                 new_parent_dir_uuid=new_parent_dir_uuid,
-            )
+            ),
         )
 
     def edit(self, new_content: str):
@@ -54,7 +54,7 @@ class File(GameObject):
                 device_uuid=self.device,
                 file_uuid=self.uuid,
                 content=new_content,
-            )
+            ),
         )
 
     def delete(self):

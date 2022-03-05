@@ -30,7 +30,7 @@ def get_device(context: MainContext, name_or_uuid: str, devices: Optional[List[D
             raise CommandError(f"There is no device with the name '{name_or_uuid}'.")
         if len(found_devices) > 1:
             raise CommandError(
-                f"There is more than one device with the name '{name_or_uuid}'. You need to specify its UUID."
+                f"There is more than one device with the name '{name_or_uuid}'. You need to specify its UUID.",
             )
         return found_devices[0]
 

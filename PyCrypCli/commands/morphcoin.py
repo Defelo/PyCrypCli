@@ -214,7 +214,7 @@ def handle_pay(context: DeviceContext, args: List[str]):
 
     if len(args) < 3:
         raise CommandError(
-            "usage: pay <filename> <receiver> <amount> [usage]\n" "   or: pay <uuid> <key> <receiver> <amount> [usage]"
+            "usage: pay <filename> <receiver> <amount> [usage]\n" "   or: pay <uuid> <key> <receiver> <amount> [usage]",
         )
 
     if extract_wallet(f"{args[0]} {args[1]}") is not None:

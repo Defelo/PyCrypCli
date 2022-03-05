@@ -160,7 +160,7 @@ class Client:
 
         self.init()
         response: dict = self.request(
-            {"action": "password", "name": username, "password": old_password, "new": new_password}
+            {"action": "password", "name": username, "password": old_password, "new": new_password},
         )
         if "error" in response:
             self.close()

@@ -197,7 +197,10 @@ def handle_rm(context: DeviceContext, args: List[str]):
 
 
 def check_file_movable(
-    context: DeviceContext, source: str, destination: str, move: bool
+    context: DeviceContext,
+    source: str,
+    destination: str,
+    move: bool,
 ) -> Optional[Tuple[File, str, str]]:
     file: Optional[File] = context.path_to_file(source)
     if file is None:

@@ -13,7 +13,12 @@ class CommandError(Exception):
 
 class Command:
     def __init__(
-        self, name: str, func: COMMAND_FUNCTION, description: str, contexts: List[Type[Context]], aliases: List[str]
+        self,
+        name: str,
+        func: COMMAND_FUNCTION,
+        description: str,
+        contexts: List[Type[Context]],
+        aliases: List[str],
     ):
         self.name: str = name
         self.func: COMMAND_FUNCTION = func
@@ -60,7 +65,11 @@ class Command:
         return decorator
 
     def subcommand(
-        self, name: str, *, contexts: List[Type[Context]] = None, aliases: List[str] = None
+        self,
+        name: str,
+        *,
+        contexts: List[Type[Context]] = None,
+        aliases: List[str] = None,
     ) -> Callable[[COMMAND_FUNCTION], "Command"]:
         if contexts is None:
             contexts = self.contexts
@@ -90,7 +99,9 @@ commands: List[Command] = []
 
 
 def command(
-    name: str, contexts: List[Type[Context]], aliases: List[str] = None
+    name: str,
+    contexts: List[Type[Context]],
+    aliases: List[str] = None,
 ) -> Callable[[COMMAND_FUNCTION], Command]:
     def decorator(func: COMMAND_FUNCTION) -> Command:
         if func.__doc__ is None:

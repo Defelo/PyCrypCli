@@ -15,7 +15,7 @@ except ImportError:
     import pyreadline as readline
 
 if not getenv("DEBUG"):
-    response = requests.get("https://sentrydsn.defelo.ml/pycrypcli")
+    response = requests.get("https://sentrydsn.defelo.de/pycrypcli")
     if response.ok:
         sentry_sdk.init(dsn=response.text, attach_stacktrace=True, shutdown_timeout=5)
 

@@ -50,6 +50,9 @@ class Wallet(PublicWallet):
     def get_miners(self) -> List[Miner]:
         return Miner.get_miners(self._client, self.uuid)
 
+    def get_mining_rate(self) -> float:
+        return sum(miner.speed for miner in self.get_miners() if miner.running)
+
     def send(self, destination: PublicWallet, amount: int, usage: str):
         self._ms(
             "currency",

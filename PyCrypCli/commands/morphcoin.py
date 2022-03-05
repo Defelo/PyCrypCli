@@ -95,8 +95,13 @@ def handle_morphcoin_look(context: DeviceContext, args: List[str]):
         raise CommandError("usage: morphcoin look <filepath>")
 
     wallet: Wallet = get_wallet_from_file(context, args[0])
+    mining_rate = wallet.get_mining_rate()
+
     print(f"UUID: {wallet.uuid}")
-    print(f"Balance: {strip_float(wallet.amount / 1000, 3)} morphcoin")
+    out = f"Balance: {strip_float(wallet.amount / 1000, 3)} morphcoin"
+    if mining_rate:
+        out += f" (+{strip_float(mining_rate, 6)} MC/s)"
+    print(out)
 
 
 @handle_morphcoin.subcommand("transactions")
@@ -172,16 +177,12 @@ def handle_morphcoin_watch(context: DeviceContext, args: List[str]):
 
             if now - last_update > 20:
                 wallet: Wallet = get_wallet(context, wallet.uuid, wallet.key)
-                current_mining_rate: float = 0
-                for miner in wallet.get_miners():
-                    if miner.running:
-                        current_mining_rate += miner.speed
-
+                current_mining_rate: float = wallet.get_mining_rate()
                 last_update: float = now
 
             current_balance: int = wallet.amount + int(current_mining_rate * 1000 * (now - last_update))
             print(
-                end=f"\rBalance: {current_balance / 1000:.3f} morphcoin " f"({current_mining_rate:.6f} MC/s) ",
+                end=f"\rBalance: {current_balance / 1000:.3f} morphcoin " f"(+{current_mining_rate:.6f} MC/s) ",
                 flush=False,
             )
             time.sleep(0.1)

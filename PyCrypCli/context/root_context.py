@@ -3,7 +3,7 @@ import os
 import re
 from typing import List, Dict, Type, Optional, TYPE_CHECKING
 
-from pypresence import Presence, InvalidPipe
+from pypresence import Presence, PyPresenceException
 
 from PyCrypCli.client import Client
 from PyCrypCli.context.context import Context
@@ -28,10 +28,10 @@ class RootContext:
 
         self.commands: Dict[Type[Context], Dict[str, "Command"]] = commands
 
-        self.presence: Presence = Presence(client_id="596676243144048640")
         try:
+            self.presence: Presence = Presence(client_id="596676243144048640")
             self.presence.connect()
-        except (FileNotFoundError, InvalidPipe, ConnectionRefusedError):
+        except (PyPresenceException, FileNotFoundError, ConnectionRefusedError):
             self.presence = None
 
     def open(self, context: "Context"):

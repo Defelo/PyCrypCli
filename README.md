@@ -25,3 +25,8 @@ $ cd PyCrypCli/
 $ sudo pip3 install -r requirements.txt
 $ python3.10 pycrypcli.py [<server>]
 ```
+
+## Or pull the [Docker Image](https://ghcr.io/defelo/pycrypcli)
+```
+$ sudo docker run -it --rm ghcr.io/defelo/pycrypcli
+```

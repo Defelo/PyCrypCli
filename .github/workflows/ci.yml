@@ -259,6 +259,12 @@ jobs:
           set -ex
 
           for file in docker*/*.tar.gz; do
+            [[ "$file" == *_linux-amd64.tar.gz ]] && continue
+            echo Loading $file
+            docker load -qi $file | cut -d' ' -f3 | grep '^ghcr.io/' | xargs -L1 docker push
+          done
+          
+          for file in docker*/*_linux-amd64.tar.gz; do
             echo Loading $file
             docker load -qi $file | cut -d' ' -f3 | grep '^ghcr.io/' | xargs -L1 docker push
           done

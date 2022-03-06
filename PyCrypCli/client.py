@@ -5,6 +5,7 @@ import time
 from typing import List, Optional, Type
 from uuid import uuid4
 
+import sentry_sdk
 from websocket import WebSocket, create_connection
 
 from PyCrypCli.exceptions import (
@@ -58,12 +59,16 @@ class Client:
         while self.waiting_for_response:
             time.sleep(0.01)
         self.waiting_for_response: bool = True
-        self.websocket.send(json.dumps(data))
+        data = json.dumps(data)
+        sentry_sdk.add_breadcrumb(category="ws", message=f"send: {data}", level="debug")
+        self.websocket.send(data)
         if no_response:
             self.waiting_for_response: bool = False
             return {}
         while True:
-            response: dict = json.loads(self.websocket.recv())
+            data = self.websocket.recv()
+            sentry_sdk.add_breadcrumb(category="ws", message=f"recv: {data}", level="debug")
+            response: dict = json.loads(data)
             if "notify-id" in response:
                 self.notifications.append(response)
             else:

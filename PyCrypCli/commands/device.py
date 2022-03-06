@@ -165,7 +165,7 @@ def handle_device_build(context: MainContext, args: List[str]):
         print(f"Hostname: {device.name} (UUID: {device.uuid})")
 
 
-@handle_device.subcommand("boot")
+@handle_device.subcommand("boot", aliases=["start"])
 def handle_device_boot(context: MainContext, args: List[str]):
     """
     Boot a device
@@ -181,7 +181,7 @@ def handle_device_boot(context: MainContext, args: List[str]):
     device.power()
 
 
-@handle_device.subcommand("shutdown")
+@handle_device.subcommand("shutdown", aliases=["poweroff", "halt"])
 def handle_device_shutdown(context: MainContext, args: List[str]):
     """
     Shut down a device
@@ -195,6 +195,20 @@ def handle_device_shutdown(context: MainContext, args: List[str]):
         raise CommandError("This device is not powered on.")
 
     device.power()
+    if isinstance(context, DeviceContext) and context.host.uuid == device.uuid:
+        context.close()
+
+
+@command("shutdown", [DeviceContext], ["poweroff", "halt"])
+def handle_shutdown(context: DeviceContext, _):
+    """Shutdown this device"""
+
+    device: Device = context.host
+    if not device.powered_on:
+        raise CommandError("This device is not powered on.")
+
+    device.power()
+    context.close()
 
 
 @handle_device.subcommand("connect")
@@ -208,7 +222,9 @@ def handle_device_connect(context: MainContext, args: List[str]):
 
     device: Device = get_device(context, args[0])
     if not device.powered_on:
-        raise CommandError("This device is not powered on.")
+        if not context.confirm("This device is not powered on. Do you want to start it now?"):
+            return
+        device.power()
 
     context.open(DeviceContext(context.root_context, context.session_token, device))
 

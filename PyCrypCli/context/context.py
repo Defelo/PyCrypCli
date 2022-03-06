@@ -43,6 +43,9 @@ class Context:
                 return choice
             print(f"'{choice}' is not one of the following:", ", ".join(options))
 
+    def confirm(self, question: str) -> bool:
+        return self.ask(question + " [yes|no] ", ["yes", "no"]) == "yes"
+
     def update_presence(
         self,
         state: str = None,

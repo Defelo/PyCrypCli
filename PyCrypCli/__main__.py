@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
 
-from PyCrypCli.pycrypcli import main
+from .pycrypcli import main
 
 main()

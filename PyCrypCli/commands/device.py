@@ -9,7 +9,8 @@ from ..exceptions import (
     IncompatibleCPUSocketError,
     NotEnoughRAMSlotsError,
     IncompatibleRAMTypesError,
-    IncompatibleDriverInterfaceError, DeviceIsStarterDeviceError,
+    IncompatibleDriverInterfaceError,
+    DeviceIsStarterDeviceError,
 )
 from ..models import Device, ResourceUsage, DeviceHardware, InventoryElement, HardwareConfig
 from ..util import is_uuid

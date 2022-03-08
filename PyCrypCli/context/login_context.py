@@ -29,7 +29,7 @@ class LoginContext(Context):
         self.login_loop_presence()
 
     def load_session(self) -> None:
-        from PyCrypCli.context.main_context import MainContext
+        from .main_context import MainContext
 
         config: Config = self.root_context.read_config_file()
 

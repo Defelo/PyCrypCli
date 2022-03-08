@@ -104,7 +104,7 @@ class Client:
         self.waiting_for_response = False
         return response
 
-    def ms(self, ms: str, endpoint: list[str], **data: Any) -> dict[str, Any]:
+    def ms(self, ms: str, endpoint: list[str], *, retry: int = 0, **data: Any) -> dict[str, Any]:
         if not self.logged_in:
             raise LoggedOutError
 
@@ -127,6 +127,9 @@ class Client:
                 if exception.error and (match := re.fullmatch(exception.error, error)):
                     raise exception(error, list(match.groups()))
             raise InvalidServerResponseError(response)
+
+        if not response_data and retry:
+            return self.ms(ms, endpoint, retry=retry - 1, **data)
 
         return response_data
 

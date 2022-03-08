@@ -25,7 +25,7 @@ class Miner(Service):
     def get_miners(client: Client, wallet_uuid: str) -> list[Miner]:
         return [
             Miner.parse(client, {**miner["service"], **miner["miner"]})
-            for miner in client.ms("service", ["miner", "list"], wallet_uuid=wallet_uuid)["miners"]
+            for miner in client.ms("service", ["miner", "list"], retry=5, wallet_uuid=wallet_uuid)["miners"]
         ]
 
     @staticmethod

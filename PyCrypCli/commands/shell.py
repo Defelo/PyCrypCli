@@ -1,11 +1,13 @@
+from typing import Any
+
 import sentry_sdk
 
-from PyCrypCli.commands import command
-from PyCrypCli.context import LoginContext, MainContext, DeviceContext, Context
+from .command import command
+from ..context import LoginContext, MainContext, DeviceContext
 
 
 @command("clear", [LoginContext, MainContext, DeviceContext])
-def handle_main_clear(*_):
+def handle_main_clear(*_: Any) -> None:
     """
     Clear the console
     """
@@ -14,7 +16,7 @@ def handle_main_clear(*_):
 
 
 @command("history", [MainContext, DeviceContext])
-def handle_main_history(context: MainContext, *_):
+def handle_main_history(context: MainContext, _: Any) -> None:
     """
     Show the history of commands entered in this session
     """
@@ -24,14 +26,14 @@ def handle_main_history(context: MainContext, *_):
 
 
 @command("feedback", [LoginContext, MainContext, DeviceContext])
-def handle_feedback(context: Context, *_):
+def handle_feedback(context: LoginContext, _: Any) -> None:
     """
     Send feedback to the developer
     """
 
     print("Please type your feedback about PyCrypCli below. When you are done press Ctrl+C")
     feedback = ["User Feedback"]
-    if hasattr(context, "username"):
+    if isinstance(context, MainContext) and context.username:
         feedback[0] += " from " + context.username
     while True:
         try:

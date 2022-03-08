@@ -1,275 +1,278 @@
 import json
-from typing import Optional
+from typing import Any
 
 
-class CommandRegistrationException(Exception):
+class ClientNotReadyError(Exception):
+    pass
+
+
+class InvalidServerURLError(Exception):
+    pass
+
+
+class CommandRegistrationError(Exception):
     def __init__(self, name: str, subcommand: bool = False):
         super().__init__(f"The {'sub' * subcommand}command {name} has already been registered.")
 
 
-class NoDocStringException(Exception):
+class NoDocStringError(Exception):
     def __init__(self, name: str, subcommand: bool = False):
         super().__init__(f"The {'sub' * subcommand}command {name} is missing a docstring.")
 
 
-class LoggedInException(Exception):
-    def __init__(self):
+class LoggedInError(Exception):
+    def __init__(self) -> None:
         super().__init__("Endpoint cannot be used while client is logged in.")
 
 
-class LoggedOutException(Exception):
-    def __init__(self):
+class LoggedOutError(Exception):
+    def __init__(self) -> None:
         super().__init__("Endpoint can only be used while client is logged in.")
 
 
-class InvalidServerResponseException(Exception):
-    def __init__(self, response: dict):
+class InvalidServerResponseError(Exception):
+    def __init__(self, response: dict[Any, Any]):
         super().__init__("Invalid Server Response: " + json.dumps(response))
 
 
-class InvalidSessionTokenException(Exception):
-    def __init__(self):
+class InvalidSessionTokenError(Exception):
+    def __init__(self) -> None:
         super().__init__("Invalid session token")
 
 
-class WeakPasswordException(Exception):
-    def __init__(self):
+class WeakPasswordError(Exception):
+    def __init__(self) -> None:
         super().__init__("Password is too weak")
 
 
-class UsernameAlreadyExistsException(Exception):
-    def __init__(self):
+class UsernameAlreadyExistsError(Exception):
+    def __init__(self) -> None:
         super().__init__("Username already exists")
 
 
-class InvalidLoginException(Exception):
-    def __init__(self):
+class InvalidLoginError(Exception):
+    def __init__(self) -> None:
         super().__init__("Invalid Login Credentials")
 
 
-class PermissionsDeniedException(Exception):
-    def __init__(self):
-        super().__init__("Permissions Denied")
-
-
-class InvalidWalletFile(Exception):
-    def __init__(self):
+class InvalidWalletFileError(Exception):
+    def __init__(self) -> None:
         super().__init__("Invalid wallet file")
 
 
-class UnknownMicroserviceException(Exception):
+class UnknownMicroserviceError(Exception):
     def __init__(self, ms: str):
         super().__init__("Unknown Microservice: " + ms)
 
 
 class MicroserviceException(Exception):
-    error: str = None
+    error: str | None = None
 
-    def __init__(self, error: Optional[str] = None, args: Optional[list] = None):
+    def __init__(self, error: str | None = None, args: list[Any] | None = None):
         super().__init__(error or "")
         self.error = error
         self.params = args
 
 
-class InternalErrorException(MicroserviceException):
+class InternalError(MicroserviceException):
     error: str = "internal error"
 
 
-class NoResponseTimeoutException(MicroserviceException):
+class NoResponseTimeoutError(MicroserviceException):
     error: str = "no response - timeout"
 
 
-class InvalidRequestException(MicroserviceException):
+class InvalidRequestError(MicroserviceException):
     error: str = "invalid_request"
 
 
-class AlreadyOwnADeviceException(MicroserviceException):
+class AlreadyOwnADeviceError(MicroserviceException):
     error: str = "already_own_a_device"
 
 
-class PermissionDeniedException(MicroserviceException):
+class PermissionDeniedError(MicroserviceException):
     error: str = "permission_denied"
 
 
-class DeviceNotFoundException(MicroserviceException):
+class DeviceNotFoundError(MicroserviceException):
     error: str = "device_not_found"
 
 
-class DevicePoweredOffException(MicroserviceException):
+class DevicePoweredOffError(MicroserviceException):
     error: str = "device_powered_off"
 
 
-class DeviceNotOnlineException(MicroserviceException):
+class DeviceNotOnlineError(MicroserviceException):
     error: str = "device_not_online"
 
 
-class DeviceIsStarterDeviceException(MicroserviceException):
+class DeviceIsStarterDeviceError(MicroserviceException):
     error: str = "device_is_starter_device"
 
 
-class MaximumDevicesReachedException(MicroserviceException):
+class MaximumDevicesReachedError(MicroserviceException):
     error: str = "maximum_devices_reached"
 
 
-class ElementPartNotFoundException(MicroserviceException):
+class ElementPartNotFoundError(MicroserviceException):
     error: str = "element_(.+)_not_found"
 
 
-class PartNotInInventoryException(MicroserviceException):
+class PartNotInInventoryError(MicroserviceException):
     error: str = "(.+)_not_in_inventory"
 
 
-class MissingPartException(MicroserviceException):
+class MissingPartError(MicroserviceException):
     error: str = "missing_(.+)"
 
 
-class IncompatibleCPUSocket(MicroserviceException):
+class IncompatibleCPUSocketError(MicroserviceException):
     error: str = "incompatible_cpu_socket"
 
 
-class NotEnoughRAMSlots(MicroserviceException):
+class NotEnoughRAMSlotsError(MicroserviceException):
     error: str = "not_enough_ram_slots"
 
 
-class IncompatibleRAMTypes(MicroserviceException):
+class IncompatibleRAMTypesError(MicroserviceException):
     error: str = "incompatible_ram_types"
 
 
-class IncompatibleDriverInterface(MicroserviceException):
+class IncompatibleDriverInterfaceError(MicroserviceException):
     error: str = "incompatible_drive_interface"
 
 
-class FileNotFoundException(MicroserviceException):
+class FileNotFoundError(MicroserviceException):
     error: str = "file_not_found"
 
 
-class FileNotChangeableException(MicroserviceException):
+class FileNotChangeableError(MicroserviceException):
     error: str = "file_not_changeable"
 
 
-class FileAlreadyExistsException(MicroserviceException):
+class FileAlreadyExistsError(MicroserviceException):
     error: str = "file_already_exists"
 
 
-class ParentDirectoryNotFound(MicroserviceException):
+class ParentDirectoryNotFoundError(MicroserviceException):
     error: str = "parent_directory_not_found"
 
 
-class CanNotMoveDirIntoItselfException(MicroserviceException):
+class CanNotMoveDirIntoItselfError(MicroserviceException):
     error: str = "can_not_move_dir_into_itself"
 
 
-class DirectoriesCanNotBeUpdatedException(MicroserviceException):
+class DirectoriesCanNotBeUpdatedError(MicroserviceException):
     error: str = "directories_can_not_be_updated"
 
 
-class DirectoryCanNotHaveTextContentException(MicroserviceException):
+class DirectoryCanNotHaveTextContentError(MicroserviceException):
     error: str = "directory_can_not_have_textcontent"
 
 
-class AlreadyOwnAWalletException(MicroserviceException):
+class AlreadyOwnAWalletError(MicroserviceException):
     error: str = "already_own_a_wallet"
 
 
-class UnknownSourceOrDestinationException(MicroserviceException):
+class UnknownSourceOrDestinationError(MicroserviceException):
     error: str = "unknown_source_or_destination"
 
 
-class NotEnoughCoinsException(MicroserviceException):
+class NotEnoughCoinsError(MicroserviceException):
     error: str = "not_enough_coins"
 
 
-class AlreadyOwnThisServiceException(MicroserviceException):
+class AlreadyOwnThisServiceError(MicroserviceException):
     error: str = "already_own_this_service"
 
 
-class ServiceNotSupportedException(MicroserviceException):
+class ServiceNotSupportedError(MicroserviceException):
     error: str = "service_not_supported"
 
 
-class ServiceNotRunningException(MicroserviceException):
+class ServiceNotRunningError(MicroserviceException):
     error: str = "service_not_running"
 
 
-class CannotToggleDirectlyException(MicroserviceException):
+class CannotToggleDirectlyError(MicroserviceException):
     error: str = "cannot_toggle_directly"
 
 
-class CouldNotStartService(MicroserviceException):
+class CouldNotStartServiceError(MicroserviceException):
     error: str = "could_not_start_service"
 
 
-class WalletNotFoundException(MicroserviceException):
+class WalletNotFoundError(MicroserviceException):
     error: str = "wallet_not_found"
 
 
-class MinerNotFoundException(MicroserviceException):
+class MinerNotFoundError(MicroserviceException):
     error: str = "miner_not_found"
 
 
-class ServiceNotFoundException(MicroserviceException):
+class ServiceNotFoundError(MicroserviceException):
     error: str = "service_not_found"
 
 
-class UnknownServiceException(MicroserviceException):
+class UnknownServiceError(MicroserviceException):
     error: str = "unknown_service"
 
 
-class ServiceCannotBeUsedException(MicroserviceException):
+class ServiceCannotBeUsedError(MicroserviceException):
     error: str = "service_cannot_be_used"
 
 
-class CannotDeleteEnforcedServiceException(MicroserviceException):
+class CannotDeleteEnforcedServiceError(MicroserviceException):
     error: str = "cannot_delete_enforced_service"
 
 
-class AttackNotRunningException(MicroserviceException):
+class AttackNotRunningError(MicroserviceException):
     error: str = "attack_not_running"
 
 
-class ItemNotFoundException(MicroserviceException):
+class ItemNotFoundError(MicroserviceException):
     error: str = "item_not_found"
 
 
-class CannotTradeWithYourselfException(MicroserviceException):
+class CannotTradeWithYourselfError(MicroserviceException):
     error: str = "cannot_trade_with_yourself"
 
 
-class UserUUIDDoesNotExistException(MicroserviceException):
+class UserUUIDDoesNotExistError(MicroserviceException):
     error: str = "user_uuid_does_not_exist"
 
 
-class NetworkNotFoundException(MicroserviceException):
+class NetworkNotFoundError(MicroserviceException):
     error: str = "network_not_found"
 
 
-class AlreadyMemberOfNetworkException(MicroserviceException):
+class AlreadyMemberOfNetworkError(MicroserviceException):
     error: str = "already_member_of_network"
 
 
-class InvitationAlreadyExistsException(MicroserviceException):
+class InvitationAlreadyExistsError(MicroserviceException):
     error: str = "invitation_already_exists"
 
 
-class CannotLeaveOwnNetworkException(MicroserviceException):
+class CannotLeaveOwnNetworkError(MicroserviceException):
     error: str = "cannot_leave_own_network"
 
 
-class CannotKickOwnerException(MicroserviceException):
+class CannotKickOwnerError(MicroserviceException):
     error: str = "cannot_kick_owner"
 
 
-class MaximumNetworksReachedException(MicroserviceException):
+class MaximumNetworksReachedError(MicroserviceException):
     error: str = "maximum_networks_reached"
 
 
-class InvalidNameException(MicroserviceException):
+class InvalidNameError(MicroserviceException):
     error: str = "invalid_name"
 
 
-class NameAlreadyInUseException(MicroserviceException):
+class NameAlreadyInUseError(MicroserviceException):
     error: str = "name_already_in_use"
 
 
-class NoPermissionsException(MicroserviceException):
+class NoPermissionsError(MicroserviceException):
     error: str = "no_permissions"

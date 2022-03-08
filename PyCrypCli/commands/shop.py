@@ -1,16 +1,16 @@
-from typing import List, Dict
+from typing import Any
 
-from PyCrypCli.client import Client
-from PyCrypCli.commands import command, CommandError
-from PyCrypCli.commands.help import print_help
-from PyCrypCli.commands.morphcoin import get_wallet_from_file
-from PyCrypCli.context import DeviceContext
-from PyCrypCli.exceptions import ItemNotFoundException, NotEnoughCoinsException
-from PyCrypCli.game_objects import Wallet, ShopCategory, ShopProduct
-from PyCrypCli.util import strip_float, print_tree
+from .command import command, CommandError
+from .help import print_help
+from .morphcoin import get_wallet_from_file
+from ..client import Client
+from ..context import DeviceContext
+from ..exceptions import ItemNotFoundError, NotEnoughCoinsError
+from ..models import Wallet, ShopCategory, ShopProduct
+from ..util import strip_float, print_tree
 
 
-def list_shop_products(client: Client) -> Dict[str, ShopProduct]:
+def list_shop_products(client: Client) -> dict[str, ShopProduct]:
     out = {}
     for category in ShopCategory.shop_list(client):
         for subcategory in category.subcategories:
@@ -22,7 +22,7 @@ def list_shop_products(client: Client) -> Dict[str, ShopProduct]:
 
 
 @command("shop", [DeviceContext])
-def handle_shop(context: DeviceContext, args: List[str]):
+def handle_shop(context: DeviceContext, args: list[str]) -> None:
     """
     Buy new hardware and more in the shop
     """
@@ -33,12 +33,12 @@ def handle_shop(context: DeviceContext, args: List[str]):
 
 
 @handle_shop.subcommand("list")
-def handle_shop_list(context: DeviceContext, _):
+def handle_shop_list(context: DeviceContext, _: Any) -> None:
     """
     List shop prodcuts
     """
 
-    categories: List[ShopCategory] = ShopCategory.shop_list(context.client)
+    categories: list[ShopCategory] = ShopCategory.shop_list(context.client)
     maxlength = max(
         *[len(item.name) + 4 for category in categories for item in category.items],
         *[
@@ -52,7 +52,7 @@ def handle_shop_list(context: DeviceContext, _):
     for category in categories:
         category_tree = []
         for subcategory in category.subcategories:
-            subcategory_tree = [
+            subcategory_tree: list[tuple[str, list[Any]]] = [
                 (item.name.ljust(maxlength) + strip_float(item.price / 1000, 3) + " MC", [])
                 for item in subcategory.items
             ]
@@ -68,7 +68,7 @@ def handle_shop_list(context: DeviceContext, _):
 
 
 @handle_shop.subcommand("buy")
-def handle_shop_buy(context: DeviceContext, args: List[str]):
+def handle_shop_buy(context: DeviceContext, args: list[str]) -> None:
     """
     Buy something in the shop
     """
@@ -80,21 +80,21 @@ def handle_shop_buy(context: DeviceContext, args: List[str]):
 
     wallet: Wallet = get_wallet_from_file(context, wallet_filepath)
 
-    shop_products: Dict[str, ShopProduct] = list_shop_products(context.client)
+    shop_products: dict[str, ShopProduct] = list_shop_products(context.client)
     if product_name not in shop_products:
         raise CommandError("This product does not exist in the shop.")
     product: ShopProduct = shop_products[product_name]
 
     try:
         product.buy(wallet)
-    except ItemNotFoundException:
+    except ItemNotFoundError:
         raise CommandError("This product does not exist in the shop.")
-    except NotEnoughCoinsException:
+    except NotEnoughCoinsError:
         raise CommandError("You don't have enough coins on your wallet to buy this product.")
 
 
 @handle_shop_buy.completer()
-def shop_completer(context: DeviceContext, args: List[str]) -> List[str]:
+def shop_completer(context: DeviceContext, args: list[str]) -> list[str]:
     if len(args) == 1:
         return list(list_shop_products(context.client))
     if len(args) == 2:

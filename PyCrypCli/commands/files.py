@@ -1,43 +1,39 @@
-from typing import List, Optional, Tuple
+from typing import Any, cast
 
-from PyCrypCli.exceptions import (
-    FileAlreadyExistsException,
-    InvalidWalletFile,
-    UnknownSourceOrDestinationException,
-    PermissionDeniedException,
-    FileNotChangeableException,
+from .command import command, CommandError
+from ..context import DeviceContext
+from ..exceptions import (
+    FileAlreadyExistsError,
+    InvalidWalletFileError,
+    UnknownSourceOrDestinationError,
+    PermissionDeniedError,
+    FileNotChangeableError,
 )
-
-from PyCrypCli.commands import command, CommandError
-from PyCrypCli.context import DeviceContext
-from PyCrypCli.game_objects import File, Wallet
+from ..models import File, Wallet
 
 
 @command("ls", [DeviceContext], aliases=["l", "dir"])
-def handle_ls(context: DeviceContext, args: List[str]):
+def handle_ls(context: DeviceContext, args: list[str]) -> None:
     """
     List all files
     """
 
-    if not args:
-        directory: File = context.pwd
-    else:
-        directory: File = context.path_to_file(args[0])
-        if directory is None:
-            raise CommandError("No such file or directory.")
+    directory = context.pwd if not args else context.path_to_file(args[0])
+    if directory is None:
+        raise CommandError("No such file or directory.")
 
     if directory.is_directory:
-        files: List[File] = context.get_files(directory.uuid)
-        files.sort(key=lambda f: [1 - f.is_directory, f.filename])
+        files: list[File] = context.get_files(directory.uuid)
+        files.sort(key=lambda f: [1 - f.is_directory, f.name])
     else:
-        files: List[File] = [directory]
+        files = [directory]
 
     for file in files:
-        print(["[FILE] ", "[DIR]  "][file.is_directory] + file.filename)
+        print(["[FILE] ", "[DIR]  "][file.is_directory] + file.name)
 
 
 @command("pwd", [DeviceContext])
-def handle_pwd(context: DeviceContext, *_):
+def handle_pwd(context: DeviceContext, _: Any) -> None:
     """
     Print the current working directory
     """
@@ -46,7 +42,7 @@ def handle_pwd(context: DeviceContext, *_):
 
 
 @command("mkdir", [DeviceContext])
-def handle_mkdir(context: DeviceContext, args: List[str]):
+def handle_mkdir(context: DeviceContext, args: list[str]) -> None:
     """
     Create a new directory
     """
@@ -55,7 +51,7 @@ def handle_mkdir(context: DeviceContext, args: List[str]):
         raise CommandError("usage: mkdir <dirname>")
 
     *path, dirname = args[0].split("/")
-    parent: Optional[File] = context.path_to_file("/".join(path))
+    parent: File | None = context.path_to_file("/".join(path))
     if parent is None:
         raise CommandError("No such file or directory.")
     if not parent.is_directory:
@@ -63,12 +59,12 @@ def handle_mkdir(context: DeviceContext, args: List[str]):
 
     try:
         context.host.create_file(dirname, "", True, parent.uuid)
-    except FileAlreadyExistsException:
+    except FileAlreadyExistsError:
         raise CommandError("There already exists a file with this name.")
 
 
 @command("cd", [DeviceContext])
-def handle_cd(context: DeviceContext, args: List[str]):
+def handle_cd(context: DeviceContext, args: list[str]) -> None:
     """
     Change the current working directory
     """
@@ -76,7 +72,7 @@ def handle_cd(context: DeviceContext, args: List[str]):
     if not args:
         context.pwd = context.get_root_dir()
     else:
-        directory: Optional[File] = context.path_to_file(args[0])
+        directory: File | None = context.path_to_file(args[0])
         if directory is None:
             raise CommandError("The specified directory does not exist")
         if not directory.is_directory:
@@ -86,7 +82,7 @@ def handle_cd(context: DeviceContext, args: List[str]):
 
 
 @command("..", [DeviceContext])
-def handle_dot_dot(context: DeviceContext, _):
+def handle_dot_dot(context: DeviceContext, _: Any) -> None:
     """
     Go to parent directory
     """
@@ -94,16 +90,18 @@ def handle_dot_dot(context: DeviceContext, _):
     handle_cd(context, [".."])
 
 
-def create_file(context: DeviceContext, filepath: str, content: str):
+def create_file(context: DeviceContext, filepath: str, content: str) -> None:
     *path, filename = filepath.split("/")
-    parent: Optional[File] = context.path_to_file("/".join(path))
+    parent: File | None = context.path_to_file("/".join(path))
+    if not parent:
+        raise CommandError("Parent directory does not exist.")
 
     if not filename:
         raise CommandError("Filename cannot be empty.")
     if len(filename) > 64:
         raise CommandError("Filename cannot be longer than 64 characters.")
 
-    file: File = context.get_file(filename, parent.uuid)
+    file: File | None = context.get_file(filename, parent.uuid)
     if file is not None:
         if file.is_directory:
             raise CommandError("A directory with this name already exists.")
@@ -113,7 +111,7 @@ def create_file(context: DeviceContext, filepath: str, content: str):
 
 
 @command("touch", [DeviceContext])
-def handle_touch(context: DeviceContext, args: List[str]):
+def handle_touch(context: DeviceContext, args: list[str]) -> None:
     """
     Create a new file with given content
     """
@@ -126,7 +124,7 @@ def handle_touch(context: DeviceContext, args: List[str]):
 
 
 @command("cat", [DeviceContext])
-def handle_cat(context: DeviceContext, args: List[str]):
+def handle_cat(context: DeviceContext, args: list[str]) -> None:
     """
     Print the content of a file
     """
@@ -135,7 +133,7 @@ def handle_cat(context: DeviceContext, args: List[str]):
         raise CommandError("usage: cat <filepath>")
 
     path: str = args[0]
-    file: File = context.path_to_file(path)
+    file: File | None = context.path_to_file(path)
     if file is None:
         raise CommandError("File does not exist.")
     if file.is_directory:
@@ -145,7 +143,7 @@ def handle_cat(context: DeviceContext, args: List[str]):
 
 
 @command("rm", [DeviceContext])
-def handle_rm(context: DeviceContext, args: List[str]):
+def handle_rm(context: DeviceContext, args: list[str]) -> None:
     """
     Remove a file
     """
@@ -154,7 +152,7 @@ def handle_rm(context: DeviceContext, args: List[str]):
         raise CommandError("usage: rm <filepath>")
 
     filepath: str = args[0]
-    file: File = context.path_to_file(filepath)
+    file: File | None = context.path_to_file(filepath)
     if file is None:
         raise CommandError("File does not exist.")
 
@@ -169,7 +167,7 @@ def handle_rm(context: DeviceContext, args: List[str]):
 
         question: str = f"Are you sure you want to delete the directory `{filepath}` including all contained files?"
     else:
-        question: str = f"Are you sure you want to delete this file `{filepath}`?"
+        question = f"Are you sure you want to delete this file `{filepath}`?"
     if context.ask(question + " [yes|no] ", ["yes", "no"]) == "no":
         raise CommandError("File has not been deleted.")
 
@@ -187,29 +185,27 @@ def handle_rm(context: DeviceContext, args: List[str]):
         else:
             print("The following key might now be the only way to access your wallet.")
             print(content)
-    except (InvalidWalletFile, UnknownSourceOrDestinationException, PermissionDeniedException):
+    except (InvalidWalletFileError, UnknownSourceOrDestinationError, PermissionDeniedError):
         pass
 
     try:
         file.delete()
-    except FileNotChangeableException:
+    except FileNotChangeableError:
         raise CommandError("Some files could not be deleted.")
 
 
 def check_file_movable(
-    context: DeviceContext,
-    source: str,
-    destination: str,
-    move: bool,
-) -> Optional[Tuple[File, str, str]]:
-    file: Optional[File] = context.path_to_file(source)
+    context: DeviceContext, source: str, destination: str, move: bool
+) -> tuple[File, str, str | None] | None:
+    file: File | None = context.path_to_file(source)
     if file is None:
         raise CommandError("File does not exist.")
 
-    dest_file: Optional[File] = context.path_to_file(destination)
+    dest_file: File | None = context.path_to_file(destination)
     absolute = destination[0] == "/"
     dest_parent_path, _, dest_name = destination[absolute:].rpartition("/")
-    dest_parent: Optional[File] = context.path_to_file("/" * absolute + dest_parent_path)
+    dest_parent: File | None = context.path_to_file("/" * absolute + dest_parent_path)
+    dest_dir: str | None
 
     if file.is_directory:
         if dest_file is None:
@@ -217,9 +213,9 @@ def check_file_movable(
                 raise CommandError("No such file or directory.")
             if not dest_parent.is_directory:
                 raise CommandError("Not a directory.")
-            dest_dir: str = dest_parent.uuid
+            dest_dir = dest_parent.uuid
         elif dest_file.is_directory:
-            sub_file: Optional[File] = context.get_file(dest_name, dest_file.uuid)
+            sub_file: File | None = context.get_file(dest_name, dest_file.uuid)
             if sub_file is not None:
                 if sub_file.is_directory:
                     if context.get_files(sub_file.uuid):
@@ -227,8 +223,8 @@ def check_file_movable(
                     sub_file.delete()
                 else:
                     raise CommandError("Directory cannot replace a file.")
-            dest_name: str = file.filename
-            dest_dir: str = dest_file.uuid
+            dest_name = file.name
+            dest_dir = dest_file.uuid
         else:
             raise CommandError("Directory cannot replace a file.")
     else:
@@ -237,29 +233,29 @@ def check_file_movable(
                 raise CommandError("No such file or directory.")
             if not dest_parent.is_directory:
                 raise CommandError("Not a directory.")
-            dest_dir: str = dest_parent.uuid
+            dest_dir = dest_parent.uuid
         elif dest_file.is_directory:
-            sub_file: Optional[File] = context.get_file(dest_name, dest_file.uuid)
+            sub_file = context.get_file(dest_name, dest_file.uuid)
             if sub_file is not None:
                 if sub_file.is_directory:
                     raise CommandError("File cannot replace a directory.")
                 sub_file.delete()
-            dest_name: str = file.filename
-            dest_dir: str = dest_file.uuid
+            dest_name = file.name
+            dest_dir = dest_file.uuid
         else:
             dest_file.delete()
-            dest_dir: str = dest_parent.uuid
+            dest_dir = cast(File, dest_parent).uuid
 
-    if dest_dir == file.parent_dir_uuid and dest_name == file.filename:
+    if dest_dir == file.parent_dir_uuid and dest_name == file.name:
         return None
 
     if dest_dir is not None:
-        dir_to_check: File = File.get_file(context.client, file.device, dest_dir)
+        dir_to_check: File | None = File.get_file(context.client, file.device_uuid, dest_dir)
         while True:
+            if not dir_to_check:
+                break
             if dir_to_check.uuid == file.uuid:
                 raise CommandError(f"You cannot {['copy', 'move'][move]} a directory into itself.")
-            if dir_to_check.uuid is None:
-                break
             dir_to_check = context.get_parent_dir(dir_to_check)
 
     if not dest_name:
@@ -271,7 +267,7 @@ def check_file_movable(
 
 
 @command("cp", [DeviceContext])
-def handle_cp(context: DeviceContext, args: List[str]):
+def handle_cp(context: DeviceContext, args: list[str]) -> None:
     """
     Create a copy of a file
     """
@@ -279,22 +275,22 @@ def handle_cp(context: DeviceContext, args: List[str]):
     if len(args) != 2:
         raise CommandError("usage: cp <source> <destination>")
 
-    result: Optional[Tuple[File, str, str]] = check_file_movable(context, args[0], args[1], move=False)
+    result: tuple[File, str, str | None] | None = check_file_movable(context, args[0], args[1], move=False)
     if result is None:
         return
 
     file, dest_name, dest_dir = result
-    queue: List[Tuple[File, str, str]] = [(file, dest_name, dest_dir)]
+    queue: list[tuple[File, str, str | None]] = [(file, dest_name, dest_dir)]
     while queue:
         file, dest_name, dest_dir = queue.pop(0)
         new_file: File = context.host.create_file(dest_name, file.content, file.is_directory, dest_dir)
         if file.is_directory:
             for child in context.get_files(file.uuid):
-                queue.append((child, child.filename, new_file.uuid))
+                queue.append((child, child.name, cast(str, new_file.uuid)))
 
 
 @command("mv", [DeviceContext])
-def handle_mv(context: DeviceContext, args: List[str]):
+def handle_mv(context: DeviceContext, args: list[str]) -> None:
     """
     Rename a file
     """
@@ -302,7 +298,7 @@ def handle_mv(context: DeviceContext, args: List[str]):
     if len(args) != 2:
         raise CommandError("usage: mv <source> <destination>")
 
-    result: Optional[Tuple[File, str, str]] = check_file_movable(context, args[0], args[1], move=True)
+    result: tuple[File, str, str | None] | None = check_file_movable(context, args[0], args[1], move=True)
     if result is None:
         return
 
@@ -314,7 +310,7 @@ def handle_mv(context: DeviceContext, args: List[str]):
 @handle_cat.completer()
 @handle_touch.completer()
 @handle_rm.completer()
-def simple_file_completer(context: DeviceContext, args: List[str]) -> List[str]:
+def simple_file_completer(context: DeviceContext, args: list[str]) -> list[str]:
     if len(args) == 1:
         return context.file_path_completer(args[0])
     return []
@@ -322,7 +318,7 @@ def simple_file_completer(context: DeviceContext, args: List[str]) -> List[str]:
 
 @handle_cd.completer()
 @handle_mkdir.completer()
-def simple_directory_completer(context: DeviceContext, args: List[str]) -> List[str]:
+def simple_directory_completer(context: DeviceContext, args: list[str]) -> list[str]:
     if len(args) == 1:
         return context.file_path_completer(args[0], dirs_only=True)
     return []
@@ -330,7 +326,7 @@ def simple_directory_completer(context: DeviceContext, args: List[str]) -> List[
 
 @handle_mv.completer()
 @handle_cp.completer()
-def copy_completer(context: DeviceContext, args: List[str]) -> List[str]:
+def copy_completer(context: DeviceContext, args: list[str]) -> list[str]:
     if 1 <= len(args) <= 2:
         return context.file_path_completer(args[-1])
     return []

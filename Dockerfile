@@ -8,7 +8,6 @@ COPY requirements.txt /app/
 
 RUN pip install -r requirements.txt
 
-COPY pycrypcli.py /app/
 COPY PyCrypCli /app/PyCrypCli
 
-CMD ["python", "pycrypcli.py"]
+CMD ["python", "-m", "PyCrypCli"]

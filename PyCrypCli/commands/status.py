@@ -1,9 +1,11 @@
-from PyCrypCli.commands import command
-from PyCrypCli.context import MainContext, DeviceContext, LoginContext, Context
+from typing import Any
+
+from .command import command
+from ..context import MainContext, DeviceContext, LoginContext, Context
 
 
 @command("whoami", [MainContext, DeviceContext])
-def handle_whoami(context: MainContext, *_):
+def handle_whoami(context: MainContext, _: Any) -> None:
     """
     Print the name of the current user
     """
@@ -12,13 +14,13 @@ def handle_whoami(context: MainContext, *_):
 
 
 @command("status", [LoginContext, MainContext, DeviceContext])
-def handle_status(context: Context, _):
+def handle_status(context: Context, _: Any) -> None:
     """
     Indicate how many players are online
     """
 
     if type(context) is LoginContext:
-        online: int = context.client.status()["online"]
+        online: int = context.client.status().online
     else:
-        online: int = context.client.info()["online"]
+        online = context.client.info().online
     print(f"Online players: {online}")

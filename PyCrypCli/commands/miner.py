@@ -1,23 +1,22 @@
-from typing import List
+from typing import Any
 
-from PyCrypCli.exceptions import ServiceNotFoundException, WalletNotFoundException
-
-from PyCrypCli.commands import CommandError, command
-from PyCrypCli.commands.help import print_help
-from PyCrypCli.context import DeviceContext
-from PyCrypCli.game_objects import Miner
-from PyCrypCli.util import is_uuid
+from .command import CommandError, command
+from .help import print_help
+from ..context import DeviceContext
+from ..exceptions import ServiceNotFoundError, WalletNotFoundError
+from ..models import Miner
+from ..util import is_uuid
 
 
 def get_miner(context: DeviceContext) -> Miner:
     try:
         return context.host.get_miner()
-    except ServiceNotFoundException:
+    except ServiceNotFoundError:
         raise CommandError("You have to create the miner service before you can use it.")
 
 
 @command("miner", [DeviceContext])
-def handle_miner(context: DeviceContext, args: List[str]):
+def handle_miner(context: DeviceContext, args: list[str]) -> None:
     """
     Manager your Morphcoin miners
     """
@@ -28,13 +27,13 @@ def handle_miner(context: DeviceContext, args: List[str]):
 
 
 @handle_miner.subcommand("look")
-def handle_miner_look(context: DeviceContext, _):
+def handle_miner_look(context: DeviceContext, _: Any) -> None:
     """
     View miner configuration
     """
 
     miner: Miner = get_miner(context)
-    print("Destination wallet: " + miner.wallet)
+    print("Destination wallet: " + miner.wallet_uuid)
     print("Running: " + ["no", "yes"][miner.running])
     print(f"Power: {miner.power * 100}%")
     if miner.running:
@@ -42,7 +41,7 @@ def handle_miner_look(context: DeviceContext, _):
 
 
 @handle_miner.subcommand("power")
-def handle_miner_power(context: DeviceContext, args: List[str]):
+def handle_miner_power(context: DeviceContext, args: list[str]) -> None:
     """
     Change miner power
     """
@@ -61,12 +60,12 @@ def handle_miner_power(context: DeviceContext, args: List[str]):
 
     try:
         miner.set_power(power)
-    except WalletNotFoundException:
+    except WalletNotFoundError:
         raise CommandError("Wallet does not exist.")
 
 
 @handle_miner.subcommand("wallet")
-def handle_miner_wallet(context: DeviceContext, args: List[str]):
+def handle_miner_wallet(context: DeviceContext, args: list[str]) -> None:
     """
     Connect the miner to a different wallet
     """
@@ -81,5 +80,5 @@ def handle_miner_wallet(context: DeviceContext, args: List[str]):
 
     try:
         miner.set_wallet(args[0])
-    except WalletNotFoundException:
+    except WalletNotFoundError:
         raise CommandError("Wallet does not exist.")

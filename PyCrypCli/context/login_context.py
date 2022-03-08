@@ -1,8 +1,9 @@
 import time
 
-from PyCrypCli.context.context import Context
-from PyCrypCli.context.root_context import RootContext
-from PyCrypCli.exceptions import InvalidSessionTokenException
+from .context import Context
+from .root_context import RootContext
+from ..exceptions import InvalidSessionTokenError
+from ..models import Config
 
 
 class LoginContext(Context):
@@ -13,37 +14,36 @@ class LoginContext(Context):
     def prompt(self) -> str:
         return "$ "
 
-    def enter_context(self):
+    def enter_context(self) -> None:
         self.login_loop_presence()
 
         try:
             self.load_session()
-        except InvalidSessionTokenException:
+        except InvalidSessionTokenError:
             self.delete_session()
             print("You are not logged in.")
             print("Type `register` to create a new account or `login` if you already have one.")
 
-    def reenter_context(self):
+    def reenter_context(self) -> None:
         super().reenter_context()
         self.login_loop_presence()
 
-    def load_session(self):
+    def load_session(self) -> None:
         from PyCrypCli.context.main_context import MainContext
 
-        config: dict = self.root_context.read_config_file()
+        config: Config = self.root_context.read_config_file()
 
-        if "token" in config.setdefault("servers", {}).setdefault(self.root_context.host, {}):
-            session_token: str = config["servers"][self.root_context.host]["token"]
-            self.client.session(session_token)
-            self.open(MainContext(self.root_context, session_token))
+        if (server_config := config.servers.get(self.root_context.host)) and server_config.token:
+            self.client.session(server_config.token)
+            self.open(MainContext(self.root_context, server_config.token))
 
-    def delete_session(self):
-        config: dict = self.root_context.read_config_file()
-        if "token" in config.setdefault("servers", {}).setdefault(self.root_context.host, {}):
-            del config["servers"][self.root_context.host]["token"]
+    def delete_session(self) -> None:
+        config: Config = self.root_context.read_config_file()
+        if server_config := config.servers.get(self.root_context.host):
+            server_config.token = None
         self.root_context.write_config_file(config)
 
-    def login_loop_presence(self):
+    def login_loop_presence(self) -> None:
         self.update_presence(
             state=f"Server: {self.root_context.host}",
             details="Logging in",

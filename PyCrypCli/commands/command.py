@@ -1,8 +1,10 @@
-from importlib import import_module
-from typing import Callable, List, Dict, Type, Optional, Tuple
+from __future__ import annotations
 
-from PyCrypCli.context import Context, COMMAND_FUNCTION, COMPLETER_FUNCTION
-from PyCrypCli.exceptions import CommandRegistrationException, NoDocStringException
+from importlib import import_module
+from typing import Callable, Type
+
+from ..context import Context, COMMAND_FUNCTION, COMPLETER_FUNCTION, ContextType
+from ..exceptions import CommandRegistrationError, NoDocStringError
 
 
 class CommandError(Exception):
@@ -15,40 +17,40 @@ class Command:
     def __init__(
         self,
         name: str,
-        func: COMMAND_FUNCTION,
+        func: COMMAND_FUNCTION[ContextType],
         description: str,
-        contexts: List[Type[Context]],
-        aliases: List[str],
+        contexts: list[Type[Context]],
+        aliases: list[str],
     ):
         self.name: str = name
-        self.func: COMMAND_FUNCTION = func
+        self.func: COMMAND_FUNCTION[ContextType] = func
         self.description: str = description
-        self.contexts: List[Type[Context]] = contexts
-        self.aliases: List[str] = aliases
-        self.completer_func: Optional[COMPLETER_FUNCTION] = None
-        self.subcommands: List[Command] = []
-        self.prepared_subcommands: Dict[Type[Context], Dict[str, Command]] = {}
+        self.contexts: list[Type[Context]] = contexts
+        self.aliases: list[str] = aliases
+        self.completer_func: COMPLETER_FUNCTION[ContextType] | None = None
+        self.subcommands: list[Command] = []
+        self.prepared_subcommands: dict[Type[Context], dict[str, Command]] = {}
 
-    def __call__(self, *args, **kwargs):
-        return self.func(*args, **kwargs)
+    def __call__(self, context: ContextType, args: list[str]) -> None:
+        self.func(context, args)
 
-    def parse_command(self, context: Context, args: List[str]) -> Tuple["Command", List[str]]:
+    def parse_command(self, context: Context, args: list[str]) -> tuple[Command, list[str]]:
         prepared_subcommands = self.prepared_subcommands.get(type(context), {})
         if args:
-            cmd: Optional[Command] = prepared_subcommands.get(args[0])
+            cmd: Command | None = prepared_subcommands.get(args[0])
             if cmd is not None:
                 return cmd.parse_command(context, args[1:])
 
         return self, args
 
-    def handle(self, context: Context, args: List[str]):
+    def handle(self, context: ContextType, args: list[str]) -> None:
         cmd, args = self.parse_command(context, args)
         try:
             cmd.func(context, args)
         except CommandError as error:
             print(error.msg)
 
-    def handle_completer(self, context: Context, args: List[str]) -> List[str]:
+    def handle_completer(self, context: ContextType, args: list[str]) -> list[str]:
         cmd, args = self.parse_command(context, args)
 
         out = list(cmd.prepared_subcommands.get(type(context), {}))
@@ -57,55 +59,46 @@ class Command:
 
         return out
 
-    def completer(self):
-        def decorator(func: COMPLETER_FUNCTION) -> COMPLETER_FUNCTION:
+    def completer(self) -> Callable[[COMPLETER_FUNCTION[ContextType]], COMPLETER_FUNCTION[ContextType]]:
+        def decorator(func: COMPLETER_FUNCTION[ContextType]) -> COMPLETER_FUNCTION[ContextType]:
             self.completer_func = func
             return func
 
         return decorator
 
     def subcommand(
-        self,
-        name: str,
-        *,
-        contexts: List[Type[Context]] = None,
-        aliases: List[str] = None,
-    ) -> Callable[[COMMAND_FUNCTION], "Command"]:
-        if contexts is None:
-            contexts = self.contexts
-
-        def decorator(func: COMMAND_FUNCTION) -> Command:
+        self, name: str, *, contexts: list[Type[Context]] | None = None, aliases: list[str] | None = None
+    ) -> Callable[[COMMAND_FUNCTION[ContextType]], "Command"]:
+        def decorator(func: COMMAND_FUNCTION[ContextType]) -> Command:
             if func.__doc__ is None:
-                raise NoDocStringException(name, subcommand=True)
+                raise NoDocStringError(name, subcommand=True)
             desc: str = func.__doc__
             desc = "\n".join(map(str.strip, desc.splitlines())).strip()
-            cmd = Command(name, func, desc, contexts, aliases or [])
+            cmd = Command(name, func, desc, contexts or self.contexts, aliases or [])
             self.subcommands.append(cmd)
             return cmd
 
         return decorator
 
-    def make_subcommands(self):
+    def make_subcommands(self) -> None:
         for cmd in self.subcommands:
             for context in cmd.contexts:
                 for name in [cmd.name] + cmd.aliases:
                     if name in self.prepared_subcommands.setdefault(context, {}):
-                        raise CommandRegistrationException(name, subcommand=True)
+                        raise CommandRegistrationError(name, subcommand=True)
                     self.prepared_subcommands[context][name] = cmd
             cmd.make_subcommands()
 
 
-commands: List[Command] = []
+commands: list[Command] = []
 
 
 def command(
-    name: str,
-    contexts: List[Type[Context]],
-    aliases: List[str] = None,
-) -> Callable[[COMMAND_FUNCTION], Command]:
-    def decorator(func: COMMAND_FUNCTION) -> Command:
+    name: str, contexts: list[Type[Context]], aliases: list[str] | None = None
+) -> Callable[[COMMAND_FUNCTION[ContextType]], Command]:
+    def decorator(func: COMMAND_FUNCTION[ContextType]) -> Command:
         if func.__doc__ is None:
-            raise NoDocStringException(name)
+            raise NoDocStringError(name)
         desc: str = func.__doc__
         desc = "\n".join(map(str.strip, desc.splitlines())).strip()
         cmd = Command(name, func, desc, contexts, aliases or [])
@@ -115,7 +108,7 @@ def command(
     return decorator
 
 
-def make_commands() -> Dict[Type[Context], Dict[str, Command]]:
+def make_commands() -> dict[Type[Context], dict[str, Command]]:
     for module in [
         "account",
         "help",
@@ -132,12 +125,12 @@ def make_commands() -> Dict[Type[Context], Dict[str, Command]]:
     ]:
         import_module(f"PyCrypCli.commands.{module}")
 
-    result: Dict[Type[Context], Dict[str, Command]] = {}
+    result: dict[Type[Context], dict[str, Command]] = {}
     for cmd in commands:
         for context in cmd.contexts:
             for name in [cmd.name] + cmd.aliases:
                 if name in result.setdefault(context, {}):
-                    raise CommandRegistrationException(name)
+                    raise CommandRegistrationError(name)
                 result[context][name] = cmd
         cmd.make_subcommands()
     return result

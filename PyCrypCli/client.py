@@ -2,24 +2,27 @@ import json
 import re
 import ssl
 import time
-from typing import List, Optional, Type
+from typing import Type, Any, cast
 from uuid import uuid4
 
 import sentry_sdk
+from pydantic import ValidationError
 from websocket import WebSocket, create_connection
 
-from PyCrypCli.exceptions import (
-    UnknownMicroserviceException,
-    InvalidServerResponseException,
+from .exceptions import (
+    UnknownMicroserviceError,
+    InvalidServerResponseError,
     MicroserviceException,
-    WeakPasswordException,
-    UsernameAlreadyExistsException,
-    InvalidLoginException,
-    InvalidSessionTokenException,
-    PermissionsDeniedException,
-    LoggedInException,
-    LoggedOutException,
+    WeakPasswordError,
+    UsernameAlreadyExistsError,
+    InvalidLoginError,
+    InvalidSessionTokenError,
+    PermissionDeniedError,
+    LoggedInError,
+    LoggedOutError,
+    ClientNotReadyError,
 )
+from .models import HardwareConfig, StatusResponse, InfoResponse, TokenResponse
 from PyCrypCli.timer import Timer
 
 
@@ -30,184 +33,213 @@ def uuid() -> str:
 class Client:
     def __init__(self, server: str):
         self.server: str = server
-        self.websocket: Optional[WebSocket] = None
-        self.timer: Optional[Timer] = None
+        self.websocket: WebSocket | None = None
+        self.timer: Timer | None = None
         self.waiting_for_response: bool = False
-        self.notifications: List[dict] = []
+        self.notifications: list[dict[str, Any]] = []
         self.logged_in: bool = False
 
-    def init(self):
+    def init(self) -> None:
         try:
-            self.websocket: WebSocket = create_connection(self.server)
+            self.websocket = create_connection(self.server)
         except ssl.SSLCertVerificationError:
-            self.websocket: WebSocket = create_connection(self.server, sslopt={"cert_reqs": ssl.CERT_NONE})
-        self.timer: Timer = Timer(10, self.info)
+            self.websocket = create_connection(self.server, sslopt={"cert_reqs": ssl.CERT_NONE})
+        self.timer = Timer(10, self.info)
 
-    def close(self):
-        if self.timer is not None:
+    def close(self) -> None:
+        if self.timer:
             self.timer.stop()
             self.timer = None
 
-        self.websocket.close()
-        self.websocket = None
-        self.logged_in: bool = False
+        if self.websocket:
+            self.websocket.close()
+            self.websocket = None
 
-    def request(self, data: dict, no_response: bool = False) -> dict:
+        self.logged_in = False
+
+    def _send(self, obj: dict[str, Any]) -> None:
+        if not self.websocket:
+            raise ClientNotReadyError
+
+        data = json.dumps(obj)
+        sentry_sdk.add_breadcrumb(category="ws", message=f"send: {data}", level="debug")
+        self.websocket.send(data)
+
+    def _recv(self) -> dict[str, Any]:
+        if not self.websocket:
+            raise ClientNotReadyError
+
+        data = self.websocket.recv()
+        sentry_sdk.add_breadcrumb(category="ws", message=f"recv: {data}", level="debug")
+        return cast(dict[str, Any], json.loads(data))
+
+    def request(self, data: dict[str, Any], no_response: bool = False) -> dict[str, Any]:
         if self.websocket is None:
             raise ConnectionError
 
         while self.waiting_for_response:
             time.sleep(0.01)
-        self.waiting_for_response: bool = True
-        data = json.dumps(data)
-        sentry_sdk.add_breadcrumb(category="ws", message=f"send: {data}", level="debug")
-        self.websocket.send(data)
+        self.waiting_for_response = True
+
+        self._send(data)
+
         if no_response:
-            self.waiting_for_response: bool = False
+            self.waiting_for_response = False
             return {}
+
         while True:
-            data = self.websocket.recv()
-            sentry_sdk.add_breadcrumb(category="ws", message=f"recv: {data}", level="debug")
-            response: dict = json.loads(data)
+            response = self._recv()
             if "notify-id" in response:
                 self.notifications.append(response)
             else:
                 break
-        self.waiting_for_response: bool = False
+
+        self.waiting_for_response = False
         return response
 
-    def ms(self, ms: str, endpoint: List[str], **data) -> dict:
+    def ms(self, ms: str, endpoint: list[str], **data: Any) -> dict[str, Any]:
         if not self.logged_in:
-            raise LoggedOutException
+            raise LoggedOutError
 
-        response: dict = self.request({"ms": ms, "endpoint": endpoint, "data": data, "tag": uuid()})
+        response: dict[str, Any] = self.request({"ms": ms, "endpoint": endpoint, "data": data, "tag": uuid()})
 
         if "error" in response:
             error: str = response["error"]
             if error == "unknown microservice":
-                raise UnknownMicroserviceException(ms)
-            raise InvalidServerResponseException(response)
+                raise UnknownMicroserviceError(ms)
+            raise InvalidServerResponseError(response)
 
         if "data" not in response:
-            raise InvalidServerResponseException(response)
+            raise InvalidServerResponseError(response)
 
-        data: dict = response["data"]
-        if "error" in data:
-            error: str = data["error"]
-            for exception in MicroserviceException.__subclasses__():  # type: Type[MicroserviceException]
-                match = re.fullmatch(exception.error, error)
-                if match:
+        response_data: dict[str, Any] = response["data"]
+        if "error" in response_data:
+            error = response_data["error"]
+            exception: Type[MicroserviceException]
+            for exception in MicroserviceException.__subclasses__():
+                if exception.error and (match := re.fullmatch(exception.error, error)):
                     raise exception(error, list(match.groups()))
-            raise InvalidServerResponseException(response)
-        return data
+            raise InvalidServerResponseError(response)
 
-    def register(self, username: str, password: str) -> str:
+        return response_data
+
+    def register(self, username: str, password: str) -> TokenResponse:
         if self.logged_in:
-            raise LoggedInException
+            raise LoggedInError
 
         self.init()
-        response: dict = self.request({"action": "register", "name": username, "password": password})
+        response: dict[str, Any] = self.request({"action": "register", "name": username, "password": password})
         if "error" in response:
             self.close()
             error: str = response["error"]
             if error == "invalid password":
-                raise WeakPasswordException()
+                raise WeakPasswordError()
             if error == "username already exists":
-                raise UsernameAlreadyExistsException()
-            raise InvalidServerResponseException(response)
-        if "token" not in response:
-            self.close()
-            raise InvalidServerResponseException(response)
-        self.logged_in: bool = True
-        self.timer.start()
-        return response["token"]
+                raise UsernameAlreadyExistsError()
+            raise InvalidServerResponseError(response)
 
-    def login(self, username: str, password: str) -> str:
+        try:
+            token_response = TokenResponse.parse(self, response)
+        except ValidationError:
+            self.close()
+            raise
+
+        self.logged_in = True
+        cast(Timer, self.timer).start()
+        return token_response
+
+    def login(self, username: str, password: str) -> TokenResponse:
         if self.logged_in:
-            raise LoggedInException
+            raise LoggedInError
 
         self.init()
-        response: dict = self.request({"action": "login", "name": username, "password": password})
+        response: dict[str, Any] = self.request({"action": "login", "name": username, "password": password})
         if "error" in response:
             self.close()
             error: str = response["error"]
             if error == "permissions denied":
-                raise InvalidLoginException()
-            raise InvalidServerResponseException(response)
-        if "token" not in response:
-            self.close()
-            raise InvalidServerResponseException(response)
-        self.logged_in: bool = True
-        self.timer.start()
-        return response["token"]
+                raise InvalidLoginError()
+            raise InvalidServerResponseError(response)
 
-    def session(self, token: str):
+        try:
+            token_response = TokenResponse.parse(self, response)
+        except ValidationError:
+            self.close()
+            raise
+
+        self.logged_in = True
+        cast(Timer, self.timer).start()
+        return token_response
+
+    def session(self, token: str) -> TokenResponse:
         if self.logged_in:
-            raise LoggedInException
+            raise LoggedInError
 
         self.init()
-        response: dict = self.request({"action": "session", "token": token})
+        response: dict[str, Any] = self.request({"action": "session", "token": token})
         if "error" in response:
             self.close()
             error: str = response["error"]
             if error == "invalid token":
-                raise InvalidSessionTokenException()
-            raise InvalidServerResponseException(response)
-        if "token" not in response:
+                raise InvalidSessionTokenError()
+            raise InvalidServerResponseError(response)
+
+        try:
+            token_response = TokenResponse.parse(self, response)
+        except ValidationError:
             self.close()
-            raise InvalidServerResponseException(response)
-        self.logged_in: bool = True
-        self.timer.start()
+            raise
 
-    def change_password(self, old_password: str, new_password: str) -> str:
+        self.logged_in = True
+        cast(Timer, self.timer).start()
+        return token_response
+
+    def change_password(self, old_password: str, new_password: str) -> TokenResponse:
         if not self.logged_in:
-            raise LoggedOutException
+            raise LoggedOutError
 
-        response: dict = self.request(
-            {"action": "password", "password": old_password, "new": new_password},
-        )
+        response: dict[str, Any] = self.request({"action": "password", "password": old_password, "new": new_password})
         if "error" in response:
             error: str = response["error"]
             if error == "permissions denied":
-                raise PermissionsDeniedException()
-            raise InvalidServerResponseException(response)
-        if "token" not in response:
-            raise InvalidServerResponseException(response)
-        return response["token"]
+                raise PermissionDeniedError()
+            raise InvalidServerResponseError(response)
 
-    def logout(self):
+        return TokenResponse.parse(self, response)
+
+    def logout(self) -> None:
         if not self.logged_in:
-            raise LoggedOutException
+            raise LoggedOutError
 
         self.request({"action": "logout"})
         self.close()
 
-    def status(self) -> dict:
+    def status(self) -> StatusResponse:
         if self.logged_in:
-            raise LoggedInException
+            raise LoggedInError
 
         self.init()
-        response: dict = self.request({"action": "status"})
+        response: dict[str, Any] = self.request({"action": "status"})
         self.close()
         if "error" in response:
-            raise InvalidServerResponseException(response)
-        return response
+            raise InvalidServerResponseError(response)
+        return StatusResponse.parse(self, response)
 
-    def info(self) -> dict:
+    def info(self) -> InfoResponse:
         if not self.logged_in:
-            raise LoggedOutException
+            raise LoggedOutError
 
-        response: dict = self.request({"action": "info"})
+        response: dict[str, Any] = self.request({"action": "info"})
         if "error" in response:
-            raise InvalidServerResponseException(response)
-        return response
+            raise InvalidServerResponseError(response)
+        return InfoResponse.parse(self, response)
 
-    def delete_user(self):
+    def delete_user(self) -> None:
         if not self.logged_in:
-            raise LoggedOutException
+            raise LoggedOutError
 
         self.request({"action": "delete"}, no_response=True)
         self.close()
 
-    def get_hardware_config(self) -> dict:
-        return self.ms("device", ["hardware", "list"])
+    def get_hardware_config(self) -> HardwareConfig:
+        return HardwareConfig.parse(self, self.ms("device", ["hardware", "list"]))

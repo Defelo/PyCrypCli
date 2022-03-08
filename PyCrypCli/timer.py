@@ -1,18 +1,18 @@
 import time
 from threading import Thread
-from typing import Callable
+from typing import Callable, Any
 
 
 class Timer(Thread):
-    def __init__(self, interval: float, func: Callable):
+    def __init__(self, interval: float, func: Callable[[], Any]):
         super().__init__(daemon=True)
 
         self.interval: float = interval
-        self.func: Callable = func
+        self.func: Callable[[], Any] = func
         self.running: bool = False
 
-    def run(self):
-        self.running: bool = True
+    def run(self) -> None:
+        self.running = True
         while self.running:
             self.func()
 
@@ -20,7 +20,7 @@ class Timer(Thread):
             sleep_until: float = t + self.interval
             while t < sleep_until and self.running:
                 time.sleep(min(0.1, sleep_until - t))
-                t: float = time.time()
+                t = time.time()
 
-    def stop(self):
-        self.running: bool = False
+    def stop(self) -> None:
+        self.running = False

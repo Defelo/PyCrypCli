@@ -1,16 +1,16 @@
 from collections import Counter
-from typing import List, Dict
+from typing import List, Dict, Any
 
-from PyCrypCli.commands import CommandError, command
-from PyCrypCli.commands.help import print_help
-from PyCrypCli.context import MainContext, DeviceContext
-from PyCrypCli.exceptions import CannotTradeWithYourselfException, UserUUIDDoesNotExistException
-from PyCrypCli.game_objects import InventoryElement, ShopCategory
-from PyCrypCli.util import print_tree
+from .command import CommandError, command
+from .help import print_help
+from ..context import MainContext, DeviceContext
+from ..exceptions import CannotTradeWithYourselfError, UserUUIDDoesNotExistError
+from ..models import InventoryElement, ShopCategory
+from ..util import print_tree
 
 
 @command("inventory", [MainContext, DeviceContext])
-def handle_inventory(context: MainContext, args: List[str]):
+def handle_inventory(context: MainContext, args: List[str]) -> None:
     """
     Manage your inventory and trade with other players
     """
@@ -21,7 +21,7 @@ def handle_inventory(context: MainContext, args: List[str]):
 
 
 @handle_inventory.subcommand("list")
-def handle_inventory_list(context: MainContext, _):
+def handle_inventory_list(context: MainContext, _: Any) -> None:
     """
     List your inventory
     """
@@ -35,7 +35,7 @@ def handle_inventory_list(context: MainContext, _):
     for category in categories:
         category_tree = []
         for subcategory in category.subcategories:
-            subcategory_tree = [
+            subcategory_tree: list[tuple[str, list[Any]]] = [
                 (f"{inventory[item.name]}x {item.name}", []) for item in subcategory.items if inventory[item.name]
             ]
             if subcategory_tree:
@@ -53,7 +53,7 @@ def handle_inventory_list(context: MainContext, _):
 
 
 @handle_inventory.subcommand("trade")
-def handle_inventory_trade(context: MainContext, args: List[str]):
+def handle_inventory_trade(context: MainContext, args: List[str]) -> None:
     """
     Trade with other players
     """
@@ -71,9 +71,9 @@ def handle_inventory_trade(context: MainContext, args: List[str]):
 
     try:
         item.trade(target_user)
-    except CannotTradeWithYourselfException:
+    except CannotTradeWithYourselfError:
         raise CommandError("You cannot trade with yourself.")
-    except UserUUIDDoesNotExistException:
+    except UserUUIDDoesNotExistError:
         raise CommandError("This user does not exist.")
 
 

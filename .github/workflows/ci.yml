@@ -33,6 +33,30 @@ jobs:
       - name: Check code formatting with black
         run: black -l 120 . --diff --check
 
+  mypy:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+        with:
+          submodules: recursive
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install mypy
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install mypy types-python-dateutil types-requests
+
+      - name: Check typing with mypy
+        run: mypy PyCrypCli
+
   linter:
     runs-on: ubuntu-latest
 
@@ -219,7 +243,7 @@ jobs:
 
   pypi:
     runs-on: ubuntu-latest
-    needs: [ codestyle, linter, build, docker_build ]
+    needs: [ codestyle, mypy, linter, build, docker_build ]
     if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     environment: pypi
 
@@ -240,7 +264,7 @@ jobs:
 
   docker_push_ghcr:
     if: ${{ github.event_name != 'pull_request' && github.actor != 'dependabot[bot]' }}
-    needs: [ codestyle, linter, build, docker_build ]
+    needs: [ codestyle, mypy, linter, build, docker_build ]
     runs-on: ubuntu-latest
 
     steps:

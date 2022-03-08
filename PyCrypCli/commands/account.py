@@ -1,18 +1,14 @@
 import getpass
 import sys
+from typing import Any
 
-from PyCrypCli.commands import command, CommandError
-from PyCrypCli.context import LoginContext, MainContext, DeviceContext
-from PyCrypCli.exceptions import (
-    WeakPasswordException,
-    UsernameAlreadyExistsException,
-    InvalidLoginException,
-    PermissionsDeniedException,
-)
+from .command import command, CommandError
+from ..context import LoginContext, MainContext, DeviceContext
+from ..exceptions import WeakPasswordError, UsernameAlreadyExistsError, InvalidLoginError, PermissionDeniedError
 
 
 @command("register", [LoginContext], aliases=["signup"])
-def register(context: LoginContext, *_):
+def register(context: LoginContext, _: Any) -> None:
     """
     Create a new account
     """
@@ -27,16 +23,16 @@ def register(context: LoginContext, *_):
     if password != confirm_password:
         raise CommandError("Passwords don't match.")
     try:
-        session_token: str = context.client.register(username, password)
+        session_token: str = context.client.register(username, password).token
         context.open(MainContext(context.root_context, session_token))
-    except WeakPasswordException:
+    except WeakPasswordError:
         raise CommandError("Password is too weak.")
-    except UsernameAlreadyExistsException:
+    except UsernameAlreadyExistsError:
         raise CommandError("Username already exists.")
 
 
 @command("login", [LoginContext])
-def login(context: LoginContext, *_):
+def login(context: LoginContext, _: Any) -> None:
     """
     Login with an existing account
     """
@@ -48,14 +44,14 @@ def login(context: LoginContext, *_):
         raise CommandError("\nAborted.")
 
     try:
-        session_token: str = context.client.login(username, password)
+        session_token: str = context.client.login(username, password).token
         context.open(MainContext(context.root_context, session_token))
-    except InvalidLoginException:
+    except InvalidLoginError:
         raise CommandError("Invalid Login Credentials.")
 
 
 @command("exit", [LoginContext], aliases=["quit"])
-def handle_login_exit(*_):
+def handle_login_exit(*_: Any) -> None:
     """
     Exit PyCrypCli
     """
@@ -64,7 +60,7 @@ def handle_login_exit(*_):
 
 
 @command("exit", [MainContext], aliases=["quit"])
-def handle_main_exit(context: MainContext, *_):
+def handle_main_exit(context: MainContext, _: Any) -> None:
     """
     Exit PyCrypCli (session will be saved)
     """
@@ -74,7 +70,7 @@ def handle_main_exit(context: MainContext, *_):
 
 
 @command("exit", [DeviceContext], aliases=["quit", "logout"])
-def handle_device_exit(context: DeviceContext, *_):
+def handle_device_exit(context: DeviceContext, _: Any) -> None:
     """
     Disconnect from this device
     """
@@ -83,7 +79,7 @@ def handle_device_exit(context: DeviceContext, *_):
 
 
 @command("logout", [MainContext])
-def handle_main_logout(context: MainContext, *_):
+def handle_main_logout(context: MainContext, _: Any) -> None:
     """
     Delete the current session and exit PyCrypCli
     """
@@ -92,7 +88,7 @@ def handle_main_logout(context: MainContext, *_):
 
 
 @command("passwd", [MainContext])
-def handle_passwd(context: MainContext, *_):
+def handle_passwd(context: MainContext, _: Any) -> None:
     """
     Change your password
     """
@@ -105,15 +101,15 @@ def handle_passwd(context: MainContext, *_):
         raise CommandError("Passwords don't match.")
 
     try:
-        context.session_token = context.client.change_password(old_password, new_password)
+        context.session_token = context.client.change_password(old_password, new_password).token
         context.save_session()
         print("Password updated successfully.")
-    except PermissionsDeniedException:
+    except PermissionDeniedError:
         raise CommandError("Incorrect password or the new password does not meet the requirements.")
 
 
 @command("_delete_user", [MainContext])
-def handle_delete_user(context: MainContext, *_):
+def handle_delete_user(context: MainContext, _: Any) -> None:
     """
     Delete this account
     """

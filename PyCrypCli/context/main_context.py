@@ -1,35 +1,34 @@
 import time
-from typing import Optional, Tuple, List
 
-from PyCrypCli.context.context import Context
-from PyCrypCli.context.login_context import LoginContext
-from PyCrypCli.context.root_context import RootContext
-from PyCrypCli.exceptions import InvalidWalletFile
-from PyCrypCli.game_objects import Wallet, Device, Service
-from PyCrypCli.util import extract_wallet
+from .context import Context
+from .login_context import LoginContext
+from .root_context import RootContext
+from ..exceptions import InvalidWalletFileError, LoggedOutError
+from ..models import Wallet, Device, Service, Config, ServerConfig, InfoResponse
+from ..util import extract_wallet
 
 
 class MainContext(LoginContext):
     def __init__(self, root_context: RootContext, session_token: str):
         super().__init__(root_context)
 
-        self.username: Optional[str] = None
-        self.user_uuid: Optional[str] = None
-        self.session_token: Optional[str] = session_token
+        self.username: str | None = None
+        self.user_uuid: str | None = None
+        self.session_token: str | None = session_token
 
     @property
     def prompt(self) -> str:
         return f"\033[38;2;53;160;171m[{self.username}]$\033[0m "
 
-    def update_user_info(self):
-        info: dict = self.root_context.client.info()
-        self.username: str = info["name"]
-        self.user_uuid: str = info["uuid"]
+    def update_user_info(self) -> None:
+        info: InfoResponse = self.root_context.client.info()
+        self.username = info.name
+        self.user_uuid = info.uuid
 
-    def loop_tick(self):
+    def loop_tick(self) -> None:
         self.update_user_info()
 
-    def enter_context(self):
+    def enter_context(self) -> None:
         Context.enter_context(self)
 
         self.update_user_info()
@@ -39,27 +38,30 @@ class MainContext(LoginContext):
 
         print(f"Logged in as {self.username}.")
 
-    def leave_context(self):
+    def leave_context(self) -> None:
         if self.client.logged_in:
             self.client.logout()
         self.delete_session()
         print("Logged out.")
 
-    def reenter_context(self):
+    def reenter_context(self) -> None:
         Context.reenter_context(self)
 
         self.main_loop_presence()
 
-    def save_session(self):
-        config: dict = self.root_context.read_config_file()
-        config.setdefault("servers", {}).setdefault(self.root_context.host, {})["token"] = self.session_token
+    def save_session(self) -> None:
+        if not self.session_token:
+            raise LoggedOutError
+
+        config: Config = self.root_context.read_config_file()
+        config.servers[self.root_context.host] = ServerConfig(token=self.session_token)
         self.root_context.write_config_file(config)
 
-    def delete_session(self):
+    def delete_session(self) -> None:
         super().delete_session()
         self.session_token = None
 
-    def main_loop_presence(self):
+    def main_loop_presence(self) -> None:
         self.update_presence(
             state=f"Logged in: {self.username}@{self.root_context.host}",
             details="in Cryptic Terminal",
@@ -69,12 +71,12 @@ class MainContext(LoginContext):
         )
 
     def extract_wallet(self, content: str) -> Wallet:
-        wallet: Optional[Tuple[str, str]] = extract_wallet(content)
+        wallet: tuple[str, str] | None = extract_wallet(content)
         if wallet is None:
-            raise InvalidWalletFile
+            raise InvalidWalletFileError
         return Wallet.get_wallet(self.client, *wallet)
 
-    def get_hacked_devices(self) -> List[Device]:
+    def get_hacked_devices(self) -> list[Device]:
         return list(
-            {Device.get_device(self.client, service.device) for service in Service.list_part_owner(self.client)},
+            {Device.get_device(self.client, service.device_uuid) for service in Service.list_part_owner(self.client)}
         )

@@ -12,9 +12,12 @@
 # PyCrypCli
 Python [Cryptic Game](https://github.com/cryptic-game/cryptic) Client
 
+## Prerequisites
+- [Python 3.10+](https://www.python.org/downloads/)
+
 ## Install via [pip](https://pypi.org/project/PyCrypCli/)
 ```
-$ sudo pip3 install pycrypcli
+$ python -m pip install -U PyCrypCli
 $ pycrypcli [<server>]
 ```
 
@@ -22,11 +25,11 @@ $ pycrypcli [<server>]
 ```
 $ git clone https://github.com/Defelo/PyCrypCli.git
 $ cd PyCrypCli/
-$ sudo pip3 install -r requirements.txt
-$ python3.10 pycrypcli.py [<server>]
+$ python -m pip install -r requirements.txt
+$ python -m PyCrypCli [<server>]
 ```
 
 ## Or pull the [Docker Image](https://ghcr.io/defelo/pycrypcli)
 ```
-$ sudo docker run -it --rm ghcr.io/defelo/pycrypcli
+# docker run -it --rm ghcr.io/defelo/pycrypcli
 ```

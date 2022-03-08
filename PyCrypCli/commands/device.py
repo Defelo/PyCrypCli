@@ -9,7 +9,7 @@ from ..exceptions import (
     IncompatibleCPUSocketError,
     NotEnoughRAMSlotsError,
     IncompatibleRAMTypesError,
-    IncompatibleDriverInterfaceError,
+    IncompatibleDriverInterfaceError, DeviceIsStarterDeviceError,
 )
 from ..models import Device, ResourceUsage, DeviceHardware, InventoryElement, HardwareConfig
 from ..util import is_uuid
@@ -240,7 +240,11 @@ def handle_device_delete(context: MainContext, args: list[str]) -> None:
 
     device: Device = get_device(context, args[0])
 
-    device.delete()
+    try:
+        device.delete()
+    except DeviceIsStarterDeviceError:
+        raise CommandError("You cannot delete your starter device.")
+
     print("Device has been deleted.")
 
 

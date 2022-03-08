@@ -2,6 +2,7 @@ import json
 import re
 import ssl
 import time
+from os import getenv
 from typing import Type, Any, cast
 from uuid import uuid4
 
@@ -23,7 +24,9 @@ from .exceptions import (
     ClientNotReadyError,
 )
 from .models import HardwareConfig, StatusResponse, InfoResponse, TokenResponse
-from PyCrypCli.timer import Timer
+from .timer import Timer
+
+LOG_WS = bool(getenv("LOG_WS"))
 
 
 def uuid() -> str:
@@ -62,6 +65,8 @@ class Client:
             raise ClientNotReadyError
 
         data = json.dumps(obj)
+        if LOG_WS:
+            print("send:", data)
         sentry_sdk.add_breadcrumb(category="ws", message=f"send: {data}", level="debug")
         self.websocket.send(data)
 
@@ -70,6 +75,8 @@ class Client:
             raise ClientNotReadyError
 
         data = self.websocket.recv()
+        if LOG_WS:
+            print("recv:", data)
         sentry_sdk.add_breadcrumb(category="ws", message=f"recv: {data}", level="debug")
         return cast(dict[str, Any], json.loads(data))
 

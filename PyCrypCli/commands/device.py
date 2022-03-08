@@ -240,6 +240,8 @@ def handle_device_delete(context: MainContext, args: list[str]) -> None:
         raise CommandError("usage: device delete <name|uuid>")
 
     device: Device = get_device(context, args[0])
+    if not context.confirm(f"Are you sure you want to delete the device '{device.name}' including all its files?"):
+        return
 
     try:
         device.delete()

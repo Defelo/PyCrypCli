@@ -165,9 +165,9 @@ def handle_rm(context: DeviceContext, args: list[str]) -> None:
                 break
             pwd = context.get_parent_dir(pwd)
 
-        question: str = f"Are you sure you want to delete the directory `{filepath}` including all contained files?"
+        question: str = f"Are you sure you want to delete the directory '{filepath}' including all contained files?"
     else:
-        question = f"Are you sure you want to delete this file `{filepath}`?"
+        question = f"Are you sure you want to delete the file '{filepath}'?"
     if context.ask(question + " [yes|no] ", ["yes", "no"]) == "no":
         raise CommandError("File has not been deleted.")
 

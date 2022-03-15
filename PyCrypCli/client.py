@@ -125,7 +125,7 @@ class Client:
             exception: Type[MicroserviceException]
             for exception in MicroserviceException.__subclasses__():
                 if exception.error and (match := re.fullmatch(exception.error, error)):
-                    raise exception(error, list(match.groups()))
+                    raise exception(list(match.groups()))
             raise InvalidServerResponseError(response)
 
         if not response_data and retry:
@@ -212,7 +212,7 @@ class Client:
         if "error" in response:
             error: str = response["error"]
             if error == "permissions denied":
-                raise PermissionDeniedError()
+                raise PermissionDeniedError
             raise InvalidServerResponseError(response)
 
         return TokenResponse.parse(self, response)

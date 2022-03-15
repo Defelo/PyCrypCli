@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "PyCrypCli"
-version = "2.1.0b0"
+version = "2.1.0b1"
 description = "Python Cryptic Game Client"
 authors = ["Defelo <elodef42@gmail.com>"]
 readme = "README.md"

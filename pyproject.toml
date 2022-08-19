@@ -24,7 +24,7 @@ bandit = "1.7.2"
 black = "^22.1.0"
 wemake-python-styleguide = "^0.16.1"
 mypy = "^0.941"
-types-requests = "^2.27.12"
+types-requests = "^2.28.9"
 
 [tool.poetry.scripts]
 pycrypcli = "PyCrypCli.pycrypcli:main"

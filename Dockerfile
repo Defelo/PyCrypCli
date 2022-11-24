@@ -1,4 +1,4 @@
-FROM python:3.10-alpine AS builder
+FROM python:3.11-alpine AS builder
 
 RUN apk add --no-cache build-base gcc musl-dev libffi-dev python3-dev openssl-dev cargo
 
@@ -17,7 +17,7 @@ COPY PyCrypCli /build/PyCrypCli
 RUN poetry build
 
 
-FROM python:3.10-alpine
+FROM python:3.11-alpine
 
 LABEL org.opencontainers.image.source=https://github.com/Defelo/PyCrypCli
 

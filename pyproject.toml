@@ -23,7 +23,7 @@ flake8 = "^4.0.1"
 bandit = "1.7.2"
 black = "^22.1.0"
 wemake-python-styleguide = "^0.16.1"
-mypy = "^0.941"
+mypy = "^1.0"
 types-requests = "^2.27.12"
 
 [tool.poetry.scripts]

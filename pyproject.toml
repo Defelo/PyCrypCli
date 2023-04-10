@@ -20,7 +20,7 @@ pydantic = "^1.9.0"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^4.0.1"
-bandit = "1.7.2"
+bandit = "1.7.5"
 black = "^22.1.0"
 wemake-python-styleguide = "^0.16.1"
 mypy = "^0.941"
